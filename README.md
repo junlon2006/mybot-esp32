@@ -1,1 +1,80 @@
 # mybot-esp32
+
+mybot SDK 的 ESP32-S3 开源移植工程。当前开发基线为 ESP-IDF v5.5.2，首个目标板为
+xiaozhi 的 `BOARD_TYPE_ZHENGCHEN_1_54TFT_ML307`。
+
+## 当前能力
+
+- mybot 1.0.0 core 以原生 ESP-IDF component 方式构建。
+- 使用 xiaozhi 验证过的 ESP32-S3 Agora RTSA 1.10.0 和 AOSL。
+- AOSL 包含 BK7258 移植验证过的 `aosl_ctor()` / `aosl_dtor()` 引用计数生命周期。
+- Wi-Fi STA 自动重连和首次启动 AP 配网门户。
+- NVS 持久化 mybot 设备凭据。
+- `esp-tls`、系统 CA bundle、SNI 和 hostname 校验的 HTTPS transport。
+- 征辰 1.54 TFT 板的 I2S0 扬声器、I2S1 麦克风、Boot/音量按键和 ST7789 状态屏。
+- 16 kHz、单声道、signed 16-bit PCM，Cloud AEC 默认开启。
+
+板名包含 ML307，但 xiaozhi 对该板的首次启动默认同样选择 Wi-Fi。当前 Agora/AOSL socket
+后端依赖 lwIP，因此首个版本固定使用 Wi-Fi；ML307 AT socket 没有注册为 lwIP netif，4G RTC
+不在当前支持范围内。
+
+## 构建
+
+```sh
+get_idf
+idf.py --version                 # 必须为 ESP-IDF v5.5.2
+idf.py set-target esp32s3
+idf.py build
+```
+
+烧录和查看日志：
+
+```sh
+idf.py -p /dev/ttyUSB0 flash monitor
+```
+
+首次启动且 NVS 没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
+`http://192.168.4.1` 完成配网。
+
+服务端默认使用中国区：
+
+```text
+https://mybot.sh2.agoralab.co/api
+```
+
+可通过 `idf.py menuconfig` 的 `mybot ESP32-S3` 菜单切换服务地址、音频 ptime、Cloud AEC
+和 AI QoS。
+
+## 硬件
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| 麦克风 I2S1 RX | WS GPIO4、BCLK GPIO5、DIN GPIO6 |
+| 扬声器 I2S0 TX | DOUT GPIO7、BCLK GPIO15、WS GPIO16 |
+| 按键 | Boot GPIO0、音量加 GPIO10、音量减 GPIO39 |
+| ST7789 | MOSI GPIO41、SCLK GPIO42、CS GPIO21、DC GPIO40、RESET GPIO45 |
+| 背光 | GPIO20 |
+| 电源保持 | GPIO2 输出高 |
+| ML307（预留） | ESP TX GPIO12、RX GPIO11 |
+
+目标模组配置按 xiaozhi 基线固定为 16 MB QIO Flash、8 MB Octal PSRAM、240 MHz CPU。
+
+## 目录
+
+```text
+components/aosl/             xiaozhi AOSL + 引用计数补丁
+components/agora_rtc/        ESP32-S3 Agora RTSA
+components/mybot_sdk/        mybot 到 ESP-IDF 的构建包装
+components/mybot_platform/   ESP32-S3 平台 ops 和征辰板实现
+third_party/mybot/           固定版本的 mybot 公共头与 core 源码
+main/                        固件入口和 Kconfig
+```
+
+第三方来源和固定版本见 [VENDORED_SOURCES.md](VENDORED_SOURCES.md)，贡献和发布要求分别见
+[CONTRIBUTING.md](CONTRIBUTING.md) 与 [docs/RELEASING.md](docs/RELEASING.md)。
+
+## 已知限制
+
+- 尚未完成真实硬件烧录、双向 RTC 音频和长期运行验证。
+- ML307 网络、配对码语音播报、唤醒词、电池和低功耗尚未接入。
+- NVS encryption、Flash encryption 和 Secure Boot 需在产品烧录流程中配置。

@@ -1,0 +1,12 @@
+# Preserve vendored sources byte-for-byte; project-owned code keeps Git's whitespace checks.
+components/agora_rtc/** -whitespace
+components/aosl/** -whitespace
+components/button/** -whitespace
+components/cmake_utilities/** -whitespace
+components/esp-wifi-connect/** -whitespace
+third_party/** -whitespace
+
+*.a binary
+*.bin binary
+*.jpg binary
+*.png binary

@@ -1,0 +1,180 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  MYBOT_REF: 38153e78acc22452c8f7afcddbcd522274dad2d6
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install formatting tools
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Format check
+        run: |
+          find main components/mybot_platform -type f \
+            \( -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' \) \
+            -exec clang-format --dry-run --Werror {} +
+      - name: Whitespace check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            before="${{ github.event.before }}"
+            if [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              range="HEAD~1..HEAD"
+            else
+              range="$before..${{ github.event.after }}"
+            fi
+          fi
+          git diff --check "$range"
+      - name: SPDX check
+        run: |
+          find main components/mybot_platform -type f \
+            \( -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' \) \
+            -print0 | while IFS= read -r -d '' file; do
+              head -n 5 "$file" | grep -q 'SPDX-License-Identifier:' || {
+                echo "missing SPDX header: $file" >&2
+                exit 1
+              }
+            done
+      - name: Validate commit messages
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            before="${{ github.event.before }}"
+            if [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              range="HEAD~1..HEAD"
+            else
+              range="$before..${{ github.event.after }}"
+            fi
+          fi
+          git log --no-merges --format='%s' "$range" | while IFS= read -r subject; do
+            printf '%s\n' "$subject" | ./githooks/commit-msg --subject-only >/dev/null
+          done
+
+  idf-build:
+    name: idf-5.5.2-ptime-${{ matrix.ptime }}
+    runs-on: ubuntu-24.04
+    container:
+      image: espressif/idf:v5.5.2
+    strategy:
+      fail-fast: false
+      matrix:
+        ptime: [20, 40, 60]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify toolchain
+        run: test "$(idf.py --version)" = "ESP-IDF v5.5.2"
+      - name: Build ESP32-S3 firmware
+        run: |
+          idf.py -B build-ptime-${{ matrix.ptime }} \
+            -DSDKCONFIG=build-ptime-${{ matrix.ptime }}/sdkconfig \
+            -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;ci/ptime${{ matrix.ptime }}.defaults" \
+            build
+      - name: Report size
+        run: idf.py -B build-ptime-${{ matrix.ptime }} size
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: mybot-esp32-ptime-${{ matrix.ptime }}-${{ github.sha }}
+          path: |
+            build-ptime-${{ matrix.ptime }}/mybot_esp32.bin
+            build-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin
+            build-ptime-${{ matrix.ptime }}/partition_table/partition-table.bin
+            build-ptime-${{ matrix.ptime }}/ota_data_initial.bin
+
+  upstream-core:
+    name: upstream-${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc-asan
+            cc: gcc
+            cxx: g++
+            sanitizer: ASAN
+          - name: clang-asan
+            cc: clang
+            cxx: clang++
+            sanitizer: ASAN
+          - name: gcc-ubsan
+            cc: gcc
+            cxx: g++
+            sanitizer: UBSAN
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: junlon2006/mybot
+          ref: ${{ env.MYBOT_REF }}
+          submodules: recursive
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake libasound2-dev libssl-dev
+      - name: Configure
+        run: cmake -S . -B build -DCONFIG_PLATFORM=linux -DMYBOT_ENABLE_${{ matrix.sanitizer }}=ON
+      - name: Build
+        run: cmake --build build -j2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  upstream-coverage:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: junlon2006/mybot
+          ref: ${{ env.MYBOT_REF }}
+          submodules: recursive
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake libasound2-dev libssl-dev lcov
+      - name: Build and test
+        run: |
+          cmake -S . -B build -DCONFIG_PLATFORM=linux -DMYBOT_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build -j2
+          ctest --test-dir build --output-on-failure
+      - name: Collect coverage
+        run: |
+          lcov --capture --directory build --output-file coverage.info \
+            --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1
+          lcov --remove coverage.info --output-file coverage.info \
+            --rc branch_coverage=1 '*/third_party/*' '*/tests/*'
+          lcov --summary coverage.info --rc branch_coverage=1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-coverage
+          path: coverage.info
+
+  upstream-docs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: junlon2006/mybot
+          ref: ${{ env.MYBOT_REF }}
+          submodules: recursive
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake doxygen
+      - name: Build API reference
+        run: |
+          cmake -S . -B build -DCONFIG_PLATFORM=linux -DMYBOT_BUILD_TESTS=OFF \
+            -DMYBOT_BUILD_EXAMPLES=OFF -DMYBOT_BUILD_LINUX_PLATFORM=OFF
+          doxygen build/docs/Doxyfile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-api-reference
+          path: build/docs/api/html

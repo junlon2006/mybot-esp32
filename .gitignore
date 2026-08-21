@@ -21,6 +21,7 @@
 *.a
 *.la
 *.lo
+!components/agora_rtc/lib/xtensa/libagora-rtc-sdk.a
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -53,3 +54,10 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# ESP-IDF generated files
+/build*/
+/sdkconfig
+/sdkconfig.old
+/.cache/
+*.bin
