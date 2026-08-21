@@ -15,6 +15,8 @@ Local changes relative to those baselines:
 
 - `components/aosl/include/api/aosl.h` and `components/aosl/kernel/mpq.c` carry BK7258 commit
   `9956b939fe70dcc741b028e8b53a66aaab2880a9` for reference-counted AOSL ownership.
+- `components/aosl/platform/src/esp32-s3/aosl_hal_thread.c` passes AOSL's byte-sized stack budget
+  directly to ESP-IDF `xTaskCreate()`, whose stack parameter is also measured in bytes.
 - `third_party/mybot/src/rtc/mybot_agora_rtc.c` uses C99 `PRIu32` format macros so `uint32_t`
   logging is valid for the ESP32-S3 ABI. The HTTP client omits plaintext-only socket helpers from
   HTTPS-only builds.

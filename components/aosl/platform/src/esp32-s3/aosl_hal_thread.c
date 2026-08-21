@@ -76,7 +76,9 @@ int aosl_hal_thread_create(aosl_thread_t *thread, aosl_thread_param_t *param,
 	wrapper_args->arg = args;
 
 	/* Create the FreeRTOS task that will run the pthread-style entry function */
-	ret = xTaskCreate(thread_wrapper, param->name, (uint16_t)(param->stack_size / sizeof (StackType_t)),
+	/* ESP-IDF defines xTaskCreate() stack depth in bytes. AOSL stack_size uses
+	 * the same unit, so passing a StackType_t count would under-allocate by 4x. */
+	ret = xTaskCreate(thread_wrapper, param->name, (configSTACK_DEPTH_TYPE)param->stack_size,
 					 wrapper_args, sched_priority, &xTaskHandle);
 	if (ret != pdPASS) {
 		aosl_free(wrapper_args);

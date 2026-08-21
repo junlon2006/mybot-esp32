@@ -5,9 +5,11 @@
 
 #include "board_config.h"
 #include "esp_app_desc.h"
+#include "esp_event.h"
 #include "esp_idf_version.h"
 #include "esp_log.h"
 #include "esp_mac.h"
+#include "esp_netif.h"
 #include "esp_psram.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -28,12 +30,31 @@ static int init_nvs(void) {
     return err == ESP_OK ? 0 : -1;
 }
 
+/* AOSL creates socket-backed wakeup pipes before the platform Wi-Fi init callback runs. */
+static int init_network_stack(void) {
+    esp_err_t err = esp_netif_init();
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "esp_netif initialization failed: %s", esp_err_to_name(err));
+        return -1;
+    }
+
+    err = esp_event_loop_create_default();
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "default event loop initialization failed: %s", esp_err_to_name(err));
+        return -1;
+    }
+    return 0;
+}
+
 void app_main(void) {
     ESP_LOGI(TAG, "mybot %s, Agora RTSA %s, ESP-IDF %s", mybot_version_string(),
              agora_rtc_get_version(), esp_get_idf_version());
 
     if (init_nvs() < 0) {
         ESP_LOGE(TAG, "NVS initialization failed");
+        return;
+    }
+    if (init_network_stack() < 0) {
         return;
     }
 

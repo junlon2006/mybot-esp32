@@ -16,3 +16,10 @@ Versioning and Conventional Commits.
 
 - Physical-device and bidirectional RTC validation is pending.
 - ML307/4G, pairing announcements, wake words, battery and power management are not yet supported.
+
+### Fixed
+
+- Initialize lwIP and the default event loop before AOSL creates its internal socket-based signal
+  pipe.
+- Preserve the requested AOSL thread stack size on ESP-IDF instead of dividing the byte count by
+  `sizeof(StackType_t)`.
