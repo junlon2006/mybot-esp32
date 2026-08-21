@@ -1,3 +1,9 @@
+if(CONFIG_LWIP_MAX_SOCKETS LESS 24)
+    message(FATAL_ERROR
+        "mybot requires CONFIG_LWIP_MAX_SOCKETS >= 24 (recommended: 32); "
+        "remove the stale sdkconfig and reconfigure")
+endif()
+
 idf_component_register(
     SRCS "app_main.c"
     REQUIRES

@@ -23,3 +23,5 @@ Versioning and Conventional Commits.
   pipe.
 - Preserve the requested AOSL thread stack size on ESP-IDF instead of dividing the byte count by
   `sizeof(StackType_t)`.
+- Increase the lwIP socket budget so mybot and Agora can open network sockets after AOSL creates
+  its MPQ wakeup pipes.
