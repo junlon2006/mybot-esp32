@@ -104,17 +104,12 @@ static void https_close(void *opaque) {
 }
 
 static const mybot_https_ops_t s_ops = {
-    .name = "esp-tls-cert-bundle",
     .connect = https_connect,
     .send = https_send,
     .recv = https_recv,
     .close = https_close,
 };
 
-int mybot_esp32s3_https_register(void) {
-    int result = mybot_https_register(&s_ops);
-    if (result < 0) {
-        ESP_LOGE(TAG, "HTTPS registration failed");
-    }
-    return result;
+const mybot_https_ops_t *mybot_esp32s3_https_ops(void) {
+    return &s_ops;
 }

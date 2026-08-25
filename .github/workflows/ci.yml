@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  MYBOT_REF: 38153e78acc22452c8f7afcddbcd522274dad2d6
+  MYBOT_REF: ecb8bc6f5bd17ff32de0483ac92e811238f6b0d6
 
 jobs:
   quality:

@@ -4,8 +4,6 @@
 
 #include <stddef.h>
 #include <mybot/mybot_errors.h>
-#include <mybot/mybot_export.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,9 +15,6 @@ extern "C" {
  * device credentials through this interface). All callbacks are required.
  */
 typedef struct {
-    /** Implementation name for logging and diagnostics. */
-    const char *name;
-
     /**
      * Allocate and open the store.
      *
@@ -73,18 +68,6 @@ typedef struct {
      */
     void (*destroy)(void *ctx);
 } mybot_kv_store_ops_t;
-
-/**
- * Register the persistent KV-store implementation for the current platform.
- *
- * @param ops KV-store operations table; must remain valid for the process
- *            lifetime
- * @return 0 on success, -1 if ops is invalid or already registered
- *
- * @note Call exactly once, before mybot_start(). Protect stored device
- *       credentials with appropriate access control or encryption.
- */
-MYBOT_API int mybot_kv_store_register(const mybot_kv_store_ops_t *ops);
 
 #ifdef __cplusplus
 }

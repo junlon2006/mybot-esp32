@@ -5,7 +5,7 @@ license and copyright notices.
 
 | Component | License | Location |
 | --- | --- | --- |
-| mybot SDK | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
+| mybot SDK 1.0.0 (`ecb8bc6`) | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
 | AOSL | Apache-2.0 with the conditions in its bundled license | `components/aosl` |
 | Agora RTSA Lite for ESP32-S3 | Distributed with permission for this project | `components/agora_rtc` |
 | esp-wifi-connect | MIT | `components/esp-wifi-connect` |

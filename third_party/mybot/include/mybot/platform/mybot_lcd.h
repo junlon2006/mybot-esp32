@@ -3,8 +3,6 @@
 #define MYBOT_LCD_H_
 
 #include <stdbool.h>
-#include <mybot/mybot_export.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,13 +61,10 @@ typedef struct {
  * layout, fonts, icons, or QR-code presentation. The content pointer is valid
  * only for the duration of the call and must not be retained by the implementation.
  *
- * @note render() may be called from different SDK threads; the SDK serializes
- *       all calls.
+ * @note render() is called by the application control owner. The SDK does not
+ *       invoke render() concurrently.
  */
 typedef struct {
-    /** Implementation name for logging and diagnostics. */
-    const char *name;
-
     /**
      * Allocate and open the display.
      *
@@ -91,23 +86,12 @@ typedef struct {
     /**
      * Release the display.
      *
-     * Called only after all render callers have stopped.
+     * Called by the application control owner after all render calls have stopped.
      *
      * @param ctx LCD implementation context from init()
      */
     void (*destroy)(void *ctx);
 } mybot_lcd_ops_t;
-
-/**
- * Register the LCD implementation for the current platform.
- *
- * @param ops LCD operations table; must remain valid for the process
- *            lifetime
- * @return 0 on success, -1 if ops is invalid or already registered
- *
- * @note Optional. When used, call exactly once before mybot_start().
- */
-MYBOT_API int mybot_lcd_register(const mybot_lcd_ops_t *ops);
 
 #ifdef __cplusplus
 }

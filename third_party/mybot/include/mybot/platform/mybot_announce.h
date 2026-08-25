@@ -3,8 +3,6 @@
 #define MYBOT_ANNOUNCE_H_
 
 #include <stdint.h>
-#include <mybot/mybot_export.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,9 +44,6 @@ typedef enum {
  * because the SDK calls it from the real-time playback worker.
  */
 typedef struct {
-    /** Implementation name for logging and diagnostics. */
-    const char *name;
-
     /** Allocate and initialize the announcement implementation.
      *  @param ctx [out] implementation context handle
      *  @return 0 on success, -1 on error */
@@ -69,17 +64,6 @@ typedef struct {
     /** Release the implementation context. */
     void (*destroy)(void *ctx);
 } mybot_announce_ops_t;
-
-/**
- * Register the announcement implementation.
- *
- * @param ops operations table; must remain valid for the process lifetime
- * @return 0 on success, -1 if ops is invalid or already registered
- *
- * @note Optional implementation: without one, the SDK skips local announcements and
- *       only logs. Call once, before mybot_start().
- */
-MYBOT_API int mybot_announce_register(const mybot_announce_ops_t *ops);
 
 #ifdef __cplusplus
 }

@@ -2,8 +2,6 @@
 #ifndef MYBOT_KEY_H_
 #define MYBOT_KEY_H_
 
-#include <mybot/mybot_export.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,15 +42,13 @@ typedef void (*mybot_key_event_handler_t)(mybot_key_event_t event, void *user_da
  * any in-flight event handler to return.
  */
 typedef struct {
-    /** Implementation name for logging and diagnostics. */
-    const char *name;
-
     /**
      * Allocate and start the key event source.
      *
      * @param ctx       [out] implementation context handle
      * @param emit      callback for reporting key events
-     * @param user_data opaque pointer forwarded to emit(); reserved, pass NULL
+     * @param user_data opaque context forwarded unchanged to emit(); it must remain
+     *                  valid until destroy() returns
      * @return 0 on success, -1 on error
      */
     int (*init)(void **ctx, mybot_key_event_handler_t emit, void *user_data);
@@ -67,17 +63,6 @@ typedef struct {
      */
     void (*destroy)(void *ctx);
 } mybot_key_ops_t;
-
-/**
- * Register the key implementation for the current platform.
- *
- * @param ops key operations table; must remain valid for the process
- *            lifetime
- * @return 0 on success, -1 if ops is invalid or already registered
- *
- * @note Call exactly once, before mybot_start().
- */
-MYBOT_API int mybot_key_register(const mybot_key_ops_t *ops);
 
 #ifdef __cplusplus
 }

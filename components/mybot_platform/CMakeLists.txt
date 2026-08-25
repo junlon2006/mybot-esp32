@@ -10,6 +10,7 @@ idf_component_register(
     INCLUDE_DIRS "include"
     REQUIRES
         mybot_sdk
+        aosl
         esp-wifi-connect
         button
         esp-tls

@@ -87,7 +87,6 @@ static void kv_destroy(void *opaque) {
 }
 
 static const mybot_kv_store_ops_t s_ops = {
-    .name = "esp-idf-nvs",
     .init = kv_init,
     .get = kv_get,
     .set = kv_set,
@@ -95,10 +94,6 @@ static const mybot_kv_store_ops_t s_ops = {
     .destroy = kv_destroy,
 };
 
-int mybot_esp32s3_kv_store_register(void) {
-    int result = mybot_kv_store_register(&s_ops);
-    if (result < 0) {
-        ESP_LOGE(TAG, "KV registration failed");
-    }
-    return result;
+const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void) {
+    return &s_ops;
 }

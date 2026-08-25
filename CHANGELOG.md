@@ -12,6 +12,11 @@ Versioning and Conventional Commits.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
 - Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
 
+### Changed
+
+- Sync the vendored mybot SDK to commit `ecb8bc6`, including its consolidated lifecycle/media
+  ownership, and migrate the ESP32-S3 platform to one descriptor-based registration.
+
 ### Known limitations
 
 - Physical-device and bidirectional RTC validation is pending.

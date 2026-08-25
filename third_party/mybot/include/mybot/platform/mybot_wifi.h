@@ -2,8 +2,6 @@
 #ifndef MYBOT_WIFI_H_
 #define MYBOT_WIFI_H_
 
-#include <mybot/mybot_export.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,9 +54,6 @@ typedef void (*mybot_wifi_event_handler_t)(mybot_wifi_event_t event, void *user_
  *       returns.
  */
 typedef struct {
-    /** Implementation name for logging and diagnostics. */
-    const char *name;
-
     /**
      * Start the platform Wi-Fi workflow without waiting for network connectivity.
      * Production implementations should normally start APSTA provisioning.
@@ -83,17 +78,6 @@ typedef struct {
      */
     void (*destroy)(void *ctx);
 } mybot_wifi_ops_t;
-
-/**
- * Register the Wi-Fi connectivity implementation for the current platform.
- *
- * @param ops implementation operations table; must remain valid for the process
- *            lifetime
- * @return 0 on success, -1 if ops is invalid or an implementation is already active
- *
- * @note Call exactly once, before mybot_start().
- */
-MYBOT_API int mybot_wifi_register(const mybot_wifi_ops_t *ops);
 
 #ifdef __cplusplus
 }

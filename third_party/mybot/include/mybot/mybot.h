@@ -90,11 +90,11 @@ typedef enum {
  * development environments whose host already manages the network connection.
  *
  * Preconditions:
- * - Every required platform implementation must be registered first (Wi-Fi, KV,
- *   key, audio capture and playback). LCD and announcement implementations are optional;
- *   a wake-word implementation is required only when MYBOT_WAKE_WORDS is enabled.
- * - With MYBOT_ENABLE_HTTPS=ON, a "https://" server requires a registered
- *   TLS transport (mybot_https_register()); plain "http://" is rejected
+ * - Register one complete mybot_platform_descriptor_t first. Wi-Fi, KV, key, audio capture and
+ *   playback are required; HTTPS and wake words become required when selected by the build and
+ *   configuration.
+ * - With MYBOT_ENABLE_HTTPS=ON, a "https://" server requires a TLS transport in the registered
+ *   platform descriptor; plain "http://" is rejected
  *   unless MYBOT_ALLOW_INSECURE_HTTP=ON is set for development builds.
  *
  * The configuration is validated (non-NULL cfg, NUL-terminated strings,
@@ -114,14 +114,17 @@ typedef enum {
  *       pair for the duration of that use.
  * @note Call from the main application thread, not from a platform event
  *       callback.
+ * @note Calls to mybot_start() and mybot_stop() are serialized internally. A
+ *       concurrent mybot_stop() waits for startup to finish; a concurrent
+ *       mybot_start() observes the completed active state and returns -1.
  */
 MYBOT_API int mybot_start(const mybot_config_t *cfg);
 
 /**
  * @brief Check whether the application instance is still running.
  *
- * @return true from a successful mybot_start() until mybot_request_exit() or
- *         mybot_stop() clears the running flag; false otherwise (also when
+ * @return true from a successful mybot_start() until the application stops or
+ *         an internal exit event clears the running flag; false otherwise (also when
  *         not started, after a failed start, or after stopping).
  *
  * @note Thread-safe (atomic read). The main loop should poll this and call
@@ -144,23 +147,6 @@ MYBOT_API bool mybot_is_running(void);
 MYBOT_API mybot_state_t mybot_get_state(void);
 
 /**
- * @brief Request a graceful application exit.
- *
- * Non-blocking: only clears the running flag so mybot_is_running() starts
- * returning false; no worker thread or resource is torn down here. The host
- * main loop observes the flag change and should then call mybot_stop() to
- * release threads and devices.
- *
- * Safe to call from any normal thread or event callback (key EXIT events, UI
- * commands) and idempotent — repeated calls are harmless. A POSIX signal
- * handler should set a sig_atomic_t flag and call this function later from
- * normal execution context.
- *
- * @note This is a request, not teardown: use mybot_stop() for actual cleanup.
- */
-MYBOT_API void mybot_request_exit(void);
-
-/**
  * @brief Stop the application and release all resources.
  *
  * Signals every worker to stop, waits for all worker threads to exit, and
@@ -177,6 +163,8 @@ MYBOT_API void mybot_request_exit(void);
  * @warning Blocks until shutdown completes, so it must be called from the
  *          main application thread — never from inside a platform event
  *          callback, an SDK worker thread, or a signal handler.
+ * @note Calls concurrent with mybot_start() are serialized and wait for the
+ *       startup attempt to finish before teardown begins.
  */
 MYBOT_API void mybot_stop(void);
 

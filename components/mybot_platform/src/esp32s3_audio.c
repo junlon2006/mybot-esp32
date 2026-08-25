@@ -2,22 +2,21 @@
 #include "board_config.h"
 
 #include <mybot/platform/mybot_audio.h>
+#include <api/aosl_atomic.h>
 
 #include "driver/i2s_std.h"
 #include "esp_err.h"
-#include "esp_log.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-#define TAG "mybot_audio"
 #define AUDIO_MAX_FRAMES 960
 #define AUDIO_IO_TIMEOUT_MS 50
 
 typedef struct {
     i2s_chan_handle_t channel;
-    bool started;
+    aosl_atomic_t started;
     int32_t scratch[AUDIO_MAX_FRAMES];
 } audio_context_t;
 
@@ -90,16 +89,17 @@ static int capture_init(void **out_ctx, int rate, int channels, int bits) {
 
 static int capture_start(void *opaque) {
     audio_context_t *ctx = opaque;
-    if (!ctx || ctx->started || i2s_channel_enable(ctx->channel) != ESP_OK) {
+    if (!ctx || aosl_atomic_read(&ctx->started) || i2s_channel_enable(ctx->channel) != ESP_OK) {
         return -1;
     }
-    ctx->started = true;
+    aosl_atomic_set(&ctx->started, true);
     return 0;
 }
 
 static int capture_read(void *opaque, void *buffer, int frames) {
     audio_context_t *ctx = opaque;
-    if (!ctx || !ctx->started || !buffer || frames <= 0 || frames > AUDIO_MAX_FRAMES) {
+    if (!ctx || !aosl_atomic_read(&ctx->started) || !buffer || frames <= 0 ||
+        frames > AUDIO_MAX_FRAMES) {
         return -1;
     }
 
@@ -133,11 +133,11 @@ static int audio_stop(void *opaque) {
     if (!ctx) {
         return -1;
     }
-    if (!ctx->started) {
+    if (!aosl_atomic_read(&ctx->started)) {
         return 0;
     }
     esp_err_t err = i2s_channel_disable(ctx->channel);
-    ctx->started = false;
+    aosl_atomic_set(&ctx->started, false);
     return err == ESP_OK ? 0 : -1;
 }
 
@@ -146,7 +146,7 @@ static void audio_destroy(void *opaque) {
     if (!ctx) {
         return;
     }
-    if (ctx->started) {
+    if (aosl_atomic_read(&ctx->started)) {
         i2s_channel_disable(ctx->channel);
     }
     i2s_del_channel(ctx->channel);
@@ -187,16 +187,17 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
 
 static int playback_start(void *opaque) {
     audio_context_t *ctx = opaque;
-    if (!ctx || ctx->started || i2s_channel_enable(ctx->channel) != ESP_OK) {
+    if (!ctx || aosl_atomic_read(&ctx->started) || i2s_channel_enable(ctx->channel) != ESP_OK) {
         return -1;
     }
-    ctx->started = true;
+    aosl_atomic_set(&ctx->started, true);
     return 0;
 }
 
 static int playback_write(void *opaque, const void *buffer, int frames) {
     audio_context_t *ctx = opaque;
-    if (!ctx || !ctx->started || !buffer || frames <= 0 || frames > AUDIO_MAX_FRAMES) {
+    if (!ctx || !aosl_atomic_read(&ctx->started) || !buffer || frames <= 0 ||
+        frames > AUDIO_MAX_FRAMES) {
         return -1;
     }
 
@@ -219,7 +220,6 @@ static int playback_write(void *opaque, const void *buffer, int frames) {
 }
 
 static const mybot_audio_capture_ops_t s_capture_ops = {
-    .name = "zhengchen-i2s-mic",
     .init = capture_init,
     .start = capture_start,
     .read = capture_read,
@@ -228,7 +228,6 @@ static const mybot_audio_capture_ops_t s_capture_ops = {
 };
 
 static const mybot_audio_playback_ops_t s_playback_ops = {
-    .name = "zhengchen-i2s-speaker",
     .init = playback_init,
     .start = playback_start,
     .write = playback_write,
@@ -236,11 +235,10 @@ static const mybot_audio_playback_ops_t s_playback_ops = {
     .destroy = audio_destroy,
 };
 
-int mybot_esp32s3_audio_register(void) {
-    if (mybot_audio_register_capture(&s_capture_ops) < 0 ||
-        mybot_audio_register_playback(&s_playback_ops) < 0) {
-        ESP_LOGE(TAG, "audio registration failed");
-        return -1;
-    }
-    return 0;
+const mybot_audio_capture_ops_t *mybot_esp32s3_audio_capture_ops(void) {
+    return &s_capture_ops;
+}
+
+const mybot_audio_playback_ops_t *mybot_esp32s3_audio_playback_ops(void) {
+    return &s_playback_ops;
 }

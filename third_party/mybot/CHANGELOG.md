@@ -6,6 +6,10 @@ This project follows Semantic Versioning.
 
 ### Added
 
+- Expand deterministic unit coverage for JSON allocation failures, HTTP and device-service
+  protocol boundaries, device lifecycle recovery, RTC errors, and application cleanup.
+- Add one-shot `mybot_platform_descriptor_t` registration with complete validation and
+  synchronous startup checks for configuration-required ops.
 - Add the BK725x platform port under `platforms/bk725x` and synchronize the complete BK7258
   reference project under `examples/bk725x`, with the full firmware implementation maintained at
   <https://github.com/junlon2006/mybot-bk7258>.
@@ -16,11 +20,47 @@ This project follows Semantic Versioning.
 
 ### Changed
 
+- Sync the complete BK725x platform adaptation with the BK7258 reference project, including
+  descriptor-based registration and embedded TLS root verification.
+- Restrict the SDK-internal LCD facade to the application control owner and remove its redundant
+  render mutex.
+- **Breaking:** remove `mybot_request_exit()`; host applications stop directly after their own exit
+  signal or condition is observed.
+- Align the Agora RTSA wrapper with the single-instance, one-call-at-a-time product model: initialize
+  RTSA once per mybot run, use one AOSL CAS lifecycle gate for callback, audio-send, and teardown
+  ordering, and create one connection per conversation, with explicit lifecycle and error logging.
+- **Breaking:** remove legacy per-capability registration; the descriptor's version, capability, and
+  name fields; and the name field from every ops table. Platform integrations must submit one complete
+  descriptor whose non-NULL ops pointers are the sole declarations of supported platform functions.
+- **Breaking:** narrow the public error-code header to the only SDK-consumed `MYBOT_ERR_NOT_FOUND`
+  result; other APIs continue to use `0` for success and negative values for failure.
+- Remove the internal conversation forwarding layer; application orchestration now calls the
+  process-wide Agora RTC module directly without copying RTC credentials into a second context.
+- Consolidate application control into one `control_mpq` owner for state, device lifecycle, RTC
+  control, UI and volume actions, and resource startup and shutdown. Control callbacks only publish
+  short events or atomic mailboxes, while PCM remains on the direct real-time data path.
+- Remove the unused platform-registry startup lock and the unconsumed `MYBOT_SHOW_TRANSCRIPT`
+  configuration surface.
+- Trim internal dead surface: unused lifecycle/RTC response fields, empty RTC stats callback,
+  duplicate platform/audio/wake-word accessors, redundant state-model CAS retries, and unused HTTP
+  and JSON convenience APIs.
+- Align the English and Chinese README lifecycle and architecture guidance, document the descriptor
+  registration contract in the public headers, match local format commands to CI scope, and refresh
+  stale BK725x ownership and generator comments.
+- Refactor application, lifecycle, RTC, audio, storage, connectivity, input, display, announcement,
+  and wake-word runtime state into caller-owned internal contexts. Public APIs retain the default
+  process-wide compatibility facade, while active implementation state no longer lives in module
+  globals.
+- Split `mybot_app.c` orchestration into dedicated media-pipeline, Agora RTC, and LCD presenter
+  modules without changing the public API.
+- Derive public application state and LCD presentation from one atomic state-model snapshot fed by
+  runtime-phase, connectivity, and device-lifecycle events.
 - Limit host clang-format and clang-tidy checks to the SDK core, Linux platform, Linux example, and
   tests; BK725x Armino sources are validated by the BK firmware build environment instead.
-- Update the AOSL lifecycle integration for the reference-counted `aosl_ctor()` / `aosl_dtor()`
-  API: mybot and Agora RTC now hold independent runtime references, and mybot releases its
-  application reference only after RTC callbacks, workers and buffers have been torn down.
+- Update the pinned AOSL submodule to upstream commit `84e0860`, which adds reference-counted
+  `aosl_ctor()` / `aosl_dtor()` lifecycle management. mybot and Agora RTC now hold independent
+  runtime references, and mybot releases its application reference only after RTC callbacks,
+  workers and buffers have been torn down.
 - Promote application informational logs to the AOSL NOTICE level, set the Linux example's
   runtime log threshold accordingly, and initialize the Agora RTSA SDK at its default NOTICE
   threshold, keeping application lifecycle messages visible while suppressing lower-priority
@@ -31,12 +71,31 @@ This project follows Semantic Versioning.
 
 ### Fixed
 
+- Keep asynchronous exit notifications side-effect free while the control owner destroys the media
+  pipeline.
+- Use a unique temporary directory in the Linux announcement test so stale files or PID reuse do not
+  make repeated CI runs fail during setup.
+- Make the application shutdown test wait for the playback worker to apply a pending announcement
+  buffer clear before using a downlink frame to block playback I/O.
+- Install the project `LICENSE` and `THIRD_PARTY_NOTICES.md` with the CMake package alongside the
+  bundled AOSL license, and verify all three documents in the install-consumer integration test.
+- Call both platform audio `stop` hooks before waiting for media workers, allowing a thread-safe
+  stop implementation to unblock in-flight capture and playback I/O without shutdown deadlocks.
+- Simplify device-service URL scheme validation into direct branches, eliminating a duplicate-condition
+  cppcheck warning across HTTPS and development HTTP build configurations.
 - Clamp server-provided device-service polling intervals to 3..60 seconds and saturate oversized JSON
   integers before conversion, preventing timer overflow and request storms.
 - Drop RTC downlink audio while a pairing announcement is active, preserving the playback ring
   buffer's single-producer/single-consumer access and giving announcements priority.
 - Remove the HTTP response parser's POSIX `strncasecmp()` dependency by using
   an ASCII-only case-insensitive comparison, preserving mixed-case header support on non-POSIX platforms.
+- Serialize Agora RTC callbacks, audio sends, and connection teardown, reject stale connection IDs,
+  and cover concurrent teardown ordering.
+- Destroy a failed Agora RTC connection without reinitializing the process-wide RTSA service.
+- Serialize application start and stop across threads so runtime initialization, failure cleanup, and
+  teardown cannot concurrently mutate the process-wide runtime.
+- Correct the public key-input contract to document the forwarded `user_data` context and its
+  callback lifetime.
 
 ## [1.0.0] - 2026-08-10
 
@@ -129,16 +188,12 @@ This project follows Semantic Versioning.
   internal lifecycle/query functions (`init` / `deinit` / `is_registered`, LCD rendering,
   wake-word PCM feed, KV-store access, capture/playback accessors and volume control) moved to
   `src/internal/mybot_*_internal.h` and are no longer part of the public API surface.
-- Move conversation-control requests (`mybot_app_start_conversation()`,
-  `mybot_app_stop_conversation()`, `mybot_app_pair()`) out of the public header
-  `include/mybot/mybot.h` into the internal `src/internal/mybot_app.h`: host applications now
-  trigger them only through platform key / wake-word events, and the symbols are no longer
-  exported from the library.
+- Remove the conversation-control helper symbols and internal `mybot_app.h`; platform key and
+  wake-word callbacks now submit short commands directly to the application control owner.
 - Rename the public application entry points from the `mybot_app_*` prefix to the root
   `mybot_*` namespace (`mybot_start()`, `mybot_stop()`, `mybot_is_running()`,
-  `mybot_get_state()`, `mybot_request_exit()`; types `mybot_config_t` / `mybot_state_t`; state
-  enumerators `MYBOT_STATE_*`). `mybot_app_*` is now reserved for internal app-shell control in
-  `src/`.
+  `mybot_get_state()`; types `mybot_config_t` / `mybot_state_t`; state
+  enumerators `MYBOT_STATE_*`).
 - Unify public API naming around `mybot_<module>_register / init / deinit`: drop redundant middle
   words (`mybot_audio_register_capture()`, `mybot_audio_register_playback()`, `mybot_key_register()`,
   `mybot_wifi_register()`, `mybot_https_register()`), rename the HTTPS transport header to

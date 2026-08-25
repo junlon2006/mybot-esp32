@@ -311,16 +311,11 @@ static void lcd_destroy(void *opaque) {
 }
 
 static const mybot_lcd_ops_t s_ops = {
-    .name = "zhengchen-st7789",
     .init = lcd_init,
     .render = lcd_render,
     .destroy = lcd_destroy,
 };
 
-int mybot_esp32s3_lcd_register(void) {
-    int result = mybot_lcd_register(&s_ops);
-    if (result < 0) {
-        ESP_LOGE(TAG, "LCD registration failed");
-    }
-    return result;
+const mybot_lcd_ops_t *mybot_esp32s3_lcd_ops(void) {
+    return &s_ops;
 }

@@ -19,14 +19,18 @@ endif()
 set(MYBOT_SOURCES
     "${MYBOT_ROOT}/src/core/mybot_app.c"
     "${MYBOT_ROOT}/src/core/mybot_device_lifecycle.c"
+    "${MYBOT_ROOT}/src/core/mybot_presenter.c"
+    "${MYBOT_ROOT}/src/core/mybot_state_model.c"
     "${MYBOT_ROOT}/src/core/mybot_version.c"
     "${MYBOT_ROOT}/src/media/mybot_audio.c"
+    "${MYBOT_ROOT}/src/media/mybot_media_pipeline.c"
     "${MYBOT_ROOT}/src/media/mybot_wake_words.c"
     "${MYBOT_ROOT}/src/platform/mybot_announce.c"
     "${MYBOT_ROOT}/src/platform/mybot_key.c"
     "${MYBOT_ROOT}/src/platform/mybot_https.c"
     "${MYBOT_ROOT}/src/platform/mybot_kv_store.c"
     "${MYBOT_ROOT}/src/platform/mybot_lcd.c"
+    "${MYBOT_ROOT}/src/platform/mybot_platform.c"
     "${MYBOT_ROOT}/src/platform/mybot_wifi.c"
     "${MYBOT_ROOT}/src/rtc/mybot_agora_rtc.c"
     "${MYBOT_ROOT}/src/service/mybot_device_client.c"
@@ -55,7 +59,6 @@ target_compile_definitions(${COMPONENT_LIB}
         MYBOT_WAKE_WORDS=0
         MYBOT_AI_QOS=$<BOOL:${CONFIG_MYBOT_AI_QOS}>
         MYBOT_FAST_SEND_MULTIPLIER=${CONFIG_MYBOT_FAST_SEND_MULTIPLIER}
-        MYBOT_SHOW_TRANSCRIPT=0
         MYBOT_ENABLE_HTTPS=1
         MYBOT_ALLOW_INSECURE_HTTP=0
 )

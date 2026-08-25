@@ -160,17 +160,12 @@ void wifi_destroy(void *opaque) {
 }
 
 const mybot_wifi_ops_t wifi_ops = {
-    .name = "esp-wifi-connect",
     .init = wifi_init,
     .destroy = wifi_destroy,
 };
 
 } // namespace
 
-extern "C" int mybot_esp32s3_wifi_register(void) {
-    int result = mybot_wifi_register(&wifi_ops);
-    if (result < 0) {
-        ESP_LOGE(TAG, "Wi-Fi registration failed");
-    }
-    return result;
+extern "C" const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void) {
+    return &wifi_ops;
 }

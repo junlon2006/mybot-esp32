@@ -177,15 +177,10 @@ static void buttons_destroy(void *opaque) {
 }
 
 static const mybot_key_ops_t s_ops = {
-    .name = "zhengchen-buttons",
     .init = buttons_init,
     .destroy = buttons_destroy,
 };
 
-int mybot_esp32s3_buttons_register(void) {
-    int result = mybot_key_register(&s_ops);
-    if (result < 0) {
-        ESP_LOGE(TAG, "button registration failed");
-    }
-    return result;
+const mybot_key_ops_t *mybot_esp32s3_button_ops(void) {
+    return &s_ops;
 }
