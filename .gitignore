@@ -61,3 +61,6 @@ dkms.conf
 /sdkconfig.old
 /.cache/
 *.bin
+
+# Local Codex development guidance (do not publish)
+/skills/
