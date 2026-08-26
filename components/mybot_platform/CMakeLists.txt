@@ -14,6 +14,7 @@ idf_component_register(
         esp-wifi-connect
         button
         esp-tls
+        esp_hw_support
         mbedtls
         nvs_flash
         esp_driver_i2s

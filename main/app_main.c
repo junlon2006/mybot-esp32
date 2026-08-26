@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
+#include "esp_netif_sntp.h"
 #include "esp_psram.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -20,6 +21,9 @@
 #include <string.h>
 
 #define TAG "mybot_bootstrap"
+
+static esp_event_handler_instance_t s_got_ip_handler;
+static bool s_sntp_initialized;
 
 static int init_nvs(void) {
     esp_err_t err = nvs_flash_init();
@@ -44,6 +48,60 @@ static int init_network_stack(void) {
         return -1;
     }
     return 0;
+}
+
+static void on_time_sync(struct timeval *tv) {
+    (void)tv;
+    ESP_LOGI(TAG, "system time synchronized via SNTP");
+}
+
+static void start_sntp_on_got_ip(void *arg, esp_event_base_t event_base, int32_t event_id,
+                                 void *event_data) {
+    (void)arg;
+    (void)event_base;
+    (void)event_id;
+    (void)event_data;
+
+    esp_err_t err = esp_netif_sntp_start();
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "SNTP time sync started");
+    } else {
+        ESP_LOGE(TAG, "failed to start SNTP: %s", esp_err_to_name(err));
+    }
+}
+
+static int init_time_sync(void) {
+    esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+    config.start = false;
+    config.wait_for_sync = false;
+    config.sync_cb = on_time_sync;
+
+    esp_err_t err = esp_netif_sntp_init(&config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "SNTP initialization failed: %s", esp_err_to_name(err));
+        return -1;
+    }
+
+    /* This handler is registered before Wi-Fi so time sync starts before the platform publishes
+     * usable connectivity to mybot. */
+    err = esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, start_sntp_on_got_ip,
+                                              NULL, &s_got_ip_handler);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "SNTP IP handler registration failed: %s", esp_err_to_name(err));
+        esp_netif_sntp_deinit();
+        return -1;
+    }
+    s_sntp_initialized = true;
+    return 0;
+}
+
+static void deinit_time_sync(void) {
+    if (!s_sntp_initialized) {
+        return;
+    }
+    esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, s_got_ip_handler);
+    esp_netif_sntp_deinit();
+    s_sntp_initialized = false;
 }
 
 void app_main(void) {
@@ -80,8 +138,10 @@ void app_main(void) {
     snprintf(config.firmware_ver, sizeof(config.firmware_ver), "%s", app_description->version);
     snprintf(config.hw_model, sizeof(config.hw_model), "%s", MYBOT_BOARD_NAME);
 
+    (void)init_time_sync();
     if (mybot_start(&config) < 0) {
         ESP_LOGE(TAG, "mybot startup failed");
+        deinit_time_sync();
         return;
     }
     ESP_LOGI(TAG, "mybot startup scheduled for device %s", config.device_id);
@@ -90,5 +150,6 @@ void app_main(void) {
         vTaskDelay(pdMS_TO_TICKS(100));
     }
     mybot_stop();
+    deinit_time_sync();
     ESP_LOGI(TAG, "mybot stopped");
 }

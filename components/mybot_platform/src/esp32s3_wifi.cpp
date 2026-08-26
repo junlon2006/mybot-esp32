@@ -7,7 +7,9 @@
 #include <wifi_manager.h>
 
 #include "esp_log.h"
+#include "esp_mac.h"
 
+#include <cstdio>
 #include <condition_variable>
 #include <mutex>
 #include <string>
@@ -99,6 +101,14 @@ int wifi_init(void **out_ctx, const char *device_id, mybot_wifi_event_handler_t 
     }
     *out_ctx = nullptr;
 
+    uint8_t mac[6];
+    if (esp_read_mac(mac, ESP_MAC_WIFI_STA) != ESP_OK) {
+        ESP_LOGE(TAG, "failed to read station MAC for provisioning SSID");
+        return -1;
+    }
+    char provisioning_ssid[sizeof("mybot-ffff")];
+    snprintf(provisioning_ssid, sizeof(provisioning_ssid), "mybot-%02x%02x", mac[0], mac[1]);
+
     {
         std::lock_guard<std::mutex> lock(binding.mutex);
         if (binding.active) {
@@ -111,7 +121,8 @@ int wifi_init(void **out_ctx, const char *device_id, mybot_wifi_event_handler_t 
     }
 
     WifiManagerConfig config;
-    config.ssid_prefix = std::string("mybot-") + device_id;
+    config.ap_ssid = provisioning_ssid;
+    config.ssid_prefix = "mybot";
     config.language = "zh-CN";
     config.station_hostname = device_id;
 

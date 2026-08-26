@@ -14,6 +14,7 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Shorten the provisioning AP SSID to `mybot-aabb`, using the first two STA MAC bytes.
 - Sync the vendored mybot SDK to the v1.0.0 release (`117a44d`), retaining the ESP32-S3 RTC and
   HTTPS-only compatibility patches.
 
@@ -24,6 +25,8 @@ Versioning and Conventional Commits.
 
 ### Fixed
 
+- Start SNTP after Wi-Fi obtains an IP address so Agora logs use synchronized UTC timestamps
+  instead of the Unix epoch.
 - Initialize lwIP and the default event loop before AOSL creates its internal socket-based signal
   pipe.
 - Preserve the requested AOSL thread stack size on ESP-IDF instead of dividing the byte count by

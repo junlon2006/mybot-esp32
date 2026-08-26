@@ -245,6 +245,7 @@ void WifiManager::StartConfigAp() {
 
     ESP_LOGI(TAG, "Starting config AP");
 
+    config_ap_->SetSsid(config_.ap_ssid);
     config_ap_->SetSsidPrefix(config_.ssid_prefix);
     config_ap_->SetLanguage(config_.language);
     config_ap_->SetShowOtaConfig(config_.show_ota_config);

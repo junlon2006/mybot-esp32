@@ -63,6 +63,11 @@ void WifiConfigurationAp::SetLanguage(const std::string &language)
     language_ = language;
 }
 
+void WifiConfigurationAp::SetSsid(const std::string &ssid)
+{
+    ssid_ = ssid;
+}
+
 void WifiConfigurationAp::SetSsidPrefix(const std::string &&ssid_prefix)
 {
     ssid_prefix_ = ssid_prefix;
@@ -114,6 +119,12 @@ void WifiConfigurationAp::Start()
 
 std::string WifiConfigurationAp::GetSsid()
 {
+    char ssid[MAX_SSID_LEN];
+    if (!ssid_.empty()) {
+        snprintf(ssid, sizeof(ssid), "%s", ssid_.c_str());
+        return std::string(ssid);
+    }
+
     // Get MAC and use it to generate a unique SSID
     uint8_t mac[6];
 #if CONFIG_IDF_TARGET_ESP32P4
@@ -121,7 +132,6 @@ std::string WifiConfigurationAp::GetSsid()
 #else
     ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
 #endif
-    char ssid[32];
     snprintf(ssid, sizeof(ssid), "%s-%02X%02X", ssid_prefix_.c_str(), mac[4], mac[5]);
     return std::string(ssid);
 }

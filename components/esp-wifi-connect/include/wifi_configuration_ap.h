@@ -31,6 +31,7 @@ public:
     WifiConfigurationAp(const WifiConfigurationAp&) = delete;
     WifiConfigurationAp& operator=(const WifiConfigurationAp&) = delete;
 
+    void SetSsid(const std::string &ssid);
     void SetSsidPrefix(const std::string &&ssid_prefix);
     void SetSsidPrefix(const std::string &ssid_prefix);
     void SetLanguage(const std::string &&language);
@@ -59,6 +60,7 @@ private:
     std::unique_ptr<DnsServer> dns_server_;
     httpd_handle_t server_ = NULL;
     EventGroupHandle_t event_group_;
+    std::string ssid_;
     std::string ssid_prefix_;
     std::string language_;
     esp_event_handler_instance_t instance_any_id_;

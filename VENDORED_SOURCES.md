@@ -21,6 +21,8 @@ Local changes relative to those baselines:
   connection-ID logging is valid for the ESP32-S3 ABI. The HTTP client omits plaintext-only socket
   helpers from HTTPS-only builds.
 - Vendored component manifests are omitted. Dependencies are local or supplied by ESP-IDF v5.5.2.
+- The esp-wifi-connect wrapper accepts an explicit provisioning SSID so the board port can use its
+  product-specific short name without the component appending another MAC suffix.
 - The button wrapper defines its pinned `4.2.0` version macros directly because the upstream
   package helper normally reads those values from the omitted Registry manifest.
 

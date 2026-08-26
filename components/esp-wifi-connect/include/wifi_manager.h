@@ -44,6 +44,7 @@ enum class WifiEvent {
 
 // Configuration
 struct WifiManagerConfig {
+    std::string ap_ssid;                     // Optional complete AP SSID
     std::string ssid_prefix = "ESP32";    // AP mode SSID prefix
     std::string language = "zh-CN";       // Web UI language
     
