@@ -167,6 +167,7 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
     i2s_chan_config_t channel_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     channel_config.dma_desc_num = 6;
     channel_config.dma_frame_num = 240;
+    channel_config.auto_clear_after_cb = true;
     if (i2s_new_channel(&channel_config, &ctx->channel, NULL) != ESP_OK) {
         free(ctx);
         return -1;
