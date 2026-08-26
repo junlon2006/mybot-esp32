@@ -71,12 +71,14 @@ static void boot_long_press(void *button, void *user_data) {
 static void volume_up_click(void *button, void *user_data) {
     (void)button;
     (void)user_data;
+    ESP_LOGI(TAG, "volume up button pressed");
     emit_event(MYBOT_KEY_EVENT_VOLUME_UP);
 }
 
 static void volume_down_click(void *button, void *user_data) {
     (void)button;
     (void)user_data;
+    ESP_LOGI(TAG, "volume down button pressed");
     emit_event(MYBOT_KEY_EVENT_VOLUME_DOWN);
 }
 
