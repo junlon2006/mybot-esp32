@@ -3,7 +3,6 @@
 #include <mybot/mybot_version.h>
 #include <agora_rtc_api.h>
 
-#include "board_config.h"
 #include "esp_app_desc.h"
 #include "esp_event.h"
 #include "esp_idf_version.h"
@@ -15,7 +14,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
-#include "mybot_esp32s3_platform.h"
+#include "mybot_board.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -120,9 +119,10 @@ void app_main(void) {
         ESP_LOGE(TAG, "PSRAM is required but was not initialized");
         return;
     }
-    if (mybot_esp32s3_platform_register() < 0) {
+    if (mybot_board_register() < 0) {
         return;
     }
+    const mybot_board_t *board = mybot_board_get();
 
     uint8_t mac[6];
     if (esp_read_mac(mac, ESP_MAC_WIFI_STA) != ESP_OK) {
@@ -136,7 +136,7 @@ void app_main(void) {
              mac[1], mac[2], mac[3], mac[4], mac[5]);
     snprintf(config.server_base, sizeof(config.server_base), "%s", CONFIG_MYBOT_SERVER_BASE);
     snprintf(config.firmware_ver, sizeof(config.firmware_ver), "%s", app_description->version);
-    snprintf(config.hw_model, sizeof(config.hw_model), "%s", MYBOT_BOARD_NAME);
+    snprintf(config.hw_model, sizeof(config.hw_model), "%s", board->hw_model);
 
     (void)init_time_sync();
     if (mybot_start(&config) < 0) {

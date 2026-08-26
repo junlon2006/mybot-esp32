@@ -1,4 +1,4 @@
-menu "mybot ESP32-S3"
+menu "mybot"
 
     config MYBOT_SERVER_BASE
         string "Device API server base URL"

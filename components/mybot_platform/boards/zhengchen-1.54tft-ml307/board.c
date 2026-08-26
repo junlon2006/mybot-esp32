@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "mybot_esp32s3_platform.h"
+#include "mybot_board.h"
 
 #include <mybot/platform/mybot_platform.h>
 
+#include "board_config.h"
 #include "esp_log.h"
 
 #define TAG "mybot_platform"
@@ -15,7 +16,11 @@ const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_esp32s3_lcd_ops(void);
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 
-int mybot_esp32s3_platform_register(void) {
+static int board_prepare(void) {
+    return 0;
+}
+
+static int board_register_platform(void) {
     const mybot_platform_descriptor_t descriptor = {
         .wifi = mybot_esp32s3_wifi_ops(),
         .kv_store = mybot_esp32s3_kv_store_ops(),
@@ -26,10 +31,20 @@ int mybot_esp32s3_platform_register(void) {
         .lcd = mybot_esp32s3_lcd_ops(),
     };
 
-    if (mybot_platform_register(&descriptor) < 0) {
-        ESP_LOGE(TAG, "platform descriptor registration failed");
-        return -1;
+    int ret = mybot_platform_register(&descriptor);
+    if (ret == 0) {
+        ESP_LOGI(TAG, "zhengchen platform adapters registered");
     }
-    ESP_LOGI(TAG, "zhengchen platform adapters registered");
-    return 0;
+    return ret;
+}
+
+static const mybot_board_t s_board = {
+    .id = MYBOT_BOARD_NAME,
+    .hw_model = MYBOT_BOARD_NAME,
+    .prepare = board_prepare,
+    .register_platform = board_register_platform,
+};
+
+const mybot_board_t *mybot_board_get(void) {
+    return &s_board;
 }

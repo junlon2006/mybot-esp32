@@ -1,6 +1,4 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "board_config.h"
-
 #include <mybot/platform/mybot_wifi.h>
 
 #include <ssid_manager.h>

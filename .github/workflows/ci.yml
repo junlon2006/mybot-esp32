@@ -65,35 +65,42 @@ jobs:
           done
 
   idf-build:
-    name: idf-5.5.2-ptime-${{ matrix.ptime }}
+    name: idf-5.5.2-${{ matrix.board }}-ptime-${{ matrix.ptime }}
     runs-on: ubuntu-24.04
     container:
       image: espressif/idf:v5.5.2
     strategy:
       fail-fast: false
       matrix:
-        ptime: [20, 40, 60]
+        include:
+          - board: zhengchen-1.54tft-ml307
+            ptime: 20
+          - board: zhengchen-1.54tft-ml307
+            ptime: 40
+          - board: zhengchen-1.54tft-ml307
+            ptime: 60
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain
         run: test "$(idf.py --version)" = "ESP-IDF v5.5.2"
       - name: Build ESP32-S3 firmware
         run: |
-          idf.py -B build-ptime-${{ matrix.ptime }} \
-            -DSDKCONFIG=build-ptime-${{ matrix.ptime }}/sdkconfig \
+          idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} \
+            -DMYBOT_BOARD=${{ matrix.board }} \
+            -DSDKCONFIG=build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/sdkconfig \
             -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;ci/ptime${{ matrix.ptime }}.defaults" \
             build
       - name: Report size
-        run: idf.py -B build-ptime-${{ matrix.ptime }} size
+        run: idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} size
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: mybot-esp32-ptime-${{ matrix.ptime }}-${{ github.sha }}
+          name: mybot-esp32-${{ matrix.board }}-ptime-${{ matrix.ptime }}-${{ github.sha }}
           path: |
-            build-ptime-${{ matrix.ptime }}/mybot_esp32.bin
-            build-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin
-            build-ptime-${{ matrix.ptime }}/partition_table/partition-table.bin
-            build-ptime-${{ matrix.ptime }}/ota_data_initial.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/mybot_esp32.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/partition_table/partition-table.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/ota_data_initial.bin
 
   upstream-core:
     name: upstream-${{ matrix.name }}

@@ -23,14 +23,19 @@ xiaozhi 的 `BOARD_TYPE_ZHENGCHEN_1_54TFT_ML307`。
 ```sh
 get_idf
 idf.py --version                 # 必须为 ESP-IDF v5.5.2
-idf.py set-target esp32s3
-idf.py build
+idf.py -B build/zhengchen-1.54tft-ml307 \
+  -DMYBOT_BOARD=zhengchen-1.54tft-ml307 \
+  -DSDKCONFIG=build/zhengchen-1.54tft-ml307/sdkconfig build
 ```
+
+当前默认 Board 为 `zhengchen-1.54tft-ml307`，但仍建议显式选择 Board 并使用隔离构建目录。
+Board profile 会自动追加对应的 Flash、PSRAM 和分区默认配置。不同 Board 必须使用不同的
+构建目录；新增 Board 的结构和约束见 [docs/BOARD_PORTING.md](docs/BOARD_PORTING.md)。
 
 烧录和查看日志：
 
 ```sh
-idf.py -p /dev/ttyUSB0 flash monitor
+idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 ```
 
 首次启动且 NVS 没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
@@ -42,7 +47,8 @@ idf.py -p /dev/ttyUSB0 flash monitor
 https://mybot.sh2.agoralab.co/api
 ```
 
-可通过 `idf.py menuconfig` 的 `mybot ESP32-S3` 菜单切换服务地址、音频 ptime、Cloud AEC
+可通过 `idf.py -B build/zhengchen-1.54tft-ml307 menuconfig` 的 `mybot` 菜单切换服务地址、
+音频 ptime、Cloud AEC
 和 AI QoS。
 
 ## 硬件
@@ -65,7 +71,7 @@ https://mybot.sh2.agoralab.co/api
 components/aosl/             xiaozhi AOSL + 引用计数补丁
 components/agora_rtc/        ESP32-S3 Agora RTSA
 components/mybot_sdk/        mybot 到 ESP-IDF 的构建包装
-components/mybot_platform/   ESP32-S3 平台 ops 和征辰板实现
+components/mybot_platform/   ESP-IDF common、可复用驱动和 Board profile
 third_party/mybot/           固定版本的 mybot 公共头与 core 源码
 main/                        固件入口和 Kconfig
 ```

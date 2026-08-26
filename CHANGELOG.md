@@ -14,6 +14,8 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Select the target Board at compile time and separate common platform services, reusable drivers,
+  and the Zhengchen board profile without changing its runtime behavior.
 - Log volume-up and volume-down button presses in the ESP32-S3 platform layer.
 - Shorten the provisioning AP SSID to `mybot-aabb`, using the first two STA MAC bytes.
 - Sync the vendored mybot SDK to the v1.0.0 release (`117a44d`), retaining the ESP32-S3 RTC and
