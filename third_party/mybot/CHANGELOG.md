@@ -4,6 +4,8 @@ This project follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-26
+
 ### Added
 
 - Expand deterministic unit coverage for JSON allocation failures, HTTP and device-service
@@ -17,97 +19,13 @@ This project follows Semantic Versioning.
   accepts a conversation, `mybot_get_state()` reports this state until normal teardown returns to
   `MYBOT_STATE_READY`; `MYBOT_STATE_WIFI_DISCONNECTED` takes precedence during runtime connectivity
   loss. Existing state values remain unchanged.
-
-### Changed
-
-- Sync the complete BK725x platform adaptation with the BK7258 reference project, including
-  descriptor-based registration and embedded TLS root verification.
-- Restrict the SDK-internal LCD facade to the application control owner and remove its redundant
-  render mutex.
-- **Breaking:** remove `mybot_request_exit()`; host applications stop directly after their own exit
-  signal or condition is observed.
-- Align the Agora RTSA wrapper with the single-instance, one-call-at-a-time product model: initialize
-  RTSA once per mybot run, use one AOSL CAS lifecycle gate for callback, audio-send, and teardown
-  ordering, and create one connection per conversation, with explicit lifecycle and error logging.
-- **Breaking:** remove legacy per-capability registration; the descriptor's version, capability, and
-  name fields; and the name field from every ops table. Platform integrations must submit one complete
-  descriptor whose non-NULL ops pointers are the sole declarations of supported platform functions.
-- **Breaking:** narrow the public error-code header to the only SDK-consumed `MYBOT_ERR_NOT_FOUND`
-  result; other APIs continue to use `0` for success and negative values for failure.
-- Remove the internal conversation forwarding layer; application orchestration now calls the
-  process-wide Agora RTC module directly without copying RTC credentials into a second context.
-- Consolidate application control into one `control_mpq` owner for state, device lifecycle, RTC
-  control, UI and volume actions, and resource startup and shutdown. Control callbacks only publish
-  short events or atomic mailboxes, while PCM remains on the direct real-time data path.
-- Remove the unused platform-registry startup lock and the unconsumed `MYBOT_SHOW_TRANSCRIPT`
-  configuration surface.
-- Trim internal dead surface: unused lifecycle/RTC response fields, empty RTC stats callback,
-  duplicate platform/audio/wake-word accessors, redundant state-model CAS retries, and unused HTTP
-  and JSON convenience APIs.
-- Align the English and Chinese README lifecycle and architecture guidance, document the descriptor
-  registration contract in the public headers, match local format commands to CI scope, and refresh
-  stale BK725x ownership and generator comments.
-- Refactor application, lifecycle, RTC, audio, storage, connectivity, input, display, announcement,
-  and wake-word runtime state into caller-owned internal contexts. Public APIs retain the default
-  process-wide compatibility facade, while active implementation state no longer lives in module
-  globals.
-- Split `mybot_app.c` orchestration into dedicated media-pipeline, Agora RTC, and LCD presenter
-  modules without changing the public API.
-- Derive public application state and LCD presentation from one atomic state-model snapshot fed by
-  runtime-phase, connectivity, and device-lifecycle events.
-- Limit host clang-format and clang-tidy checks to the SDK core, Linux platform, Linux example, and
-  tests; BK725x Armino sources are validated by the BK firmware build environment instead.
-- Update the pinned AOSL submodule to upstream commit `84e0860`, which adds reference-counted
-  `aosl_ctor()` / `aosl_dtor()` lifecycle management. mybot and Agora RTC now hold independent
-  runtime references, and mybot releases its application reference only after RTC callbacks,
-  workers and buffers have been torn down.
-- Promote application informational logs to the AOSL NOTICE level, set the Linux example's
-  runtime log threshold accordingly, and initialize the Agora RTSA SDK at its default NOTICE
-  threshold, keeping application lifecycle messages visible while suppressing lower-priority
-  dependency logs.
-- Simplify the Wi-Fi platform boundary to connectivity events: remove the redundant
-  `mybot_wifi_state_t`, `mybot_wifi_state_handler_t`, and internal state query, and
-  require connected events to represent usable IP networking.
-
-### Fixed
-
-- Keep asynchronous exit notifications side-effect free while the control owner destroys the media
-  pipeline.
-- Use a unique temporary directory in the Linux announcement test so stale files or PID reuse do not
-  make repeated CI runs fail during setup.
-- Make the application shutdown test wait for the playback worker to apply a pending announcement
-  buffer clear before using a downlink frame to block playback I/O.
-- Install the project `LICENSE` and `THIRD_PARTY_NOTICES.md` with the CMake package alongside the
-  bundled AOSL license, and verify all three documents in the install-consumer integration test.
-- Call both platform audio `stop` hooks before waiting for media workers, allowing a thread-safe
-  stop implementation to unblock in-flight capture and playback I/O without shutdown deadlocks.
-- Simplify device-service URL scheme validation into direct branches, eliminating a duplicate-condition
-  cppcheck warning across HTTPS and development HTTP build configurations.
-- Clamp server-provided device-service polling intervals to 3..60 seconds and saturate oversized JSON
-  integers before conversion, preventing timer overflow and request storms.
-- Drop RTC downlink audio while a pairing announcement is active, preserving the playback ring
-  buffer's single-producer/single-consumer access and giving announcements priority.
-- Remove the HTTP response parser's POSIX `strncasecmp()` dependency by using
-  an ASCII-only case-insensitive comparison, preserving mixed-case header support on non-POSIX platforms.
-- Serialize Agora RTC callbacks, audio sends, and connection teardown, reject stale connection IDs,
-  and cover concurrent teardown ordering.
-- Destroy a failed Agora RTC connection without reinitializing the process-wide RTSA service.
-- Serialize application start and stop across threads so runtime initialization, failure cleanup, and
-  teardown cannot concurrently mutate the process-wide runtime.
-- Correct the public key-input contract to document the forwarded `user_data` context and its
-  callback lifetime.
-
-## [1.0.0] - 2026-08-10
-
-### Added
-
 - Pairing-code voice announcement: when a pair code is obtained the SDK plays
   the fixed prompt then each code digit as short local sounds, once per pair
   code, through the normal playback path. The platform supplies raw 16 kHz
   mono s16 PCM assets per locale (Linux reference: `./assets/locales/<locale>/prompt.pcm`
   and `0.pcm`..`9.pcm`); the SDK core contains no audio decoder.
 - HTTPS-by-default device-service transport with a platform TLS contract and Linux OpenSSL implementation.
-- Cross-platform porting guide, release checklist, security and contribution policies.
+- Cross-platform porting guide, release checklist, support and contribution guidance.
 - CI coverage for Linux builds, tests, public headers, and external CMake host integration.
 - Bilingual (English / Simplified Chinese) README with an AI-conversation product overview and
   layered architecture diagrams.
@@ -148,35 +66,59 @@ This project follows Semantic Versioning.
   Agora RTSA library is supplied by the consumer via `MYBOT_AGORA_SDK_DIR` /
   `MYBOT_AGORA_RTC_LIBRARY` and is covered by an install-and-consume integration test.
 
-### Fixed
-
-- Continue binding-status polling during active conversations and end RTC locally when the device
-  becomes unbound or its credential is rejected.
-- Harden the Linux file KV implementation against symlink traversal and persist atomic replacements and
-  deletions with file and directory `fsync`.
-- Preserve runtime Wi-Fi disconnect/reconnect events, pause device-service traffic while offline,
-  and end active RTC conversations locally without reinitializing services after reconnect.
-- Percent-encode device IDs in URL path segments and reject control characters in dynamic HTTP
-  header values and request targets.
-- Reject conversation-start responses without a valid conversation ID before entering the active
-  conversation state.
-- Reject `MYBOT_BUILD_LINUX_PLATFORM=ON` with a non-Linux `CONFIG_PLATFORM` at configure time, and
-  document the two independent platform-selection variables (`CONFIG_PLATFORM` selects the AOSL
-  HAL port; `MYBOT_BUILD_LINUX_PLATFORM` builds the Linux reference implementations).
-- Fix a NULL dereference in `mybot_json_create_*_array()` when an allocation fails mid-array,
-  replace unbounded `strcpy` in JSON printing with bounded copies, and stop calling side-effecting
-  functions inside test `assert()` (found by cppcheck / clang-tidy).
-- Fix a heap buffer overflow in `mybot_json` string parsing: a malformed `\u` escape followed by a
-  quote could swallow the closing quote and overflow the output buffer (found by the new
-  deterministic JSON parser fuzz).
-- Guard `mybot_rtc_session_join()` and `mybot_rtc_session_send_audio()` against calls before
-  initialization, which previously dereferenced a NULL mutex (found by the new RTC session test).
-- Release partially initialized services immediately when `start_services()` fails, instead of
-  relying on a later `mybot_stop()` call; service teardown is shared, idempotent, and safe to
-  run twice after a failed startup.
-
 ### Changed
 
+- Replace the bundled x86_64 Linux Agora RTSA Lite static package with shared-library build
+  `1267429` (`v1.10.1`) and accept either shared or static target libraries in CMake integrations.
+- Document the [mybot-esp32](https://github.com/junlon2006/mybot-esp32) cross-platform reference
+  project in the porting guide and repository documentation.
+- Sync the complete BK725x platform adaptation with the BK7258 reference project, including
+  descriptor-based registration and embedded TLS root verification.
+- Restrict the SDK-internal LCD facade to the application control owner and remove its redundant
+  render mutex.
+- **Breaking:** remove `mybot_request_exit()`; host applications stop directly after their own exit
+  signal or condition is observed.
+- Align the Agora RTSA wrapper with the single-instance, one-call-at-a-time product model: initialize
+  RTSA once per mybot run, use one AOSL CAS lifecycle gate for callback, audio-send, and teardown
+  ordering, and create one connection per conversation, with explicit lifecycle and error logging.
+- **Breaking:** remove legacy per-capability registration; the descriptor's version, capability, and
+  name fields; and the name field from every ops table. Platform integrations must submit one complete
+  descriptor whose non-NULL ops pointers are the sole declarations of supported platform functions.
+- **Breaking:** narrow the public error-code header to the only SDK-consumed `MYBOT_ERR_NOT_FOUND`
+  result; other APIs continue to use `0` for success and negative values for failure.
+- Remove the internal conversation forwarding layer; application orchestration now calls the
+  process-wide Agora RTC module directly without copying RTC credentials into a second context.
+- Consolidate application control into one `control_mpq` owner for state, device lifecycle, RTC
+  control, UI and volume actions, and resource startup and shutdown. Control callbacks only publish
+  short events or atomic mailboxes, while PCM remains on the direct real-time data path.
+- Remove the unused platform-registry startup lock and the unconsumed `MYBOT_SHOW_TRANSCRIPT`
+  configuration surface.
+- Trim internal dead surface: unused lifecycle/RTC response fields, empty RTC stats callback,
+  duplicate platform/audio/wake-word accessors, redundant state-model CAS retries, and unused HTTP
+  and JSON convenience APIs.
+- Align the English and Chinese README lifecycle and architecture guidance, document the descriptor
+  registration contract in the public headers, match local format commands to CI scope, and refresh
+  stale BK725x ownership and generator comments.
+- Refactor application, lifecycle, RTC, audio, storage, connectivity, input, display, announcement,
+  and wake-word runtime state into caller-owned internal contexts. Public APIs retain the default
+  process-wide compatibility facade, while active implementation state no longer lives in module
+  globals.
+- Split `mybot_app.c` orchestration into dedicated media-pipeline, Agora RTC, and LCD presenter
+  modules without changing the public API.
+- Derive public application state and LCD presentation from one atomic state-model snapshot fed by
+  runtime-phase, connectivity, and device-lifecycle events.
+- Limit host clang-format and clang-tidy checks to the SDK core, Linux platform, Linux example, and
+  tests; BK725x Armino sources are validated by the BK firmware build environment instead.
+- Update the pinned AOSL submodule to upstream commit `84e0860`, which adds reference-counted
+  `aosl_ctor()` / `aosl_dtor()` lifecycle management. mybot holds an application runtime reference
+  and releases it only after RTC callbacks, workers and buffers have been torn down.
+- Promote application informational logs to the AOSL NOTICE level, set the Linux example's
+  runtime log threshold accordingly, and initialize the Agora RTSA SDK at its default NOTICE
+  threshold, keeping application lifecycle messages visible while suppressing lower-priority
+  dependency logs.
+- Simplify the Wi-Fi platform boundary to connectivity events: remove the redundant
+  `mybot_wifi_state_t`, `mybot_wifi_state_handler_t`, and internal state query, and
+  require connected events to represent usable IP networking.
 - AOSL is now a git submodule at `third_party/aosl` tracking the latest upstream master commit
   `39c3fb7b` instead of a vendored copy; no local AOSL changes are carried.
 - Volume control is now fully SDK-internal: when a device volume implementation is registered, volume
@@ -208,6 +150,58 @@ This project follows Semantic Versioning.
 - The `.clang-format` language standard is `Auto` (inferred per file) instead of the misleading
   `Cpp03`, and the installed `mybot.pc` is relocatable: its prefix is derived from the pkg-config
   directory at any `CMAKE_INSTALL_LIBDIR` depth rather than baked in at configure time.
+
+### Fixed
+
+- Keep asynchronous exit notifications side-effect free while the control owner destroys the media
+  pipeline.
+- Use a unique temporary directory in the Linux announcement test so stale files or PID reuse do not
+  make repeated CI runs fail during setup.
+- Make the application shutdown test wait for the playback worker to apply a pending announcement
+  buffer clear before using a downlink frame to block playback I/O.
+- Install the project `LICENSE` and `THIRD_PARTY_NOTICES.md` with the CMake package alongside the
+  bundled AOSL license, and verify all three documents in the install-consumer integration test.
+- Call both platform audio `stop` hooks before waiting for media workers, allowing a thread-safe
+  stop implementation to unblock in-flight capture and playback I/O without shutdown deadlocks.
+- Simplify device-service URL scheme validation into direct branches, eliminating a duplicate-condition
+  cppcheck warning across HTTPS and development HTTP build configurations.
+- Clamp server-provided device-service polling intervals to 3..60 seconds and saturate oversized JSON
+  integers before conversion, preventing timer overflow and request storms.
+- Drop RTC downlink audio while a pairing announcement is active, preserving the playback ring
+  buffer's single-producer/single-consumer access and giving announcements priority.
+- Remove the HTTP response parser's POSIX `strncasecmp()` dependency by using
+  an ASCII-only case-insensitive comparison, preserving mixed-case header support on non-POSIX platforms.
+- Serialize Agora RTC callbacks, audio sends, and connection teardown, reject stale connection IDs,
+  and cover concurrent teardown ordering.
+- Destroy a failed Agora RTC connection without reinitializing the process-wide RTSA service.
+- Serialize application start and stop across threads so runtime initialization, failure cleanup, and
+  teardown cannot concurrently mutate the process-wide runtime.
+- Correct the public key-input contract to document the forwarded `user_data` context and its
+  callback lifetime.
+- Continue binding-status polling during active conversations and end RTC locally when the device
+  becomes unbound or its credential is rejected.
+- Harden the Linux file KV implementation against symlink traversal and persist atomic replacements and
+  deletions with file and directory `fsync`.
+- Preserve runtime Wi-Fi disconnect/reconnect events, pause device-service traffic while offline,
+  and end active RTC conversations locally without reinitializing services after reconnect.
+- Percent-encode device IDs in URL path segments and reject control characters in dynamic HTTP
+  header values and request targets.
+- Reject conversation-start responses without a valid conversation ID before entering the active
+  conversation state.
+- Reject `MYBOT_BUILD_LINUX_PLATFORM=ON` with a non-Linux `CONFIG_PLATFORM` at configure time, and
+  document the two independent platform-selection variables (`CONFIG_PLATFORM` selects the AOSL
+  HAL port; `MYBOT_BUILD_LINUX_PLATFORM` builds the Linux reference implementations).
+- Fix a NULL dereference in `mybot_json_create_*_array()` when an allocation fails mid-array,
+  replace unbounded `strcpy` in JSON printing with bounded copies, and stop calling side-effecting
+  functions inside test `assert()` (found by cppcheck / clang-tidy).
+- Fix a heap buffer overflow in `mybot_json` string parsing: a malformed `\u` escape followed by a
+  quote could swallow the closing quote and overflow the output buffer (found by the new
+  deterministic JSON parser fuzz).
+- Guard `mybot_rtc_session_join()` and `mybot_rtc_session_send_audio()` against calls before
+  initialization, which previously dereferenced a NULL mutex (found by the new RTC session test).
+- Release partially initialized services immediately when `start_services()` fails, instead of
+  relying on a later `mybot_stop()` call; service teardown is shared, idempotent, and safe to
+  run twice after a failed startup.
 
 ## [0.1.0-rc.1]
 

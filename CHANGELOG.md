@@ -14,8 +14,8 @@ Versioning and Conventional Commits.
 
 ### Changed
 
-- Sync the vendored mybot SDK to commit `ecb8bc6`, including its consolidated lifecycle/media
-  ownership, and migrate the ESP32-S3 platform to one descriptor-based registration.
+- Sync the vendored mybot SDK to the v1.0.0 release (`117a44d`), retaining the ESP32-S3 RTC and
+  HTTPS-only compatibility patches.
 
 ### Known limitations
 

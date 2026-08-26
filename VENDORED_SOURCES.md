@@ -4,7 +4,7 @@
 
 | 路径 | 来源 | 固定版本 |
 | --- | --- | --- |
-| `third_party/mybot` | `junlon2006/mybot` | commit `ecb8bc6f5bd17ff32de0483ac92e811238f6b0d6` |
+| `third_party/mybot` | `junlon2006/mybot` | v1.0.0, commit `117a44d041538d1647d0da9662cdb2fb622c00da` |
 | `components/aosl` | `junlon2006/xiaozhi-esp32` | commit `ad2f7da4c9ba77294a5abb48f29e895fe486ed0e` |
 | `components/agora_rtc` | `junlon2006/xiaozhi-esp32` | Agora RTSA 1.10.0, build 1154652 |
 | `components/esp-wifi-connect` | `78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |
