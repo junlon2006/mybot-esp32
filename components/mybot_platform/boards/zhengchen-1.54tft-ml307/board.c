@@ -3,8 +3,10 @@
 
 #include <mybot/platform/mybot_platform.h>
 
+#include "board_actions.h"
 #include "board_config.h"
 #include "esp_log.h"
+#include "wifi_control.h"
 
 #define TAG "mybot_platform"
 
@@ -18,6 +20,23 @@ const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 
 static int board_prepare(void) {
     return 0;
+}
+
+int mybot_board_handle_boot_long_press(void) {
+    mybot_board_request_wifi_provisioning();
+    return 0;
+}
+
+static int board_provision_wifi(void) {
+    return mybot_wifi_run_provisioning();
+}
+
+static int board_ensure_network(const char *device_id) {
+    return mybot_wifi_ensure_network(device_id);
+}
+
+static void board_shutdown_network(void) {
+    mybot_wifi_shutdown_network();
 }
 
 static int board_register_platform(void) {
@@ -43,6 +62,9 @@ static const mybot_board_t s_board = {
     .hw_model = MYBOT_BOARD_NAME,
     .prepare = board_prepare,
     .register_platform = board_register_platform,
+    .ensure_network = board_ensure_network,
+    .provision_wifi = board_provision_wifi,
+    .shutdown_network = board_shutdown_network,
 };
 
 const mybot_board_t *mybot_board_get(void) {

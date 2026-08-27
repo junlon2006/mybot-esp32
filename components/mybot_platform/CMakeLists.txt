@@ -30,7 +30,9 @@ idf_component_register(
         "src/common/wifi.cpp"
         ${MYBOT_BOARD_SOURCES}
     INCLUDE_DIRS "include"
-    PRIV_INCLUDE_DIRS "${MYBOT_BOARD_INCLUDE_DIR}"
+    PRIV_INCLUDE_DIRS
+        "src/internal"
+        "${MYBOT_BOARD_INCLUDE_DIR}"
     REQUIRES
         mybot_sdk
         aosl

@@ -39,7 +39,11 @@ idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 ```
 
 首次启动且 NVS 没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
-`http://192.168.4.1` 完成配网。
+`http://192.168.4.1` 完成配网。网络连接是 mybot 启动的先决条件，设备拿到 IP 后才启动
+mybot 服务。
+
+运行时长按 Boot 键 3 秒会先停止 mybot，再进入 Wi-Fi 配网模式；重新拿到 IP 后自动启动
+mybot。短按 Boot 键仍用于开始或结束对话。
 
 服务端默认使用中国区：
 

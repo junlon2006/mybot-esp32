@@ -23,6 +23,8 @@ Local changes relative to those baselines:
 - Vendored component manifests are omitted. Dependencies are local or supplied by ESP-IDF v5.5.2.
 - The esp-wifi-connect wrapper accepts an explicit provisioning SSID so the board port can use its
   product-specific short name without the component appending another MAC suffix.
+- The esp-wifi-connect DNS server validates request sizes and joins its worker before releasing
+  provisioning resources.
 - The button wrapper defines its pinned `4.2.0` version macros directly because the upstream
   package helper normally reads those values from the omitted Registry manifest.
 

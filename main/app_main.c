@@ -139,17 +139,34 @@ void app_main(void) {
     snprintf(config.hw_model, sizeof(config.hw_model), "%s", board->hw_model);
 
     (void)init_time_sync();
-    if (mybot_start(&config) < 0) {
-        ESP_LOGE(TAG, "mybot startup failed");
-        deinit_time_sync();
-        return;
-    }
-    ESP_LOGI(TAG, "mybot startup scheduled for device %s", config.device_id);
+    for (;;) {
+        if (board->ensure_network(config.device_id) < 0) {
+            ESP_LOGE(TAG, "network prerequisite failed");
+            break;
+        }
+        if (mybot_start(&config) < 0) {
+            ESP_LOGE(TAG, "mybot startup failed");
+            break;
+        }
+        ESP_LOGI(TAG, "mybot startup scheduled for device %s", config.device_id);
 
-    while (mybot_is_running()) {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        while (mybot_is_running()) {
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+        mybot_stop();
+        ESP_LOGI(TAG, "mybot stopped");
+
+        if (!mybot_board_take_wifi_provisioning_request()) {
+            break;
+        }
+        ESP_LOGI(TAG, "entering Wi-Fi provisioning mode");
+        if (board->provision_wifi() < 0) {
+            ESP_LOGE(TAG, "Wi-Fi provisioning failed");
+            break;
+        }
+        ESP_LOGI(TAG, "network connected; restarting mybot");
     }
-    mybot_stop();
+
+    board->shutdown_network();
     deinit_time_sync();
-    ESP_LOGI(TAG, "mybot stopped");
 }

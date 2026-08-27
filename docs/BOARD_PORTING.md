@@ -16,9 +16,12 @@ components/mybot_platform/
 ```
 
 The vendored mybot core remains board-independent. Every Board provides a process-lifetime
-`mybot_board_t` and registers one complete `mybot_platform_descriptor_t`. Wi-Fi, KV storage, key
-input, capture, and playback are required by the SDK; hardware volume, HTTPS, LCD, announcements,
-and wake words are optional unless the active product configuration requires them.
+`mybot_board_t`, owns the product network prerequisite and provisioning lifecycle, and registers one
+complete `mybot_platform_descriptor_t`. The mybot Wi-Fi adapter attaches to the already-connected
+network and monitors runtime link changes; it does not own initial provisioning or shut down the
+Board network. KV storage, key input, capture, and playback are required by the SDK; hardware
+volume, HTTPS, LCD, announcements, and wake words are optional unless the active product
+configuration requires them.
 
 ## Build profile
 
@@ -52,9 +55,12 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 2. Add the Board ID and profile mapping to `boards/boards.cmake`. Board selection is never changed
    from menuconfig; `-DMYBOT_BOARD=<board-id>` is the only user-facing source of truth.
 3. Reuse common services and an existing typed driver where the hardware contract matches.
-4. Keep power sequencing and unusual codec, display, touch, or input behavior inside the Board or a
+4. Implement the Board network lifecycle so `ensure_network()` returns only after usable IP
+   connectivity, `provision_wifi()` returns only after provisioning reconnects the station, and
+   `shutdown_network()` performs final network teardown.
+5. Keep power sequencing and unusual codec, display, touch, or input behavior inside the Board or a
    hardware-family driver; do not add ESP-IDF details to `third_party/mybot`.
-5. Preserve the SDK audio boundary: 16 kHz, mono, signed 16-bit PCM, with frame counts rather than
+6. Preserve the SDK audio boundary: 16 kHz, mono, signed 16-bit PCM, with frame counts rather than
    byte counts.
-6. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,
+7. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,
    bidirectional audio, input, display, hangup, and repeated start/stop validation.

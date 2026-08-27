@@ -14,6 +14,8 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Decouple network provisioning from mybot startup. Connectivity is now a prerequisite, and holding
+  Boot stops mybot before provisioning and restarts it after the station obtains an IP address.
 - Select the target Board at compile time and separate common platform services, reusable drivers,
   and the Zhengchen board profile without changing its runtime behavior.
 - Log volume-up and volume-down button presses in the ESP32-S3 platform layer.
@@ -36,3 +38,4 @@ Versioning and Conventional Commits.
   `sizeof(StackType_t)`.
 - Increase the lwIP socket budget so mybot and Agora can open network sockets after AOSL creates
   its MPQ wakeup pipes.
+- Validate DNS request sizes and wait for the provisioning DNS worker before releasing its server.

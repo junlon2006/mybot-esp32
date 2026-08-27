@@ -24,4 +24,5 @@ set(MYBOT_BOARD_REQUIRES
     esp_driver_i2s
     esp_driver_spi
     esp_lcd
+    esp_timer
 )
