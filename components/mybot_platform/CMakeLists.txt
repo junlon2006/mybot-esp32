@@ -7,6 +7,23 @@ include("${CMAKE_CURRENT_LIST_DIR}/boards/boards.cmake")
 mybot_resolve_board("${MYBOT_BOARD}")
 include("${MYBOT_BOARD_PROFILE}")
 
+set(MYBOT_AUDIO_ASSET_DIR
+    "${CMAKE_CURRENT_LIST_DIR}/assets/locales/${CONFIG_MYBOT_LANGUAGE_TAG}")
+set(MYBOT_EMBEDDED_AUDIO_ASSETS
+    "${MYBOT_AUDIO_ASSET_DIR}/prompt.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/wificonfig.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/0.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/1.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/2.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/3.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/4.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/5.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/6.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/7.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/8.ogg"
+    "${MYBOT_AUDIO_ASSET_DIR}/9.ogg"
+)
+
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     foreach(required_config IN LISTS MYBOT_BOARD_REQUIRED_CONFIGS)
         if(NOT ${required_config})
@@ -28,6 +45,9 @@ idf_component_register(
         "src/common/https.c"
         "src/common/kv_store.c"
         "src/common/wifi.cpp"
+        "src/common/embedded_ogg_announce.c"
+        "src/common/embedded_ogg_prompt.c"
+        "src/common/ogg_opus_decoder.c"
         ${MYBOT_BOARD_SOURCES}
     INCLUDE_DIRS "include"
     PRIV_INCLUDE_DIRS
@@ -42,7 +62,9 @@ idf_component_register(
         mbedtls
         nvs_flash
         freertos
+        esp_audio_codec
         ${MYBOT_BOARD_REQUIRES}
+    EMBED_FILES ${MYBOT_EMBEDDED_AUDIO_ASSETS}
     REQUIRED_IDF_TARGETS esp32s3
 )
 

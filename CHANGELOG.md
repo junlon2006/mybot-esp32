@@ -11,6 +11,8 @@ Versioning and Conventional Commits.
 - mybot 1.0.0, Agora RTSA 1.10.0 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
+- Embedded Chinese and English Ogg/Opus pairing-code announcements decoded to PSRAM at runtime.
+- Localized Wi-Fi provisioning prompts played after the configuration AP starts.
 - Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
 
 ### Changed
@@ -28,7 +30,7 @@ Versioning and Conventional Commits.
 ### Known limitations
 
 - Physical-device and bidirectional RTC validation is pending.
-- ML307/4G, pairing announcements, wake words, battery and power management are not yet supported.
+- ML307/4G, wake words, battery and power management are not yet supported.
 
 ### Fixed
 

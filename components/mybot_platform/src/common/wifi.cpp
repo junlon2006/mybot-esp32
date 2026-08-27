@@ -107,8 +107,9 @@ bool wait_for_station(std::chrono::seconds timeout) {
     return ready && control.initialized && control.network_connected;
 }
 
-int run_provisioning_locked() {
+int run_provisioning_locked(mybot_wifi_provisioning_handler_t on_provisioning) {
     auto &manager = WifiManager::GetInstance();
+    bool provisioning_announced = false;
 
     for (;;) {
         {
@@ -124,6 +125,10 @@ int run_provisioning_locked() {
         if (!manager.IsConfigMode()) {
             ESP_LOGE(TAG, "event=provision_ap state=starting result=error");
             return -1;
+        }
+        if (!provisioning_announced && on_provisioning) {
+            provisioning_announced = true;
+            on_provisioning();
         }
 
         {
@@ -233,7 +238,7 @@ extern "C" int mybot_wifi_ensure_network(const char *device_id,
         WifiManagerConfig config;
         config.ap_ssid = provisioning_ssid;
         config.ssid_prefix = "mybot";
-        config.language = "zh-CN";
+        config.language = CONFIG_MYBOT_LANGUAGE_TAG;
         config.station_hostname = device_id;
 
         if (!manager.Initialize(config)) {
@@ -270,10 +275,7 @@ extern "C" int mybot_wifi_ensure_network(const char *device_id,
 
     if (SsidManager::GetInstance().GetSsidList().empty()) {
         ESP_LOGI(TAG, "event=network_route action=provision reason=no_saved_credentials");
-        if (on_provisioning) {
-            on_provisioning();
-        }
-        return run_provisioning_locked();
+        return run_provisioning_locked(on_provisioning);
     }
 
     ESP_LOGI(TAG, "event=station_connect source=saved_credentials state=waiting_ip");
@@ -283,15 +285,12 @@ extern "C" int mybot_wifi_ensure_network(const char *device_id,
     }
 
     ESP_LOGW(TAG, "event=station_connect source=saved_credentials result=timeout action=provision");
-    if (on_provisioning) {
-        on_provisioning();
-    }
-    return run_provisioning_locked();
+    return run_provisioning_locked(on_provisioning);
 }
 
-extern "C" int mybot_wifi_run_provisioning(void) {
+extern "C" int mybot_wifi_run_provisioning(mybot_wifi_provisioning_handler_t on_provisioning) {
     std::lock_guard<std::mutex> operation_lock(control.operation_mutex);
-    return run_provisioning_locked();
+    return run_provisioning_locked(on_provisioning);
 }
 
 extern "C" void mybot_wifi_shutdown_network(void) {

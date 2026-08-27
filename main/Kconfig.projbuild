@@ -1,5 +1,21 @@
 menu "mybot"
 
+    choice MYBOT_LANGUAGE
+        prompt "Product language"
+        default MYBOT_LANGUAGE_ZH_CN
+
+        config MYBOT_LANGUAGE_ZH_CN
+            bool "Chinese (zh-CN)"
+
+        config MYBOT_LANGUAGE_EN_US
+            bool "English (en-US)"
+    endchoice
+
+    config MYBOT_LANGUAGE_TAG
+        string
+        default "en-US" if MYBOT_LANGUAGE_EN_US
+        default "zh-CN"
+
     config MYBOT_SERVER_BASE
         string "Device API server base URL"
         default "https://mybot.sh2.agoralab.co/api"

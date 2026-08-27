@@ -65,7 +65,7 @@ jobs:
           done
 
   idf-build:
-    name: idf-5.5.2-${{ matrix.board }}-ptime-${{ matrix.ptime }}
+    name: idf-5.5.2-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}
     runs-on: ubuntu-24.04
     container:
       image: espressif/idf:v5.5.2
@@ -74,11 +74,21 @@ jobs:
       matrix:
         include:
           - board: zhengchen-1.54tft-ml307
+            language: zh-CN
             ptime: 20
+            defaults: ci/ptime20.defaults
           - board: zhengchen-1.54tft-ml307
+            language: zh-CN
             ptime: 40
+            defaults: ci/ptime40.defaults
           - board: zhengchen-1.54tft-ml307
+            language: zh-CN
             ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: zhengchen-1.54tft-ml307
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain
@@ -88,14 +98,14 @@ jobs:
           idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} \
             -DMYBOT_BOARD=${{ matrix.board }} \
             -DSDKCONFIG=build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/sdkconfig \
-            -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;ci/ptime${{ matrix.ptime }}.defaults" \
+            -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;${{ matrix.defaults }}" \
             build
       - name: Report size
         run: idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} size
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: mybot-esp32-${{ matrix.board }}-ptime-${{ matrix.ptime }}-${{ github.sha }}
+          name: mybot-esp32-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-${{ github.sha }}
           path: |
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/mybot_esp32.bin
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin

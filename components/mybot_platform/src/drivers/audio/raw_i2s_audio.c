@@ -298,8 +298,11 @@ static int audio_stop(void *opaque) {
     }
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=stop", ctx->direction);
     esp_err_t err = i2s_channel_disable(ctx->channel);
+    if (err != ESP_OK) {
+        return -1;
+    }
     aosl_atomic_set(&ctx->started, false);
-    return err == ESP_OK ? 0 : -1;
+    return 0;
 }
 
 static void audio_destroy(void *opaque) {
@@ -308,10 +311,14 @@ static void audio_destroy(void *opaque) {
         return;
     }
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=destroy", ctx->direction);
-    if (aosl_atomic_read(&ctx->started)) {
-        i2s_channel_disable(ctx->channel);
+    if (aosl_atomic_read(&ctx->started) && i2s_channel_disable(ctx->channel) != ESP_OK) {
+        ESP_LOGW(TAG, "event=audio_device direction=%s action=disable result=error",
+                 ctx->direction);
     }
-    i2s_del_channel(ctx->channel);
+    if (i2s_del_channel(ctx->channel) != ESP_OK) {
+        ESP_LOGW(TAG, "event=audio_device direction=%s action=destroy result=error",
+                 ctx->direction);
+    }
     free(ctx);
 }
 
@@ -321,7 +328,6 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
         return -1;
     }
     *out_ctx = NULL;
-    apply_output_volume(MYBOT_AUDIO_VOLUME_MAX);
 
     audio_context_t *ctx = audio_context_create("playback");
     if (!ctx) {
@@ -346,6 +352,7 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
         return -1;
     }
 
+    apply_output_volume(MYBOT_AUDIO_VOLUME_MAX);
     *out_ctx = ctx;
     return 0;
 }

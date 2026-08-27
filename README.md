@@ -13,6 +13,8 @@ xiaozhi 的 `BOARD_TYPE_ZHENGCHEN_1_54TFT_ML307`。
 - `esp-tls`、系统 CA bundle、SNI 和 hostname 校验的 HTTPS transport。
 - 征辰 1.54 TFT 板的 I2S0 扬声器、I2S1 麦克风、Boot/音量按键和 ST7789 状态屏。
 - 0-100 扬声器音量控制，默认值为 70，按键步进为 10；采用 xiaozhi 同款平方软件增益曲线并通过 NVS 持久化。
+- 中英文配对码语音播报，使用内嵌 Ogg/Opus 资源并在运行时解码到 PSRAM。
+- 自动或按键进入配网模式时，播放所选语言的本地配网提示音。
 - 16 kHz、单声道、signed 16-bit PCM，Cloud AEC 默认开启。
 
 板名包含 ML307，但 xiaozhi 对该板的首次启动默认同样选择 Wi-Fi。当前 Agora/AOSL socket
@@ -52,8 +54,7 @@ mybot。短按 Boot 键仍用于开始或结束对话。
 https://mybot.sh2.agoralab.co/api
 ```
 
-可通过 `idf.py -B build/zhengchen-1.54tft-ml307 menuconfig` 的 `mybot` 菜单切换服务地址、
-音频 ptime、Cloud AEC
+可通过 `idf.py -B build/zhengchen-1.54tft-ml307 menuconfig` 的 `mybot` 菜单切换中英文、服务地址、音频 ptime、Cloud AEC
 和 AI QoS。
 
 ## 硬件
@@ -87,5 +88,5 @@ main/                        固件入口和 Kconfig
 ## 已知限制
 
 - 尚未完成真实硬件烧录、双向 RTC 音频和长期运行验证。
-- ML307 网络、配对码语音播报、唤醒词、电池和低功耗尚未接入。
+- ML307 网络、唤醒词、电池和低功耗尚未接入。
 - NVS encryption、Flash encryption 和 Secure Boot 需在产品烧录流程中配置。

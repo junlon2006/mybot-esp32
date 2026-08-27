@@ -8,8 +8,10 @@
 | `components/aosl` | `junlon2006/xiaozhi-esp32` | commit `ad2f7da4c9ba77294a5abb48f29e895fe486ed0e` |
 | `components/agora_rtc` | `junlon2006/xiaozhi-esp32` | Agora RTSA 1.10.0, build 1154652 |
 | `components/esp-wifi-connect` | `78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |
+| `components/esp_audio_codec` | Espressif `esp_audio_codec` | 2.5.0, commit `3bb83597d07b604e1ab5b78dd4370a28d6fa802d` |
 | `components/button` | `espressif/button` | 4.2.0, commit `5f9cb98ae4d0e8153c4b4d1accf471214e5b6fe8` |
 | `components/cmake_utilities` | Espressif cmake utilities | 0.5.0 |
+| `components/mybot_platform/assets` | `junlon2006/mybot-bk7258` prompt assets | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
 
 Local changes relative to those baselines:
 

@@ -5,14 +5,18 @@
 
 #include "board_actions.h"
 #include "board_config.h"
+#include "embedded_ogg_prompt.h"
 #include "esp_log.h"
 #include "wifi_control.h"
+
+#include <stdbool.h>
 
 #define TAG "mybot_platform"
 
 const mybot_audio_capture_ops_t *mybot_esp32s3_audio_capture_ops(void);
 const mybot_audio_playback_ops_t *mybot_esp32s3_audio_playback_ops(void);
 const mybot_audio_volume_ops_t *mybot_esp32s3_audio_volume_ops(void);
+const mybot_announce_ops_t *mybot_esp32s3_announce_ops(void);
 const mybot_key_ops_t *mybot_esp32s3_button_ops(void);
 const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
@@ -22,6 +26,7 @@ int mybot_esp32s3_buttons_start(void);
 
 static const mybot_lcd_ops_t *s_lcd_ops;
 static void *s_lcd_ctx;
+static bool s_automatic_provisioning_started;
 
 static int board_show_screen(mybot_lcd_screen_t screen) {
     if (!s_lcd_ops || !s_lcd_ctx) {
@@ -37,12 +42,23 @@ static int board_show_wifi_provisioning(void) {
     return board_show_screen(MYBOT_LCD_SCREEN_WIFI_PROVISIONING);
 }
 
-static void board_on_automatic_provisioning(void) {
+static void board_on_provisioning(const char *trigger) {
     if (board_show_wifi_provisioning() < 0) {
-        ESP_LOGW(TAG, "event=display screen=wifi_provisioning trigger=automatic result=error");
+        ESP_LOGW(TAG, "event=display screen=wifi_provisioning trigger=%s result=error", trigger);
     } else {
-        ESP_LOGI(TAG, "event=display screen=wifi_provisioning trigger=automatic result=ok");
+        ESP_LOGI(TAG, "event=display screen=wifi_provisioning trigger=%s result=ok", trigger);
     }
+    (void)mybot_embedded_ogg_play_wifi_provisioning(mybot_esp32s3_audio_playback_ops(),
+                                                    mybot_esp32s3_audio_volume_ops(), trigger);
+}
+
+static void board_on_automatic_provisioning(void) {
+    s_automatic_provisioning_started = true;
+    board_on_provisioning("automatic");
+}
+
+static void board_on_button_provisioning(void) {
+    board_on_provisioning("button");
 }
 
 static int board_prepare(void) {
@@ -72,16 +88,16 @@ int mybot_board_handle_boot_long_press(void) {
 }
 
 static int board_provision_wifi(void) {
-    if (board_show_wifi_provisioning() < 0) {
-        ESP_LOGW(TAG, "event=display screen=wifi_provisioning trigger=button result=error");
-    } else {
-        ESP_LOGI(TAG, "event=display screen=wifi_provisioning trigger=button result=ok");
-    }
-    return mybot_wifi_run_provisioning();
+    return mybot_wifi_run_provisioning(board_on_button_provisioning);
 }
 
 static int board_ensure_network(const char *device_id) {
-    return mybot_wifi_ensure_network(device_id, board_on_automatic_provisioning);
+    s_automatic_provisioning_started = false;
+    int result = mybot_wifi_ensure_network(device_id, board_on_automatic_provisioning);
+    if (s_automatic_provisioning_started) {
+        (void)mybot_board_wait_wifi_provisioning_request(0);
+    }
+    return result;
 }
 
 static void board_shutdown_network(void) {
@@ -96,6 +112,7 @@ static int board_register_platform(void) {
         .audio_capture = mybot_esp32s3_audio_capture_ops(),
         .audio_playback = mybot_esp32s3_audio_playback_ops(),
         .audio_volume = mybot_esp32s3_audio_volume_ops(),
+        .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
         .lcd = mybot_esp32s3_lcd_ops(),
     };
