@@ -12,6 +12,7 @@ xiaozhi 的 `BOARD_TYPE_ZHENGCHEN_1_54TFT_ML307`。
 - NVS 持久化 mybot 设备凭据。
 - `esp-tls`、系统 CA bundle、SNI 和 hostname 校验的 HTTPS transport。
 - 征辰 1.54 TFT 板的 I2S0 扬声器、I2S1 麦克风、Boot/音量按键和 ST7789 状态屏。
+- 0-100 扬声器音量控制，默认值为 70，按键步进为 10；采用 xiaozhi 同款平方软件增益曲线并通过 NVS 持久化。
 - 16 kHz、单声道、signed 16-bit PCM，Cloud AEC 默认开启。
 
 板名包含 ML307，但 xiaozhi 对该板的首次启动默认同样选择 Wi-Fi。当前 Agora/AOSL socket

@@ -12,6 +12,7 @@
 
 const mybot_audio_capture_ops_t *mybot_esp32s3_audio_capture_ops(void);
 const mybot_audio_playback_ops_t *mybot_esp32s3_audio_playback_ops(void);
+const mybot_audio_volume_ops_t *mybot_esp32s3_audio_volume_ops(void);
 const mybot_key_ops_t *mybot_esp32s3_button_ops(void);
 const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
@@ -94,6 +95,7 @@ static int board_register_platform(void) {
         .key = mybot_esp32s3_button_ops(),
         .audio_capture = mybot_esp32s3_audio_capture_ops(),
         .audio_playback = mybot_esp32s3_audio_playback_ops(),
+        .audio_volume = mybot_esp32s3_audio_volume_ops(),
         .https = mybot_esp32s3_https_ops(),
         .lcd = mybot_esp32s3_lcd_ops(),
     };

@@ -10,6 +10,7 @@ Versioning and Conventional Commits.
 - ESP-IDF v5.5.2 project for the Zhengchen 1.54 TFT ESP32-S3 board.
 - mybot 1.0.0, Agora RTSA 1.10.0 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
+- Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
 - Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
 
 ### Changed
