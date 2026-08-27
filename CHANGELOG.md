@@ -39,4 +39,6 @@ Versioning and Conventional Commits.
   `sizeof(StackType_t)`.
 - Increase the lwIP socket budget so mybot and Agora can open network sockets after AOSL creates
   its MPQ wakeup pipes.
+- Make ESP32-S3 AOSL millisecond sleeps block for at least one FreeRTOS tick so MPQ teardown cannot
+  starve the task that releases its final queue reference.
 - Validate DNS request sizes and wait for the provisioning DNS worker before releasing its server.

@@ -1,4 +1,6 @@
-#include <unistd.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include <time.h>
 #include <sys/time.h>
 #include <stdio.h> /* just for perror */
@@ -45,5 +47,9 @@ int aosl_hal_get_time_str(char *buf, int len)
 
 void aosl_hal_msleep(uint64_t ms)
 {
-	usleep (ms * 1000);
+	TickType_t ticks = pdMS_TO_TICKS (ms);
+	if (ticks == 0)
+		ticks = 1;
+
+	vTaskDelay (ticks);
 }
