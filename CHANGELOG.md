@@ -15,7 +15,8 @@ Versioning and Conventional Commits.
 ### Changed
 
 - Decouple network provisioning from mybot startup. Connectivity is now a prerequisite, and holding
-  Boot stops mybot before provisioning and restarts it after the station obtains an IP address.
+  Boot stops mybot before provisioning, shows the Wi-Fi setup screen, and restarts mybot after the
+  station obtains an IP address.
 - Select the target Board at compile time and separate common platform services, reusable drivers,
   and the Zhengchen board profile without changing its runtime behavior.
 - Log volume-up and volume-down button presses in the ESP32-S3 platform layer.

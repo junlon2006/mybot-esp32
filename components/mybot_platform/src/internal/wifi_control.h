@@ -6,7 +6,10 @@
 extern "C" {
 #endif
 
-int mybot_wifi_ensure_network(const char *device_id);
+typedef void (*mybot_wifi_provisioning_handler_t)(void);
+
+int mybot_wifi_ensure_network(const char *device_id,
+                              mybot_wifi_provisioning_handler_t on_provisioning);
 int mybot_wifi_run_provisioning(void);
 void mybot_wifi_shutdown_network(void);
 

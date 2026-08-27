@@ -6,6 +6,7 @@
 
 #include "driver/i2s_std.h"
 #include "esp_err.h"
+#include "esp_log.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,10 +14,12 @@
 
 #define AUDIO_MAX_FRAMES 960
 #define AUDIO_IO_TIMEOUT_MS 50
+#define TAG "mybot_audio"
 
 typedef struct {
     i2s_chan_handle_t channel;
     aosl_atomic_t started;
+    const char *direction;
     int32_t scratch[AUDIO_MAX_FRAMES];
 } audio_context_t;
 
@@ -51,17 +54,22 @@ static i2s_std_config_t make_i2s_config(int rate, gpio_num_t bclk, gpio_num_t ws
     return config;
 }
 
-static audio_context_t *audio_context_create(void) {
-    return calloc(1, sizeof(audio_context_t));
+static audio_context_t *audio_context_create(const char *direction) {
+    audio_context_t *ctx = calloc(1, sizeof(audio_context_t));
+    if (ctx) {
+        ctx->direction = direction;
+    }
+    return ctx;
 }
 
 static int capture_init(void **out_ctx, int rate, int channels, int bits) {
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=capture action=initialize");
     if (!out_ctx || validate_format(rate, channels, bits) < 0) {
         return -1;
     }
     *out_ctx = NULL;
 
-    audio_context_t *ctx = audio_context_create();
+    audio_context_t *ctx = audio_context_create("capture");
     if (!ctx) {
         return -1;
     }
@@ -89,6 +97,7 @@ static int capture_init(void **out_ctx, int rate, int channels, int bits) {
 
 static int capture_start(void *opaque) {
     audio_context_t *ctx = opaque;
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=capture action=start");
     if (!ctx || aosl_atomic_read(&ctx->started) || i2s_channel_enable(ctx->channel) != ESP_OK) {
         return -1;
     }
@@ -136,6 +145,7 @@ static int audio_stop(void *opaque) {
     if (!aosl_atomic_read(&ctx->started)) {
         return 0;
     }
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=stop", ctx->direction);
     esp_err_t err = i2s_channel_disable(ctx->channel);
     aosl_atomic_set(&ctx->started, false);
     return err == ESP_OK ? 0 : -1;
@@ -146,6 +156,7 @@ static void audio_destroy(void *opaque) {
     if (!ctx) {
         return;
     }
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=destroy", ctx->direction);
     if (aosl_atomic_read(&ctx->started)) {
         i2s_channel_disable(ctx->channel);
     }
@@ -154,12 +165,13 @@ static void audio_destroy(void *opaque) {
 }
 
 static int playback_init(void **out_ctx, int rate, int channels, int bits) {
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=playback action=initialize");
     if (!out_ctx || validate_format(rate, channels, bits) < 0) {
         return -1;
     }
     *out_ctx = NULL;
 
-    audio_context_t *ctx = audio_context_create();
+    audio_context_t *ctx = audio_context_create("playback");
     if (!ctx) {
         return -1;
     }
@@ -188,6 +200,7 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
 
 static int playback_start(void *opaque) {
     audio_context_t *ctx = opaque;
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=playback action=start");
     if (!ctx || aosl_atomic_read(&ctx->started) || i2s_channel_enable(ctx->channel) != ESP_OK) {
         return -1;
     }

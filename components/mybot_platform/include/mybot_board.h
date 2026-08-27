@@ -3,6 +3,7 @@
 #define MYBOT_BOARD_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +23,7 @@ typedef struct {
 const mybot_board_t *mybot_board_get(void);
 int mybot_board_register(void);
 void mybot_board_request_wifi_provisioning(void);
-bool mybot_board_take_wifi_provisioning_request(void);
+bool mybot_board_wait_wifi_provisioning_request(uint32_t timeout_ms);
 
 #ifdef __cplusplus
 }

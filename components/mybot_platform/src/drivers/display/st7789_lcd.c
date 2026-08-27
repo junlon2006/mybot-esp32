@@ -32,6 +32,8 @@ typedef struct {
     SemaphoreHandle_t transfer_done;
     bool spi_ready;
     bool initialized;
+    /* The board holds one process-lifetime reference; SDK runs borrow additional references. */
+    unsigned int users;
 } lcd_context_t;
 
 static lcd_context_t s_context;
@@ -143,10 +145,16 @@ static int draw_text_centered(int y, const char *text, int scale, uint16_t foreg
 }
 
 static int lcd_init(void **out_ctx) {
-    if (!out_ctx || s_context.initialized) {
+    if (!out_ctx) {
         return -1;
     }
     *out_ctx = NULL;
+    if (s_context.initialized) {
+        ++s_context.users;
+        *out_ctx = &s_context;
+        ESP_LOGI(TAG, "event=lcd action=attach references=%u", s_context.users);
+        return 0;
+    }
 
     gpio_config_t power_config = {
         .pin_bit_mask = (1ULL << GPIO_NUM_2) | (1ULL << MYBOT_DISPLAY_BACKLIGHT),
@@ -208,7 +216,9 @@ static int lcd_init(void **out_ctx) {
 
     gpio_set_level(MYBOT_DISPLAY_BACKLIGHT, 1);
     s_context.initialized = true;
+    s_context.users = 1;
     *out_ctx = &s_context;
+    ESP_LOGI(TAG, "event=lcd action=initialize references=1");
     return 0;
 
 fail:
@@ -299,6 +309,10 @@ static int lcd_render(void *opaque, const mybot_lcd_content_t *content) {
 static void lcd_destroy(void *opaque) {
     lcd_context_t *ctx = opaque;
     if (ctx != &s_context || !ctx->initialized) {
+        return;
+    }
+    ESP_LOGI(TAG, "event=lcd action=detach references=%u", ctx->users - 1);
+    if (--ctx->users > 0) {
         return;
     }
     gpio_set_level(MYBOT_DISPLAY_BACKLIGHT, 0);

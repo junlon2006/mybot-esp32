@@ -11,15 +11,16 @@
 #include "esp_netif.h"
 #include "esp_netif_sntp.h"
 #include "esp_psram.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "esp_timer.h"
 #include "nvs_flash.h"
 #include "mybot_board.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
 #define TAG "mybot_bootstrap"
+#define CONTROL_EVENT_WAIT_MS 100
 
 static esp_event_handler_instance_t s_got_ip_handler;
 static bool s_sntp_initialized;
@@ -140,33 +141,61 @@ void app_main(void) {
 
     (void)init_time_sync();
     for (;;) {
+        int64_t network_started_us = esp_timer_get_time();
+        ESP_LOGI(TAG, "event=control state=waiting_network");
         if (board->ensure_network(config.device_id) < 0) {
-            ESP_LOGE(TAG, "network prerequisite failed");
+            ESP_LOGE(TAG, "event=control state=waiting_network elapsed_ms=%" PRId64 " result=error",
+                     (esp_timer_get_time() - network_started_us) / 1000);
             break;
         }
+        int64_t mybot_started_us = esp_timer_get_time();
+        ESP_LOGI(TAG, "event=control state=starting_mybot network_elapsed_ms=%" PRId64,
+                 (mybot_started_us - network_started_us) / 1000);
         if (mybot_start(&config) < 0) {
-            ESP_LOGE(TAG, "mybot startup failed");
+            ESP_LOGE(TAG, "event=control state=starting_mybot elapsed_ms=%" PRId64 " result=error",
+                     (esp_timer_get_time() - mybot_started_us) / 1000);
             break;
         }
-        ESP_LOGI(TAG, "mybot startup scheduled for device %s", config.device_id);
+        ESP_LOGI(TAG, "event=control state=mybot_running start_elapsed_ms=%" PRId64 " device=%s",
+                 (esp_timer_get_time() - mybot_started_us) / 1000, config.device_id);
 
+        bool provisioning_requested = false;
         while (mybot_is_running()) {
-            vTaskDelay(pdMS_TO_TICKS(100));
+            if (mybot_board_wait_wifi_provisioning_request(CONTROL_EVENT_WAIT_MS)) {
+                provisioning_requested = true;
+                break;
+            }
         }
+        if (!provisioning_requested) {
+            provisioning_requested = mybot_board_wait_wifi_provisioning_request(0);
+        }
+        int64_t stop_started_us = esp_timer_get_time();
+        ESP_LOGI(TAG, "event=control state=stopping_mybot sdk_state=%d running=%d reason=%s",
+                 (int)mybot_get_state(), mybot_is_running() ? 1 : 0,
+                 provisioning_requested ? "provision_request" : "sdk_stopped");
         mybot_stop();
-        ESP_LOGI(TAG, "mybot stopped");
+        if (!provisioning_requested) {
+            provisioning_requested = mybot_board_wait_wifi_provisioning_request(0);
+        }
 
-        if (!mybot_board_take_wifi_provisioning_request()) {
+        if (!provisioning_requested) {
+            ESP_LOGI(TAG,
+                     "event=control state=stopped stop_elapsed_ms=%" PRId64 " reason=sdk_stopped",
+                     (esp_timer_get_time() - stop_started_us) / 1000);
             break;
         }
-        ESP_LOGI(TAG, "entering Wi-Fi provisioning mode");
+        int64_t provision_started_us = esp_timer_get_time();
+        ESP_LOGI(TAG, "event=control state=provisioning stop_elapsed_ms=%" PRId64 " source=button",
+                 (provision_started_us - stop_started_us) / 1000);
         if (board->provision_wifi() < 0) {
-            ESP_LOGE(TAG, "Wi-Fi provisioning failed");
+            ESP_LOGE(TAG, "event=control state=provisioning elapsed_ms=%" PRId64 " result=error",
+                     (esp_timer_get_time() - provision_started_us) / 1000);
             break;
         }
-        ESP_LOGI(TAG, "network connected; restarting mybot");
+        (void)mybot_board_wait_wifi_provisioning_request(0);
     }
 
+    ESP_LOGI(TAG, "event=control state=shutting_down");
     board->shutdown_network();
     deinit_time_sync();
 }

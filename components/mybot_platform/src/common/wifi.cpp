@@ -119,10 +119,10 @@ int run_provisioning_locked() {
             control.network_connected = false;
         }
 
-        ESP_LOGI(TAG, "starting Wi-Fi configuration AP");
+        ESP_LOGI(TAG, "event=provision_ap state=starting");
         manager.StartConfigAp();
         if (!manager.IsConfigMode()) {
-            ESP_LOGE(TAG, "failed to start Wi-Fi configuration AP");
+            ESP_LOGE(TAG, "event=provision_ap state=starting result=error");
             return -1;
         }
 
@@ -135,17 +135,19 @@ int run_provisioning_locked() {
             }
         }
 
-        ESP_LOGI(TAG, "Wi-Fi configuration completed; waiting for station connection");
+        ESP_LOGI(TAG, "event=station_connect source=provisioning state=waiting_ip");
         manager.StartStation();
         if (wait_for_station(kStationConnectionTimeout)) {
             return 0;
         }
-        ESP_LOGW(TAG, "station connection timed out; restarting Wi-Fi configuration AP");
+        ESP_LOGW(TAG, "event=station_connect source=provisioning result=timeout "
+                      "action=restart_provisioning");
     }
 }
 
 int wifi_init(void **out_ctx, const char *device_id, mybot_wifi_event_handler_t emit,
               void *user_data) {
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=wifi action=attach");
     if (!out_ctx || !device_id || !device_id[0] || !emit) {
         return -1;
     }
@@ -156,7 +158,7 @@ int wifi_init(void **out_ctx, const char *device_id, mybot_wifi_event_handler_t 
     {
         std::lock_guard<std::mutex> lock(control.state_mutex);
         if (!control.initialized || control.stopping || control.sdk_active) {
-            ESP_LOGE(TAG, "mybot requires an initialized host-managed network");
+            ESP_LOGE(TAG, "event=sdk_network_attach result=error reason=network_unavailable");
             return -1;
         }
         control.sdk_active = true;
@@ -178,6 +180,7 @@ void wifi_destroy(void *opaque) {
         return;
     }
 
+    ESP_LOGI(TAG, "event=sdk_adapter adapter=wifi action=detach");
     std::lock_guard<std::mutex> event_lock(control.event_mutex);
     std::lock_guard<std::mutex> lock(control.state_mutex);
     control.sdk_active = false;
@@ -197,7 +200,8 @@ extern "C" const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void) {
     return &wifi_ops;
 }
 
-extern "C" int mybot_wifi_ensure_network(const char *device_id) {
+extern "C" int mybot_wifi_ensure_network(const char *device_id,
+                                         mybot_wifi_provisioning_handler_t on_provisioning) {
     if (!device_id || !device_id[0]) {
         return -1;
     }
@@ -220,7 +224,7 @@ extern "C" int mybot_wifi_ensure_network(const char *device_id) {
     if (!initialized) {
         uint8_t mac[6];
         if (esp_read_mac(mac, ESP_MAC_WIFI_STA) != ESP_OK) {
-            ESP_LOGE(TAG, "failed to read station MAC for provisioning SSID");
+            ESP_LOGE(TAG, "event=network_prepare result=error reason=mac_read");
             return -1;
         }
         char provisioning_ssid[sizeof("mybot-ffff")];
@@ -233,7 +237,7 @@ extern "C" int mybot_wifi_ensure_network(const char *device_id) {
         config.station_hostname = device_id;
 
         if (!manager.Initialize(config)) {
-            ESP_LOGE(TAG, "failed to initialize Wi-Fi manager");
+            ESP_LOGE(TAG, "event=network_prepare result=error reason=manager_initialize");
             return -1;
         }
 
@@ -265,17 +269,23 @@ extern "C" int mybot_wifi_ensure_network(const char *device_id) {
     }
 
     if (SsidManager::GetInstance().GetSsidList().empty()) {
-        ESP_LOGI(TAG, "no saved Wi-Fi credentials; provisioning is required");
+        ESP_LOGI(TAG, "event=network_route action=provision reason=no_saved_credentials");
+        if (on_provisioning) {
+            on_provisioning();
+        }
         return run_provisioning_locked();
     }
 
-    ESP_LOGI(TAG, "connecting to a saved Wi-Fi network");
+    ESP_LOGI(TAG, "event=station_connect source=saved_credentials state=waiting_ip");
     manager.StartStation();
     if (wait_for_station(kStationConnectionTimeout)) {
         return 0;
     }
 
-    ESP_LOGW(TAG, "saved Wi-Fi networks are unavailable; provisioning is required");
+    ESP_LOGW(TAG, "event=station_connect source=saved_credentials result=timeout action=provision");
+    if (on_provisioning) {
+        on_provisioning();
+    }
     return run_provisioning_locked();
 }
 
