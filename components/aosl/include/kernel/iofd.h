@@ -120,7 +120,11 @@ struct iofd {
 	iofd_data_t data_f;
 	aosl_fd_event_t event_f;
 	uintptr_t argc;
+#if defined(__ARMCC_VERSION)
+	uintptr_t argv [];
+#else
 	uintptr_t argv [0];
+#endif
 };
 
 #define iofd_fobj(iofd) (&(iofd)->fobj)

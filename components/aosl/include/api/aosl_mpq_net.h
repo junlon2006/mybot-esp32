@@ -98,6 +98,15 @@ extern __aosl_api__ int aosl_bind_port_only (aosl_fd_t sockfd, uint16_t af, unsi
  * @return              0 on success, <0 on failure
  **/
 extern __aosl_api__ int aosl_bind_device (aosl_fd_t sockfd, const char *if_name);
+
+/**
+ * @brief Set DSCP for a socket.
+ * @param [in] sockfd  the socket fd
+ * @param [in] af      the address family (AF_INET or AF_INET6)
+ * @param [in] dscp    DSCP value in range [0, 63]
+ * @return             0 on success, <0 on failure
+ **/
+extern __aosl_api__ int aosl_set_socket_dscp (aosl_fd_t sockfd, int af, int dscp);
 //extern __aosl_api__ int aosl_getsockname (aosl_fd_t sockfd, aosl_sockaddr_t *addr);
 //extern __aosl_api__ int aosl_getpeername (aosl_fd_t sockfd, aosl_sockaddr_t *addr);
 //extern __aosl_api__ int aosl_getsockopt (aosl_fd_t sockfd, int level, int optname, void *optval, int *optlen);

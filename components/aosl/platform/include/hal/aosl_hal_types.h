@@ -10,9 +10,12 @@
 #define __AOSL_HAL_TYPES_H__
 
 #include <stdint.h>
+#include <hal/aosl_hal_config.h>
 
 #ifndef __inline__
-#if defined(_MSC_VER)
+#if defined(__ARMCC_VERSION)
+#define __inline__ __inline
+#elif defined(_MSC_VER)
 #define __inline__ __inline
 #else
 #define __inline__ inline

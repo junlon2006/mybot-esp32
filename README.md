@@ -5,8 +5,8 @@ mybot SDK 的 ESP32-S3 开源移植工程。当前开发基线为 ESP-IDF v5.5.2
 
 ## 当前能力
 
-- mybot 1.0.0 + Unreleased (`add34a2`) core 以原生 ESP-IDF component 方式构建。
-- 使用 xiaozhi 验证过的 ESP32-S3 Agora RTSA 1.10.0 和 AOSL。
+- mybot 1.0.0 + Unreleased (`27324e7`) core 以原生 ESP-IDF component 方式构建。
+- 使用 Agora RTSA Lite 1.10.1 (build 1270872) 和 AOSL。
 - AOSL 包含 BK7258 移植验证过的 `aosl_ctor()` / `aosl_dtor()` 引用计数生命周期。
 - Wi-Fi STA 自动重连和首次启动 AP 配网门户。
 - NVS 持久化 mybot 设备凭据。
@@ -98,7 +98,7 @@ MCLK，不作为按键使用。CoreS3 没有独立音量键，首版使用持久
 ## 目录
 
 ```text
-components/aosl/             xiaozhi AOSL + 引用计数补丁
+components/aosl/             AOSL v1.0.4 + ESP32-S3 平台适配
 components/agora_rtc/        ESP32-S3 Agora RTSA
 components/mybot_sdk/        mybot 到 ESP-IDF 的构建包装
 components/mybot_platform/   ESP-IDF common、可复用驱动和 Board profile

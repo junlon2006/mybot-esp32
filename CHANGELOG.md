@@ -8,7 +8,7 @@ Versioning and Conventional Commits.
 ### Added
 
 - ESP-IDF v5.5.2 project for the Zhengchen 1.54 TFT ESP32-S3 board.
-- mybot 1.0.0, Agora RTSA 1.10.0 and reference-counted AOSL integration.
+- mybot 1.0.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
 - Embedded Chinese and English Ogg/Opus pairing-code announcements decoded to PSRAM at runtime.
@@ -16,12 +16,17 @@ Versioning and Conventional Commits.
 - M5Stack CoreS3 Board profile with ILI9342 display, FT6336 touch input, and
   ES7210/AW88298 audio support.
 - Agora RTM login and voice-print registration status displayed during active conversations.
+- RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
+- AOSL socket DSCP support required by the RTSA 1.10.1 network implementation.
 - Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
 
 ### Changed
 
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
-- Sync the vendored mybot SDK to Unreleased commit `add34a2`, adding RTM and voice-print status.
+- Sync the vendored mybot SDK to Unreleased commit `27324e7`, adding RTM channel subscription for
+  voice-print status.
+- Update the AOSL baseline to `AgoraIO-Community/aosl` commit `84e0860` while retaining the
+  ESP32-S3 FreeRTOS, PSRAM, and board-specific adaptations.
 - Decouple network provisioning from mybot startup. Connectivity is now a prerequisite, and holding
   Boot stops mybot before provisioning, shows the Wi-Fi setup screen, and restarts mybot after the
   station obtains an IP address.

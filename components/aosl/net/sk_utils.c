@@ -869,6 +869,24 @@ __export_in_so__ int aosl_bind_device (aosl_fd_t sockfd, const char *if_name)
 	return 0;
 }
 
+__export_in_so__ int aosl_set_socket_dscp(aosl_fd_t sockfd, int af, int dscp)
+{
+	if (af != AOSL_AF_INET && af != AOSL_AF_INET6) {
+		aosl_errno = AOSL_EINVAL;
+		return -1;
+	}
+	if (dscp < 0 || dscp > 63) {
+		aosl_errno = AOSL_EINVAL;
+		return -1;
+	}
+
+	int err = aosl_hal_sk_set_dscp(sockfd, (enum aosl_socket_domain)af, (uint8_t)dscp);
+	if (err < 0) {
+		return aosl_hal_set_error(err);
+	}
+	return 0;
+}
+
 __export_in_so__ void aosl_ip_addr_init (aosl_ip_addr_t *addr)
 {
 	addr->v4.sin_family = AOSL_AF_UNSPEC;

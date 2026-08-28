@@ -5,9 +5,9 @@ license and copyright notices.
 
 | Component | License | Location |
 | --- | --- | --- |
-| mybot SDK 1.0.0 + Unreleased (`add34a2`) | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
-| AOSL | Apache-2.0 with the conditions in its bundled license | `components/aosl` |
-| Agora RTSA Lite for ESP32-S3 | Distributed with permission for this project | `components/agora_rtc` |
+| mybot SDK 1.0.0 + Unreleased (`27324e7`) | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
+| AOSL v1.0.4 + post-release fixes (`84e0860`) | Apache-2.0 with the conditions in its bundled license | `components/aosl` |
+| Agora RTSA Lite for ESP32-S3 1.10.1 (build 1270872) | Distributed with permission for this project | `components/agora_rtc` |
 | esp-wifi-connect | MIT | `components/esp-wifi-connect` |
 | Espressif audio codec 2.5.0 | Espressif Modified MIT | `components/esp_audio_codec` |
 | Espressif codec device 1.5.11 | Apache-2.0 | `components/esp_codec_dev` |

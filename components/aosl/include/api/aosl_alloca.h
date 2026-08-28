@@ -10,7 +10,10 @@
 #ifndef __AOSL_ALLOCA_H__
 #define __AOSL_ALLOCA_H__
 
-#if defined (__GNUC__)
+#if defined(__ARMCC_VERSION)
+/* ARM RVCT: alloca is available via alloca.h or malloc.h */
+#include <alloca.h>
+#elif defined (__GNUC__)
 #include <alloca.h>
 #elif defined (_MSC_VER)
 #include <malloc.h>

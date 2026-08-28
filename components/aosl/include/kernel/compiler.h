@@ -18,7 +18,15 @@
 #endif
 
 #ifndef FuncReturnAddress
-#if defined(_MSC_VER)
+/*
+ * ARM Compiler 5 (ARMCC) defines __ARMCC_VERSION and supports __return_address().
+ * ARM Compiler 6 (armclang) also defines __ARMCC_VERSION but does NOT support
+ * __return_address() - it defines __clang__ so we can differentiate.
+ * For armclang, GCC, and other compilers, use __builtin_return_address(0).
+ */
+#if defined(__ARMCC_VERSION) && !defined(__clang__)
+#define FuncReturnAddress() __return_address()
+#elif defined(_MSC_VER)
 #include <intrin.h>
 #define FuncReturnAddress() _ReturnAddress()
 #else

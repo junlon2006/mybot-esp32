@@ -52,7 +52,7 @@ idf_component_register(
 target_compile_features(${COMPONENT_LIB} PRIVATE c_std_99)
 target_compile_options(${COMPONENT_LIB} PRIVATE -fvisibility=hidden)
 
-# Keep the add34a2 SDK snapshot byte-identical while its ESP32 portability fixes are pending
+# Keep the vendored SDK snapshot byte-identical while its ESP32 portability fixes are pending
 # upstream. Xtensa defines uint32_t as unsigned long, while the snapshot logs it with %u.
 set_source_files_properties(
     "${MYBOT_ROOT}/src/rtc/mybot_agora_rtc.c"

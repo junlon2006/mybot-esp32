@@ -157,6 +157,34 @@ int aosl_hal_sk_bind_device(int sockfd, const char *if_name)
 	return 0;
 }
 
+int aosl_hal_sk_set_dscp(aosl_fd_t sockfd, enum aosl_socket_domain domain, uint8_t dscp)
+{
+	int traffic_class = ((int)dscp) << 2;
+	int level = 0;
+	int optname = 0;
+
+	switch (domain) {
+	case AOSL_AF_INET:
+		level = IPPROTO_IP;
+		optname = IP_TOS;
+		break;
+	case AOSL_AF_INET6:
+		return AOSL_HAL_RET_EHAL;
+	default:
+		return AOSL_HAL_RET_EHAL;
+	}
+
+	int ret = lwip_setsockopt(sockfd, level, optname, &traffic_class, sizeof(traffic_class));
+	if (ret < 0) {
+		int orig_errno = errno;
+		ret = aosl_hal_errno_convert(orig_errno);
+		AOSL_LOG_ERR("setsockopt(dscp=%u, level=%d, opt=%d) errno convert: %d -> %d", dscp, level,
+					 optname, orig_errno, ret);
+		return ret;
+	}
+	return 0;
+}
+
 int aosl_hal_sk_listen(int sockfd, int backlog)
 {
 	int ret = lwip_listen(sockfd, backlog);

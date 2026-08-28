@@ -39,7 +39,11 @@ struct timer_node {
 	aosl_obj_dtor_t dtor;
 
 	uintptr_t argc;
+#if defined(__ARMCC_VERSION)
+	uintptr_t argv [];
+#else
 	uintptr_t argv [0];
+#endif
 };
 
 extern void __free_timer (struct timer_node *timer);

@@ -78,6 +78,15 @@ int aosl_hal_sk_bind(aosl_fd_t sockfd, const aosl_sockaddr_t* addr);
 int aosl_hal_sk_bind_device(aosl_fd_t sockfd, const char *if_name);
 
 /**
+ * @brief   set DSCP for a socket
+ * @param [in] sockfd socket file descriptor
+ * @param [in] domain socket address family
+ * @param [in] dscp DSCP value in range [0, 63]
+ * @return 0 on success, < 0 on error. should use aosl_hal_errno_convert to get error code
+ */
+int aosl_hal_sk_set_dscp(aosl_fd_t sockfd, enum aosl_socket_domain domain, uint8_t dscp);
+
+/**
  * @brief   listen for incoming connections
  * @param [in] sockfd socket file descriptor
  * @param [in] backlog maximum length of the pending connections queue
