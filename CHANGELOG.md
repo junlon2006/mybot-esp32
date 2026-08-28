@@ -19,6 +19,7 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
 - Decouple network provisioning from mybot startup. Connectivity is now a prerequisite, and holding
   Boot stops mybot before provisioning, shows the Wi-Fi setup screen, and restarts mybot after the
   station obtains an IP address.
