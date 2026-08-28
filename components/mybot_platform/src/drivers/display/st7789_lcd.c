@@ -303,6 +303,10 @@ static int lcd_render(void *opaque, const mybot_lcd_content_t *content) {
         int code_scale = code_length <= 9 ? 4 : 2;
         return draw_text_centered(128, content->pair_code, code_scale, foreground, background);
     }
+    if (content->screen == MYBOT_LCD_SCREEN_IN_CONVERSATION &&
+        (content->indicators & MYBOT_LCD_INDICATOR_VP_REGISTERED) != 0) {
+        return draw_text_centered(145, "VP SAVED", 2, RGB565(114, 255, 156), background);
+    }
     return 0;
 }
 

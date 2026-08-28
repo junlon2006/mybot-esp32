@@ -69,6 +69,11 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 7. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,
    bidirectional audio, input, display, hangup, and repeated start/stop validation.
 
+LCD `indicators` are non-exclusive overlays on the semantic base screen. Render recognized bits
+without changing the underlying workflow, ignore unknown bits, and preserve the existing layout
+when no supported indicator is set. `MYBOT_LCD_INDICATOR_VP_REGISTERED` is currently meaningful
+only on `MYBOT_LCD_SCREEN_IN_CONVERSATION`.
+
 When capture and playback share one physical I2S peripheral, keep the peripheral and codec state in
 a ref-counted Board driver. The SDK initializes and destroys capture and playback independently,
 and the provisioning prompt can open playback before the first SDK start.

@@ -4,7 +4,7 @@
 
 | 路径 | 来源 | 固定版本 |
 | --- | --- | --- |
-| `third_party/mybot` | `junlon2006/mybot` | v1.0.0, commit `117a44d041538d1647d0da9662cdb2fb622c00da` |
+| `third_party/mybot` | `junlon2006/mybot` | v1.0.0 + Unreleased, commit `add34a29e3f784ac5c5d7a49438d451d30bee387` |
 | `components/aosl` | `junlon2006/xiaozhi-esp32` | commit `ad2f7da4c9ba77294a5abb48f29e895fe486ed0e` |
 | `components/agora_rtc` | `junlon2006/xiaozhi-esp32` | Agora RTSA 1.10.0, build 1154652 |
 | `components/esp-wifi-connect` | `78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |
@@ -22,9 +22,6 @@ Local changes relative to those baselines:
   `9956b939fe70dcc741b028e8b53a66aaab2880a9` for reference-counted AOSL ownership.
 - `components/aosl/platform/src/esp32-s3/aosl_hal_thread.c` passes AOSL's byte-sized stack budget
   directly to ESP-IDF `xTaskCreate()`, whose stack parameter is also measured in bytes.
-- `third_party/mybot/src/rtc/mybot_agora_rtc.c` uses C99 `PRIu32` format macros so `uint32_t` and
-  connection-ID logging is valid for the ESP32-S3 ABI. The HTTP client omits plaintext-only socket
-  helpers from HTTPS-only builds.
 - Vendored component manifests are omitted. Dependencies are local or supplied by ESP-IDF v5.5.2.
 - The esp_codec_dev source set is limited to its common interfaces and platform adapters plus the
   ES7210 ADC and AW88298 DAC used by M5Stack CoreS3.

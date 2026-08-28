@@ -4,6 +4,15 @@ This project follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Enable Agora RTM login and point-to-point messaging in the internal RTC wrapper. RTM uses the
+  server-issued `rtc.uid` as the local account, validates Agora's 64-byte ASCII account contract,
+  exposes the server-provided `agent_uid` for peer messaging, and requires RTM login to complete
+  successfully within five seconds before starting the RTC channel join.
+- Handle the RTM `message.sal_status` / `VP_REGISTER_SUCCESS` event during an active conversation
+  and expose it to LCD platforms as the `MYBOT_LCD_INDICATOR_VP_REGISTERED` overlay indicator.
+
 ## [1.0.0] - 2026-08-26
 
 ### Added

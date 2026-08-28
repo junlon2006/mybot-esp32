@@ -8,16 +8,25 @@
 #include <api/aosl_log.h>
 #include <api/aosl_time.h>
 
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef MYBOT_RTM_LOGIN_TIMEOUT_MS
+#define MYBOT_RTM_LOGIN_TIMEOUT_MS 5000U
+#endif
+
+#define MYBOT_RTM_LOGIN_POLL_MS 10U
 
 typedef struct {
     mybot_rtc_state_t state;
     connection_id_t conn_id;
     mybot_agora_rtc_callbacks_t callbacks;
     char app_id[64];
+    char rtm_uid[MYBOT_RTM_UID_MAX_LEN];
+    bool rtm_login_requested;
+    bool rtm_login_completed;
+    bool rtm_logged_in;
     bool fini_failed;
 } mybot_agora_rtc_t;
 
@@ -72,13 +81,276 @@ static inline bool connection_is_active(connection_id_t conn_id) {
     return conn_id != CONNECTION_ID_INVALID && conn_id == s_rtc.conn_id;
 }
 
+static bool rtm_uid_char_is_allowed(unsigned char c) {
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+        return true;
+    }
+    switch (c) {
+    case ' ':
+    case '!':
+    case '#':
+    case '$':
+    case '%':
+    case '&':
+    case '(':
+    case ')':
+    case '+':
+    case ',':
+    case '-':
+    case '.':
+    case ':':
+    case ';':
+    case '<':
+    case '=':
+    case '>':
+    case '?':
+    case '@':
+    case '[':
+    case ']':
+    case '^':
+    case '_':
+    case '{':
+    case '|':
+    case '}':
+    case '~':
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool mybot_agora_rtc_rtm_uid_is_valid(const char *rtm_uid) {
+    if (!rtm_uid || !rtm_uid[0]) {
+        return false;
+    }
+    size_t len = strlen(rtm_uid);
+    if (len >= MYBOT_RTM_UID_MAX_LEN) {
+        return false;
+    }
+    for (size_t i = 0; i < len; ++i) {
+        if (!rtm_uid_char_is_allowed((unsigned char)rtm_uid[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool map_rtm_event(rtm_event_type_e event_type, mybot_rtm_event_type_t *mapped) {
+    if (!mapped) {
+        return false;
+    }
+    switch (event_type) {
+    case RTM_EVENT_TYPE_LOGIN:
+        *mapped = MYBOT_RTM_EVENT_LOGIN;
+        return true;
+    case RTM_EVENT_TYPE_KICKOFF:
+        *mapped = MYBOT_RTM_EVENT_KICKOFF;
+        return true;
+    case RTM_EVENT_TYPE_EXIT:
+        *mapped = MYBOT_RTM_EVENT_EXIT;
+        return true;
+    default:
+        return false;
+    }
+}
+
+static const char *rtm_event_name(rtm_event_type_e event_type) {
+    switch (event_type) {
+    case RTM_EVENT_TYPE_LOGIN:
+        return "LOGIN";
+    case RTM_EVENT_TYPE_KICKOFF:
+        return "KICKOFF";
+    case RTM_EVENT_TYPE_EXIT:
+        return "EXIT";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+static void on_rtm_event(const char *rtm_uid, rtm_event_type_e event_type,
+                         rtm_err_code_e error_code) {
+    mybot_rtm_event_type_t mapped_event;
+
+    rtc_lock();
+    if (!s_rtc.rtm_login_requested) {
+        AOSL_LOG_NTC("[RTM] event ignored: login was not requested (type=%s(%d), error=%d)",
+                     rtm_event_name(event_type), (int)event_type, (int)error_code);
+        rtc_unlock();
+        return;
+    }
+    if (!rtm_uid) {
+        AOSL_LOG_WRN("[RTM] event ignored: missing UID (type=%s(%d), error=%d)",
+                     rtm_event_name(event_type), (int)event_type, (int)error_code);
+        rtc_unlock();
+        return;
+    }
+    if (strcmp(rtm_uid, s_rtc.rtm_uid) != 0) {
+        AOSL_LOG_WRN("[RTM] event ignored: UID mismatch (expected=%s, received=%s, type=%s(%d))",
+                     s_rtc.rtm_uid, rtm_uid, rtm_event_name(event_type), (int)event_type);
+        rtc_unlock();
+        return;
+    }
+
+    AOSL_LOG_NTC("[RTM] event: uid=%s type=%s(%d) error=%d", rtm_uid, rtm_event_name(event_type),
+                 (int)event_type, (int)error_code);
+
+    switch (event_type) {
+    case RTM_EVENT_TYPE_LOGIN:
+        s_rtc.rtm_login_completed = true;
+        s_rtc.rtm_logged_in = error_code == ERR_RTM_OK;
+        if (s_rtc.rtm_logged_in) {
+            AOSL_LOG_NTC("[RTM] login succeeded (uid=%s)", rtm_uid);
+        } else {
+            AOSL_LOG_WRN("[RTM] login failed (uid=%s, error=%d)", rtm_uid, (int)error_code);
+        }
+        break;
+    case RTM_EVENT_TYPE_KICKOFF:
+        s_rtc.rtm_login_completed = true;
+        s_rtc.rtm_logged_in = false;
+        AOSL_LOG_WRN("[RTM] account kicked off (uid=%s, error=%d)", rtm_uid, (int)error_code);
+        break;
+    case RTM_EVENT_TYPE_EXIT:
+        s_rtc.rtm_login_completed = true;
+        s_rtc.rtm_logged_in = false;
+        AOSL_LOG_NTC("[RTM] account exited (uid=%s, error=%d)", rtm_uid, (int)error_code);
+        break;
+    default:
+        AOSL_LOG_WRN("[RTM] unknown event received (uid=%s, type=%d, error=%d)", rtm_uid,
+                     (int)event_type, (int)error_code);
+        break;
+    }
+
+    if (!map_rtm_event(event_type, &mapped_event)) {
+        AOSL_LOG_NTC("[RTM] event not forwarded: unsupported type=%d", (int)event_type);
+    } else if (!s_rtc.callbacks.on_rtm_event) {
+        AOSL_LOG_NTC("[RTM] event not forwarded: no application callback (type=%s)",
+                     rtm_event_name(event_type));
+    } else {
+        AOSL_LOG_NTC("[RTM] forwarding event to application (type=%s)", rtm_event_name(event_type));
+        s_rtc.callbacks.on_rtm_event(rtm_uid, mapped_event, (int)error_code,
+                                     s_rtc.callbacks.user_data);
+    }
+    rtc_unlock();
+}
+
+static void on_rtm_data(const char *rtm_uid, const void *data, size_t len,
+                        const char *custom_type) {
+    size_t preview_len = len > 512U ? 512U : len;
+
+    rtc_lock();
+    if (!s_rtc.rtm_login_requested) {
+        AOSL_LOG_NTC("[RTM] data ignored: login was not requested (from=%s, type=%s, len=%zu)",
+                     rtm_uid ? rtm_uid : "(null)", custom_type ? custom_type : "(null)", len);
+        rtc_unlock();
+        return;
+    }
+
+    if (data && preview_len > 0) {
+        AOSL_LOG_NTC("[RTM] data received: from=%s type=%s len=%zu msg=%.*s",
+                     rtm_uid ? rtm_uid : "(null)", custom_type ? custom_type : "(null)", len,
+                     (int)preview_len, (const char *)data);
+    } else {
+        AOSL_LOG_NTC("[RTM] data received: from=%s type=%s len=%zu msg=(empty)",
+                     rtm_uid ? rtm_uid : "(null)", custom_type ? custom_type : "(null)", len);
+    }
+
+    if (s_rtc.callbacks.on_rtm_data) {
+        AOSL_LOG_NTC("[RTM] forwarding data to application (from=%s, len=%zu)",
+                     rtm_uid ? rtm_uid : "(null)", len);
+        s_rtc.callbacks.on_rtm_data(rtm_uid, data, len, custom_type, s_rtc.callbacks.user_data);
+    } else {
+        AOSL_LOG_NTC("[RTM] data not forwarded: no application callback (from=%s, len=%zu)",
+                     rtm_uid ? rtm_uid : "(null)", len);
+    }
+    rtc_unlock();
+}
+
+static void on_rtm_send_data_result(const char *rtm_uid, uint32_t msg_id, rtm_msg_state_e state) {
+    rtc_lock();
+    if (s_rtc.rtm_login_requested && s_rtc.callbacks.on_rtm_send_data_result) {
+        s_rtc.callbacks.on_rtm_send_data_result(rtm_uid, msg_id, (mybot_rtm_message_state_t)state,
+                                                s_rtc.callbacks.user_data);
+    }
+    rtc_unlock();
+}
+
+static int login_rtm_locked(const char *rtm_uid, const char *rtm_token) {
+    if (!mybot_agora_rtc_rtm_uid_is_valid(rtm_uid)) {
+        AOSL_LOG_ERR("[RTM] login rejected: invalid RTM UID");
+        return -1;
+    }
+    if (s_rtc.state != MYBOT_RTC_STATE_INITIALIZED || s_rtc.conn_id != CONNECTION_ID_INVALID) {
+        AOSL_LOG_ERR("[RTM] login rejected (RTC state=%s, conn_id=%u)", state_name(s_rtc.state),
+                     s_rtc.conn_id);
+        return -1;
+    }
+    if (s_rtc.rtm_login_requested) {
+        return strcmp(s_rtc.rtm_uid, rtm_uid) == 0 ? 0 : -1;
+    }
+
+    agora_rtm_handler_t handler;
+    memset(&handler, 0, sizeof(handler));
+    handler.on_rtm_event = on_rtm_event;
+    handler.on_rtm_data = on_rtm_data;
+    handler.on_rtm_send_data_result = on_rtm_send_data_result;
+
+    memcpy(s_rtc.rtm_uid, rtm_uid, strlen(rtm_uid) + 1);
+    s_rtc.rtm_login_requested = true;
+    s_rtc.rtm_login_completed = false;
+    s_rtc.rtm_logged_in = false;
+    int ret = agora_rtc_login_rtm(rtm_uid, rtm_token && rtm_token[0] ? rtm_token : NULL, &handler);
+    if (ret < 0) {
+        AOSL_LOG_ERR("[RTM] login failed: %s", agora_rtc_err_2_str(ret));
+        s_rtc.rtm_uid[0] = '\0';
+        s_rtc.rtm_login_requested = false;
+        s_rtc.rtm_login_completed = false;
+        s_rtc.rtm_logged_in = false;
+        return -1;
+    }
+    AOSL_LOG_NTC("[RTM] login requested (uid=%s)", rtm_uid);
+    return 0;
+}
+
+static int wait_for_rtm_login(const char *rtm_uid) {
+    aosl_ts_t started_at = aosl_tick_ms();
+    AOSL_LOG_NTC("[RTM] waiting for login before RTC join (uid=%s, timeout=%u ms)", rtm_uid,
+                 (unsigned int)MYBOT_RTM_LOGIN_TIMEOUT_MS);
+
+    for (;;) {
+        rtc_lock();
+        bool request_matches = s_rtc.rtm_login_requested && strcmp(s_rtc.rtm_uid, rtm_uid) == 0;
+        bool completed = s_rtc.rtm_login_completed;
+        bool logged_in = s_rtc.rtm_logged_in;
+        rtc_unlock();
+
+        if (!request_matches) {
+            AOSL_LOG_ERR("[RTM] login wait aborted: request is no longer active (uid=%s)", rtm_uid);
+            return -1;
+        }
+        if (completed) {
+            if (!logged_in) {
+                AOSL_LOG_ERR("[RTM] login did not succeed (uid=%s)", rtm_uid);
+                return -1;
+            }
+            AOSL_LOG_NTC("[RTM] login confirmed before RTC join (uid=%s)", rtm_uid);
+            return 0;
+        }
+        if (aosl_tick_ms() - started_at >= MYBOT_RTM_LOGIN_TIMEOUT_MS) {
+            AOSL_LOG_ERR("[RTM] login timed out after %u ms (uid=%s)",
+                         (unsigned int)MYBOT_RTM_LOGIN_TIMEOUT_MS, rtm_uid);
+            return -1;
+        }
+        aosl_msleep(MYBOT_RTM_LOGIN_POLL_MS);
+    }
+}
+
 static void on_join_channel_success(connection_id_t conn_id, uint32_t uid, int elapsed) {
     rtc_lock();
     if (!connection_is_active(conn_id)) {
         rtc_unlock();
         return;
     }
-    AOSL_LOG_NTC("join channel success (uid=%" PRIu32 ", elapsed=%d ms)", uid, elapsed);
+    AOSL_LOG_NTC("join channel success (uid=%u, elapsed=%d ms)", uid, elapsed);
     set_state(MYBOT_RTC_STATE_CONNECTED);
     rtc_unlock();
 }
@@ -125,7 +397,7 @@ static void on_user_joined(connection_id_t conn_id, const user_info_t *user, int
         rtc_unlock();
         return;
     }
-    AOSL_LOG_NTC("[RTC] user \"%s\" (uid=%" PRIu32 ") joined", user->user_account, user->uid);
+    AOSL_LOG_NTC("[RTC] user \"%s\" (uid=%u) joined", user->user_account, user->uid);
     rtc_unlock();
 }
 
@@ -138,8 +410,8 @@ static void on_user_offline(connection_id_t conn_id, const user_info_t *user, in
         rtc_unlock();
         return;
     }
-    AOSL_LOG_NTC("[RTC] user \"%s\" (uid=%" PRIu32 ") offline (reason=%d)",
-                 user->user_account, user->uid, reason);
+    AOSL_LOG_NTC("[RTC] user \"%s\" (uid=%u) offline (reason=%d)", user->user_account, user->uid,
+                 reason);
     rtc_unlock();
 }
 
@@ -203,6 +475,10 @@ static void clear_runtime_state(void) {
     s_rtc.conn_id = CONNECTION_ID_INVALID;
     memset(&s_rtc.callbacks, 0, sizeof(s_rtc.callbacks));
     s_rtc.app_id[0] = '\0';
+    s_rtc.rtm_uid[0] = '\0';
+    s_rtc.rtm_login_requested = false;
+    s_rtc.rtm_login_completed = false;
+    s_rtc.rtm_logged_in = false;
     s_rtc.fini_failed = false;
 }
 
@@ -279,17 +555,99 @@ int mybot_agora_rtc_init(const char *app_id, const mybot_agora_rtc_callbacks_t *
     return 0;
 }
 
+int mybot_agora_rtc_login_rtm(const char *rtm_uid, const char *rtm_token) {
+    rtc_lock();
+    int ret = login_rtm_locked(rtm_uid, rtm_token);
+    rtc_unlock();
+    return ret;
+}
+
+int mybot_agora_rtc_logout_rtm(void) {
+    rtc_lock();
+    if (!s_rtc.rtm_login_requested) {
+        rtc_unlock();
+        return 0;
+    }
+
+    int ret = agora_rtc_logout_rtm();
+    if (ret < 0) {
+        AOSL_LOG_ERR("[RTM] logout failed: %s", agora_rtc_err_2_str(ret));
+        rtc_unlock();
+        return -1;
+    }
+    AOSL_LOG_NTC("[RTM] logged out (uid=%s)", s_rtc.rtm_uid);
+    s_rtc.rtm_uid[0] = '\0';
+    s_rtc.rtm_login_requested = false;
+    s_rtc.rtm_login_completed = false;
+    s_rtc.rtm_logged_in = false;
+    rtc_unlock();
+    return 0;
+}
+
+bool mybot_agora_rtc_is_rtm_logged_in(void) {
+    rtc_lock();
+    bool logged_in = s_rtc.rtm_logged_in;
+    rtc_unlock();
+    return logged_in;
+}
+
+int mybot_agora_rtc_send_rtm_data(const char *peer_rtm_uid, const void *data, size_t len,
+                                  uint32_t msg_id, const char *custom_type) {
+    if (!mybot_agora_rtc_rtm_uid_is_valid(peer_rtm_uid) || !data || len == 0 || len > 31U * 1024U ||
+        (custom_type && strlen(custom_type) > 32U)) {
+        AOSL_LOG_ERR("[RTM] send rejected: invalid peer, payload, or custom type");
+        return -1;
+    }
+
+    rtc_lock();
+    if (!s_rtc.rtm_logged_in) {
+        AOSL_LOG_ERR("[RTM] send rejected: login has not completed");
+        rtc_unlock();
+        return -1;
+    }
+    int ret = agora_rtc_send_rtm_data(peer_rtm_uid, data, len, msg_id, custom_type);
+    if (ret < 0) {
+        AOSL_LOG_ERR("[RTM] send failed: %s", agora_rtc_err_2_str(ret));
+    }
+    rtc_unlock();
+    return ret;
+}
+
 int mybot_agora_rtc_join(const char *channel, const char *token, const char *user_account) {
     if (!channel || !channel[0] || !user_account || !user_account[0]) {
         AOSL_LOG_ERR("[RTC] join rejected: invalid channel or user account");
         return -1;
     }
+    bool rtm_started_for_join = false;
     rtc_lock();
+    if (s_rtc.rtm_login_requested) {
+        if (strcmp(s_rtc.rtm_uid, user_account) != 0) {
+            AOSL_LOG_ERR("[RTC] join rejected: RTM UID does not match RTC user account");
+            rtc_unlock();
+            return -1;
+        }
+    } else {
+        if (login_rtm_locked(user_account, token) < 0) {
+            rtc_unlock();
+            return -1;
+        }
+        rtm_started_for_join = true;
+    }
+    rtc_unlock();
 
+    if (wait_for_rtm_login(user_account) < 0) {
+        if (rtm_started_for_join) {
+            (void)mybot_agora_rtc_logout_rtm();
+        }
+        return -1;
+    }
+
+    rtc_lock();
     int ret = -1;
-    if (s_rtc.state != MYBOT_RTC_STATE_INITIALIZED || s_rtc.conn_id != CONNECTION_ID_INVALID) {
-        AOSL_LOG_ERR("[RTC] join rejected (state=%s, conn_id=%" PRIu32 ")",
-                     state_name(s_rtc.state), s_rtc.conn_id);
+    if (s_rtc.state != MYBOT_RTC_STATE_INITIALIZED || s_rtc.conn_id != CONNECTION_ID_INVALID ||
+        !s_rtc.rtm_logged_in || strcmp(s_rtc.rtm_uid, user_account) != 0) {
+        AOSL_LOG_ERR("[RTC] join rejected after RTM wait (state=%s, conn_id=%u, rtm_logged_in=%d)",
+                     state_name(s_rtc.state), s_rtc.conn_id, s_rtc.rtm_logged_in ? 1 : 0);
         goto out;
     }
 
@@ -299,7 +657,7 @@ int mybot_agora_rtc_join(const char *channel, const char *token, const char *use
         AOSL_LOG_ERR("create_connection failed: %s", agora_rtc_err_2_str(ret));
         goto out;
     }
-    AOSL_LOG_NTC("[RTC] connection created (conn_id=%" PRIu32 ")", conn_id);
+    AOSL_LOG_NTC("[RTC] connection created (conn_id=%u)", conn_id);
 
     rtc_channel_options_t channel_options;
     memset(&channel_options, 0, sizeof(channel_options));
@@ -339,12 +697,15 @@ int mybot_agora_rtc_join(const char *channel, const char *token, const char *use
             set_state(MYBOT_RTC_STATE_INITIALIZED);
         }
     } else {
-        AOSL_LOG_NTC("[RTC] join requested (conn_id=%" PRIu32 ", channel=%s, user=%s)", conn_id,
-                     channel, user_account);
+        AOSL_LOG_NTC("[RTC] join requested (conn_id=%u, channel=%s, user=%s)", conn_id, channel,
+                     user_account);
     }
 
 out:
     rtc_unlock();
+    if (ret < 0 && rtm_started_for_join) {
+        (void)mybot_agora_rtc_logout_rtm();
+    }
     return ret;
 }
 
@@ -354,11 +715,11 @@ int mybot_agora_rtc_leave(void) {
     connection_id_t conn_id = s_rtc.conn_id;
     if (conn_id == CONNECTION_ID_INVALID) {
         rtc_unlock();
-        return 0;
+        return mybot_agora_rtc_logout_rtm();
     }
 
     s_rtc.conn_id = CONNECTION_ID_INVALID;
-    AOSL_LOG_NTC("[RTC] leaving connection (conn_id=%" PRIu32 ")", conn_id);
+    AOSL_LOG_NTC("[RTC] leaving connection (conn_id=%u)", conn_id);
     int leave_ret = agora_rtc_leave_channel(conn_id);
     if (leave_ret < 0) {
         AOSL_LOG_ERR("leave_channel failed: %s", agora_rtc_err_2_str(leave_ret));
@@ -367,11 +728,12 @@ int mybot_agora_rtc_leave(void) {
     if (destroy_ret < 0) {
         AOSL_LOG_ERR("destroy_connection failed: %s", agora_rtc_err_2_str(destroy_ret));
     } else {
-        AOSL_LOG_NTC("[RTC] connection destroyed (conn_id=%" PRIu32 ")", conn_id);
+        AOSL_LOG_NTC("[RTC] connection destroyed (conn_id=%u)", conn_id);
     }
     set_state(destroy_ret < 0 ? MYBOT_RTC_STATE_ERROR : MYBOT_RTC_STATE_INITIALIZED);
     rtc_unlock();
-    return destroy_ret < 0 ? -1 : 0;
+    int rtm_ret = mybot_agora_rtc_logout_rtm();
+    return destroy_ret < 0 || rtm_ret < 0 ? -1 : 0;
 }
 
 void mybot_agora_rtc_fini(void) {
@@ -424,8 +786,8 @@ int mybot_agora_rtc_send_audio(const void *data, size_t len) {
             AOSL_LOG_ERR("send_audio failed: %s", agora_rtc_err_2_str(ret));
         }
     } else {
-        AOSL_LOG_ERR("[RTC] send_audio rejected (state=%s, conn_id=%" PRIu32 ")",
-                     state_name(s_rtc.state), s_rtc.conn_id);
+        AOSL_LOG_ERR("[RTC] send_audio rejected (state=%s, conn_id=%u)", state_name(s_rtc.state),
+                     s_rtc.conn_id);
     }
     rtc_unlock();
     return ret;

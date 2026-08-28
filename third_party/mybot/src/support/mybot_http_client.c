@@ -223,9 +223,7 @@ static int parse_url(const char *url, url_parts_t *parts) {
     return 0;
 }
 
-#if MYBOT_ALLOW_INSECURE_HTTP
 static aosl_fd_t tcp_connect(const char *host, int port, uint64_t deadline);
-#endif
 
 typedef struct {
     bool use_tls;
@@ -288,7 +286,6 @@ static void stream_close(http_stream_t *stream) {
  * Create a TCP socket and connect to host:port.
  * Returns socket fd, or AOSL_INVALID_FD on error.
  */
-#if MYBOT_ALLOW_INSECURE_HTTP
 static int wait_for_connect(aosl_fd_t fd, uint64_t deadline) {
     fd_set_t write_fds = aosl_hal_fdset_create();
     fd_set_t error_fds = aosl_hal_fdset_create();
@@ -387,7 +384,6 @@ static aosl_fd_t tcp_connect(const char *host, int port, uint64_t deadline) {
 
     return fd;
 }
-#endif
 
 /*
  * Send all bytes (retry on short send).

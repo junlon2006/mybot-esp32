@@ -51,6 +51,19 @@ idf_component_register(
 
 target_compile_features(${COMPONENT_LIB} PRIVATE c_std_99)
 target_compile_options(${COMPONENT_LIB} PRIVATE -fvisibility=hidden)
+
+# Keep the add34a2 SDK snapshot byte-identical while its ESP32 portability fixes are pending
+# upstream. Xtensa defines uint32_t as unsigned long, while the snapshot logs it with %u.
+set_source_files_properties(
+    "${MYBOT_ROOT}/src/rtc/mybot_agora_rtc.c"
+    PROPERTIES COMPILE_OPTIONS "-Wno-format"
+)
+# Plain TCP helpers are intentionally unreachable in this HTTPS-only firmware.
+set_source_files_properties(
+    "${MYBOT_ROOT}/src/support/mybot_http_client.c"
+    PROPERTIES COMPILE_OPTIONS "-Wno-unused-function"
+)
+
 target_compile_definitions(${COMPONENT_LIB}
     PRIVATE MYBOT_BUILDING_LIBRARY
     PUBLIC

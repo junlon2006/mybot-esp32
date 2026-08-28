@@ -15,11 +15,13 @@ Versioning and Conventional Commits.
 - Localized Wi-Fi provisioning prompts played after the configuration AP starts.
 - M5Stack CoreS3 Board profile with ILI9342 display, FT6336 touch input, and
   ES7210/AW88298 audio support.
+- Agora RTM login and voice-print registration status displayed during active conversations.
 - Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
 
 ### Changed
 
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
+- Sync the vendored mybot SDK to Unreleased commit `add34a2`, adding RTM and voice-print status.
 - Decouple network provisioning from mybot startup. Connectivity is now a prerequisite, and holding
   Boot stops mybot before provisioning, shows the Wi-Fi setup screen, and restarts mybot after the
   station obtains an IP address.

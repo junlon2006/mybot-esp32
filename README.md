@@ -5,7 +5,7 @@ mybot SDK 的 ESP32-S3 开源移植工程。当前开发基线为 ESP-IDF v5.5.2
 
 ## 当前能力
 
-- mybot 1.0.0 core 以原生 ESP-IDF component 方式构建。
+- mybot 1.0.0 + Unreleased (`add34a2`) core 以原生 ESP-IDF component 方式构建。
 - 使用 xiaozhi 验证过的 ESP32-S3 Agora RTSA 1.10.0 和 AOSL。
 - AOSL 包含 BK7258 移植验证过的 `aosl_ctor()` / `aosl_dtor()` 引用计数生命周期。
 - Wi-Fi STA 自动重连和首次启动 AP 配网门户。
@@ -17,6 +17,7 @@ mybot SDK 的 ESP32-S3 开源移植工程。当前开发基线为 ESP-IDF v5.5.2
   音量按键，CoreS3 使用 AW88298 硬件音量。
 - 中英文配对码语音播报，使用内嵌 Ogg/Opus 资源并在运行时解码到 PSRAM。
 - 自动或用户请求进入配网模式时，播放所选语言的本地配网提示音。
+- 会话开始前完成 Agora RTM 登录，并在服务端确认声纹注册后于通话页面显示状态。
 - 16 kHz、单声道、signed 16-bit PCM，Cloud AEC 默认开启。
 
 板名包含 ML307，但 xiaozhi 对该板的首次启动默认同样选择 Wi-Fi。当前 Agora/AOSL socket
