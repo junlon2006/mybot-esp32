@@ -89,6 +89,14 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: m5stack-core-s3
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: m5stack-core-s3
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain

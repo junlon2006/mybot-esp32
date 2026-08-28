@@ -32,6 +32,7 @@ The profile defines:
 - `MYBOT_BOARD_SDKCONFIG_DEFAULTS`
 - `MYBOT_BOARD_INCLUDE_DIR`
 - `MYBOT_BOARD_REQUIRED_CONFIGS`
+- `MYBOT_BOARD_FORBIDDEN_CONFIGS` (optional)
 - `MYBOT_BOARD_PARTITION_TABLE`
 - `MYBOT_BOARD_SOURCES`
 - `MYBOT_BOARD_REQUIRES`
@@ -39,6 +40,9 @@ The profile defines:
 Use a separate build directory and sdkconfig for every Board. The build cache rejects changing
 `MYBOT_BOARD` in place, and component configuration rejects stale Flash, PSRAM, or partition
 settings that do not satisfy the selected profile.
+
+This is required even for Boards sharing the same ESP-IDF target. For example,
+`zhengchen-1.54tft-ml307` uses Octal PSRAM while `m5stack-core-s3` uses Quad PSRAM.
 
 ```sh
 idf.py -B build/<board-id> \
@@ -64,3 +68,7 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
    byte counts.
 7. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,
    bidirectional audio, input, display, hangup, and repeated start/stop validation.
+
+When capture and playback share one physical I2S peripheral, keep the peripheral and codec state in
+a ref-counted Board driver. The SDK initializes and destroys capture and playback independently,
+and the provisioning prompt can open playback before the first SDK start.

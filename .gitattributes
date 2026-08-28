@@ -4,6 +4,8 @@ components/aosl/** -whitespace
 components/button/** -whitespace
 components/cmake_utilities/** -whitespace
 components/esp_audio_codec/** -whitespace
+components/esp_codec_dev/** -whitespace
+components/esp_lcd_ili9341/** -whitespace
 components/esp-wifi-connect/** -whitespace
 third_party/** -whitespace
 

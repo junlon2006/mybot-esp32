@@ -13,6 +13,8 @@ Versioning and Conventional Commits.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
 - Embedded Chinese and English Ogg/Opus pairing-code announcements decoded to PSRAM at runtime.
 - Localized Wi-Fi provisioning prompts played after the configuration AP starts.
+- M5Stack CoreS3 Board profile with ILI9342 display, FT6336 touch input, and
+  ES7210/AW88298 audio support.
 - Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
 
 ### Changed

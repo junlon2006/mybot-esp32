@@ -1,0 +1,18 @@
+menu "Audio Codec Device Configuration"
+
+    config CODEC_I2C_BACKWARD_COMPATIBLE
+        bool "Use the legacy I2C driver"
+        default n
+        help
+            Use the legacy I2C driver instead of the ESP-IDF 5.3 and newer
+            master-bus API.
+
+    config CODEC_ES7210_SUPPORT
+        bool "Support ES7210 codec"
+        default n
+
+    config CODEC_AW88298_SUPPORT
+        bool "Support AW88298 codec"
+        default n
+
+endmenu

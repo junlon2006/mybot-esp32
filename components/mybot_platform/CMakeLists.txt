@@ -32,6 +32,13 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
                 "use a clean board-specific sdkconfig")
         endif()
     endforeach()
+    foreach(forbidden_config IN LISTS MYBOT_BOARD_FORBIDDEN_CONFIGS)
+        if(${forbidden_config})
+            message(FATAL_ERROR
+                "MYBOT_BOARD=${MYBOT_BOARD} requires ${forbidden_config}=n; "
+                "use a clean board-specific sdkconfig")
+        endif()
+    endforeach()
     if(NOT CONFIG_PARTITION_TABLE_CUSTOM_FILENAME STREQUAL MYBOT_BOARD_PARTITION_TABLE)
         message(FATAL_ERROR
             "MYBOT_BOARD=${MYBOT_BOARD} requires partition table ${MYBOT_BOARD_PARTITION_TABLE}, "
