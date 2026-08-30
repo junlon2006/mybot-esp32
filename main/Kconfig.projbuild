@@ -1,0 +1,56 @@
+menu "mybot"
+
+    choice MYBOT_LANGUAGE
+        prompt "Product language"
+        default MYBOT_LANGUAGE_ZH_CN
+
+        config MYBOT_LANGUAGE_ZH_CN
+            bool "Chinese (zh-CN)"
+
+        config MYBOT_LANGUAGE_EN_US
+            bool "English (en-US)"
+    endchoice
+
+    config MYBOT_LANGUAGE_TAG
+        string
+        default "en-US" if MYBOT_LANGUAGE_EN_US
+        default "zh-CN"
+
+    config MYBOT_SERVER_BASE
+        string "Device API server base URL"
+        default "https://mybot.sh2.agoralab.co/api"
+
+    choice MYBOT_AUDIO_PTIME
+        prompt "Audio packet duration"
+        default MYBOT_AUDIO_PTIME_60
+
+        config MYBOT_AUDIO_PTIME_20
+            bool "20 ms"
+
+        config MYBOT_AUDIO_PTIME_40
+            bool "40 ms"
+
+        config MYBOT_AUDIO_PTIME_60
+            bool "60 ms"
+    endchoice
+
+    config MYBOT_AUDIO_PTIME_MS
+        int
+        default 20 if MYBOT_AUDIO_PTIME_20
+        default 40 if MYBOT_AUDIO_PTIME_40
+        default 60 if MYBOT_AUDIO_PTIME_60
+
+    config MYBOT_CLOUD_AEC
+        bool "Enable cloud AEC"
+        default y
+
+    config MYBOT_AI_QOS
+        bool "Enable Agora AI QoS"
+        default y
+
+    config MYBOT_FAST_SEND_MULTIPLIER
+        int "Agora fast-send multiplier"
+        range 1 5
+        default 3
+
+endmenu
