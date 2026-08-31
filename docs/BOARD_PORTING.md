@@ -1,5 +1,7 @@
 # Board porting
 
+> [English](BOARD_PORTING.md) | [简体中文](BOARD_PORTING.zh-CN.md)
+
 mybot firmware selects exactly one Board at compile time. Runtime board detection is intentionally
 not supported because the IDF target, Flash size and mode, PSRAM mode, and partition table must be
 known before components are configured.

@@ -135,5 +135,3 @@ if (ssid_list.empty()) {
     wifi_manager.StartStation();
 }
 ```
-
-Please check https://github.com/78/xiaozhi-esp32 for more usage.

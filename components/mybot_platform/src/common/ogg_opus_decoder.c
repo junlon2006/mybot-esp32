@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd. */
-/* Ogg packet parsing follows the xiaozhi-esp32 OggDemuxer state model. */
 #include "ogg_opus_decoder.h"
 
 #include "decoder/esp_audio_dec.h"

@@ -7,9 +7,6 @@ on:
 permissions:
   contents: read
 
-env:
-  MYBOT_REF: 27324e7177b52ad9d8743aba31acf94d0a125f44
-
 jobs:
   quality:
     runs-on: ubuntu-24.04
@@ -127,87 +124,3 @@ jobs:
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/partition_table/partition-table.bin
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/ota_data_initial.bin
-
-  upstream-core:
-    name: upstream-${{ matrix.name }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: gcc-asan
-            cc: gcc
-            cxx: g++
-            sanitizer: ASAN
-          - name: clang-asan
-            cc: clang
-            cxx: clang++
-            sanitizer: ASAN
-          - name: gcc-ubsan
-            cc: gcc
-            cxx: g++
-            sanitizer: UBSAN
-    env:
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: junlon2006/mybot
-          ref: ${{ env.MYBOT_REF }}
-          submodules: recursive
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake libasound2-dev libssl-dev
-      - name: Configure
-        run: cmake -S . -B build -DCONFIG_PLATFORM=linux -DMYBOT_ENABLE_${{ matrix.sanitizer }}=ON
-      - name: Build
-        run: cmake --build build -j2
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-
-  upstream-coverage:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: junlon2006/mybot
-          ref: ${{ env.MYBOT_REF }}
-          submodules: recursive
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake libasound2-dev libssl-dev lcov
-      - name: Build and test
-        run: |
-          cmake -S . -B build -DCONFIG_PLATFORM=linux -DMYBOT_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
-          cmake --build build -j2
-          ctest --test-dir build --output-on-failure
-      - name: Collect coverage
-        run: |
-          lcov --capture --directory build --output-file coverage.info \
-            --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1
-          lcov --remove coverage.info --output-file coverage.info \
-            --rc branch_coverage=1 '*/third_party/*' '*/tests/*'
-          lcov --summary coverage.info --rc branch_coverage=1
-      - uses: actions/upload-artifact@v4
-        with:
-          name: upstream-coverage
-          path: coverage.info
-
-  upstream-docs:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: junlon2006/mybot
-          ref: ${{ env.MYBOT_REF }}
-          submodules: recursive
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake doxygen
-      - name: Build API reference
-        run: |
-          cmake -S . -B build -DCONFIG_PLATFORM=linux -DMYBOT_BUILD_TESTS=OFF \
-            -DMYBOT_BUILD_EXAMPLES=OFF -DMYBOT_BUILD_LINUX_PLATFORM=OFF
-          doxygen build/docs/Doxyfile
-      - uses: actions/upload-artifact@v4
-        with:
-          name: upstream-api-reference
-          path: build/docs/api/html

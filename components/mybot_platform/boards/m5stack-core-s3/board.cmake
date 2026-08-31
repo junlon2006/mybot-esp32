@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd.
+# Copyright (c) 2025 Project Contributors
+
 set(MYBOT_BOARD_TARGET "esp32s3")
 set(MYBOT_BOARD_SDKCONFIG_DEFAULTS "${CMAKE_CURRENT_LIST_DIR}/sdkconfig.defaults")
 set(MYBOT_BOARD_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}")

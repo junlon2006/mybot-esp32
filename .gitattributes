@@ -1,4 +1,4 @@
-# Preserve vendored sources byte-for-byte; project-owned code keeps Git's whitespace checks.
+# Disable project whitespace checks for externally maintained source snapshots.
 components/agora_rtc/** -whitespace
 components/aosl/** -whitespace
 components/button/** -whitespace
@@ -12,4 +12,5 @@ third_party/** -whitespace
 *.a binary
 *.bin binary
 *.jpg binary
+*.ogg binary
 *.png binary

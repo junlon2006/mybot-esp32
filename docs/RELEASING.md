@@ -1,17 +1,40 @@
-# Releasing
+# Release Checklist
 
-1. Update `PROJECT_VER` in the root `CMakeLists.txt` and the changelog together. The firmware reads
-   this version from the generated ESP-IDF app descriptor.
-2. Confirm the vendored revisions and notices are current.
-3. Use ESP-IDF v5.5.2 to perform a clean build and inspect `idf.py size` output.
-4. Verify the app fits both OTA slots with sufficient rollback headroom.
-5. Run format, commit-message, SPDX and `git diff --check` validation.
-6. On the target board, validate first-boot provisioning, reconnect, pairing, HTTPS, RTC join,
-   bidirectional audio, hangup, repeated start/stop and reboot persistence.
-7. Negative-test invalid CA, hostname mismatch, TLS timeout, missing NVS values and Wi-Fi loss.
-8. Confirm logs and NVS dumps do not disclose device, RTC or Wi-Fi credentials.
-9. Publish an annotated `v<version>` tag with `LICENSE`, `THIRD_PARTY_NOTICES.md`, checksums,
-   firmware binaries, partition layout and known limitations.
+> [English](RELEASING.md) | [简体中文](RELEASING.zh-CN.md)
 
-Do not describe a successful compile as hardware validation. ML307/4G builds must not be released as
-supported until Agora has a verified lwIP-compatible path on that network.
+## Prepare
+
+- [ ] Choose a Semantic Version and update `PROJECT_VER` in `CMakeLists.txt` and `CHANGELOG.md`.
+- [ ] Confirm README, board support, known limitations, and configuration documentation are current.
+- [ ] Review all dependency revisions, bundled licenses, and `THIRD_PARTY_NOTICES.md`.
+- [ ] Confirm written rights to redistribute every bundled binary, especially Agora RTSA.
+- [ ] Confirm no credential, token, private endpoint, customer data, generated sdkconfig, or NVS data
+      is tracked.
+
+## Verify
+
+```sh
+. /path/to/esp-idf/export.sh
+test "$(idf.py --version)" = "ESP-IDF v5.5.2"
+idf.py -B build/release \
+  -DMYBOT_BOARD=zhengchen-1.54tft-ml307 \
+  -DSDKCONFIG=build/release/sdkconfig build
+idf.py -B build/release size
+git diff --check
+```
+
+- [ ] CI passes for both boards, both languages, and 20/40/60 ms packet durations.
+- [ ] Both OTA slots retain sufficient rollback headroom.
+- [ ] Format, SPDX, whitespace, and commit-message checks pass.
+- [ ] On each release board, test provisioning, reconnect, pairing, HTTPS, bidirectional audio,
+      voice-print status, hangup, repeated start/stop, and reboot persistence.
+- [ ] Negative-test invalid CA, hostname mismatch, TLS timeout, missing NVS values, and Wi-Fi loss.
+- [ ] Confirm logs and release archives contain no credentials.
+- [ ] Confirm release configurations enable the intended NVS/Flash encryption and Secure Boot policy.
+
+## Publish
+
+- [ ] Create an annotated `v<version>` tag matching `PROJECT_VER`.
+- [ ] Attach source and firmware artifacts only after third-party authorization review.
+- [ ] Include `LICENSE`, `THIRD_PARTY_NOTICES.md`, the changelog, partition layout, and checksums.
+- [ ] List known limitations and distinguish build validation from real-hardware validation.
