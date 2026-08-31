@@ -5,9 +5,10 @@
 
 **[English](README.md) | [简体中文](README.zh-CN.md)**
 
-`mybot-esp32` is an independent ESP-IDF firmware project that brings the mybot AI voice-chat SDK
-to ESP32-S3 devices. It owns board initialization, Wi-Fi provisioning, persistent storage, secure
-HTTPS transport, audio capture/playback, input, display, and the firmware lifecycle around mybot.
+`mybot-esp32` is an independent ESP-IDF firmware project that brings the
+[mybot AI voice-chat SDK](https://github.com/junlon2006/mybot) to ESP32-S3 devices. It owns board
+initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, audio
+capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are Zhengchen
 1.54 TFT ML307 and M5Stack CoreS3.

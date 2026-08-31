@@ -5,9 +5,10 @@
 
 **[English](README.md) | [简体中文](README.zh-CN.md)**
 
-`mybot-esp32` 是一个独立的 ESP-IDF 固件工程，将 mybot AI 语音对话 SDK 运行在 ESP32-S3
-设备上。工程负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、
-显示，以及 mybot 外围的固件生命周期。
+`mybot-esp32` 是一个独立的 ESP-IDF 固件工程，将
+[mybot AI 语音对话 SDK](https://github.com/junlon2006/mybot) 运行在 ESP32-S3 设备上。工程
+负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
+mybot 外围的固件生命周期。
 
 当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 M5Stack CoreS3。
 
