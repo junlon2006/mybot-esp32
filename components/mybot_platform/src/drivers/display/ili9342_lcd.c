@@ -299,9 +299,11 @@ static int lcd_render(void *opaque, const mybot_lcd_content_t *content) {
         const int code_scale = code_length <= 11 ? 4 : 3;
         return draw_text_centered(128, content->pair_code, code_scale, foreground, background);
     }
-    if (content->screen == MYBOT_LCD_SCREEN_IN_CONVERSATION &&
-        (content->indicators & MYBOT_LCD_INDICATOR_VP_REGISTERED) != 0) {
-        return draw_text_centered(145, "VP SAVED", 2, RGB565(114, 255, 156), background);
+    if (content->screen == MYBOT_LCD_SCREEN_IN_CONVERSATION) {
+        const bool vp_registered = (content->indicators & MYBOT_LCD_INDICATOR_VP_REGISTERED) != 0;
+        return draw_text_centered(145, vp_registered ? "VP SAVED" : "VP REGISTERING", 2,
+                                  vp_registered ? RGB565(114, 255, 156) : RGB565(255, 211, 92),
+                                  background);
     }
     return 0;
 }

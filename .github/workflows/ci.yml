@@ -69,6 +69,9 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: espressif/idf:v5.5.2
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -100,16 +103,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain
-        run: test "$(idf.py --version)" = "ESP-IDF v5.5.2"
+        run: |
+          source /opt/esp/idf/export.sh >/dev/null
+          test "$(idf.py --version)" = "ESP-IDF v5.5.2"
       - name: Build ESP32-S3 firmware
         run: |
+          source /opt/esp/idf/export.sh >/dev/null
           idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} \
             -DMYBOT_BOARD=${{ matrix.board }} \
             -DSDKCONFIG=build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/sdkconfig \
             -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;${{ matrix.defaults }}" \
             build
       - name: Report size
-        run: idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} size
+        run: |
+          source /opt/esp/idf/export.sh >/dev/null
+          idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} size
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:

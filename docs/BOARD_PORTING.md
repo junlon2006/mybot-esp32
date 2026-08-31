@@ -70,9 +70,11 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
    bidirectional audio, input, display, hangup, and repeated start/stop validation.
 
 LCD `indicators` are non-exclusive overlays on the semantic base screen. Render recognized bits
-without changing the underlying workflow, ignore unknown bits, and preserve the existing layout
-when no supported indicator is set. `MYBOT_LCD_INDICATOR_VP_REGISTERED` is currently meaningful
-only on `MYBOT_LCD_SCREEN_IN_CONVERSATION`.
+without replacing the underlying workflow label and ignore unknown bits.
+`MYBOT_LCD_INDICATOR_VP_REGISTERED` is currently meaningful only on
+`MYBOT_LCD_SCREEN_IN_CONVERSATION`. The supported ESP32-S3 displays show voice-print registration
+in progress when the conversation screen has no registered indicator, then replace it with the
+registered status when `MYBOT_LCD_INDICATOR_VP_REGISTERED` is set.
 
 When capture and playback share one physical I2S peripheral, keep the peripheral and codec state in
 a ref-counted Board driver. The SDK initializes and destroys capture and playback independently,
