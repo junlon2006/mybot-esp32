@@ -1,4 +1,6 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd. */
+/* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
 
 #include <mybot/platform/mybot_lcd.h>

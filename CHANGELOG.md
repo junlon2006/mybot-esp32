@@ -15,19 +15,22 @@ Versioning and Conventional Commits.
 - Localized Wi-Fi provisioning prompts played after the configuration AP starts.
 - M5Stack CoreS3 Board profile with ILI9342 display, FT6336 touch input, and
   ES7210/AW88298 audio support.
+- Real-device CoreS3 provisioning and bidirectional voice validation.
 - Agora RTM login and voice-print registration status displayed during active conversations.
 - RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
 - AOSL socket DSCP support required by the RTSA 1.10.1 network implementation.
 - Voice-print registration-in-progress status shown immediately on the conversation screen.
-- Target firmware CI plus the upstream mybot sanitizer, coverage and documentation jobs.
+- Target firmware CI for both supported boards, both languages, and supported audio packet times.
 
 ### Changed
 
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
 - Sync the vendored mybot SDK to Unreleased commit `27324e7`, adding RTM channel subscription for
   voice-print status.
-- Update the AOSL baseline to `AgoraIO-Community/aosl` commit `84e0860` while retaining the
-  ESP32-S3 FreeRTOS, PSRAM, and board-specific adaptations.
+- Update the AOSL baseline while retaining the ESP32-S3 FreeRTOS, PSRAM, and board-specific
+  adaptations.
+- Align the bilingual project, contribution, support, porting, and release documentation with the
+  standalone ESP32 firmware scope.
 - Decouple network provisioning from mybot startup. Connectivity is now a prerequisite, and holding
   Boot stops mybot before provisioning, shows the Wi-Fi setup screen, and restarts mybot after the
   station obtains an IP address.
@@ -40,11 +43,12 @@ Versioning and Conventional Commits.
 
 ### Known limitations
 
-- Physical-device and bidirectional RTC validation is pending.
 - ML307/4G, wake words, battery and power management are not yet supported.
 
 ### Fixed
 
+- Correct the CoreS3-derived file licenses, add the missing esp-wifi-connect MIT text, and remove
+  stale Component Registry cache checksums from locally adapted components.
 - Start SNTP after Wi-Fi obtains an IP address so Agora logs use synchronized UTC timestamps
   instead of the Unix epoch.
 - Initialize lwIP and the default event loop before AOSL creates its internal socket-based signal

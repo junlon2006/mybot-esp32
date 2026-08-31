@@ -1,34 +1,57 @@
 # mybot-esp32
 
-mybot SDK 的 ESP32-S3 开源移植工程。当前开发基线为 ESP-IDF v5.5.2，支持 xiaozhi
-硬件基线中的征辰 1.54 TFT ML307 和 M5Stack CoreS3。
+[![CI](https://github.com/junlon2006/mybot-esp32/actions/workflows/ci.yml/badge.svg)](https://github.com/junlon2006/mybot-esp32/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/junlon2006/mybot-esp32)](LICENSE)
 
-## 当前能力
+**[English](README.md) | [简体中文](README.zh-CN.md)**
 
-- mybot 1.0.0 + Unreleased (`27324e7`) core 以原生 ESP-IDF component 方式构建。
-- 使用 Agora RTSA Lite 1.10.1 (build 1270872) 和 AOSL。
-- AOSL 包含 BK7258 移植验证过的 `aosl_ctor()` / `aosl_dtor()` 引用计数生命周期。
-- Wi-Fi STA 自动重连和首次启动 AP 配网门户。
-- NVS 持久化 mybot 设备凭据。
-- `esp-tls`、系统 CA bundle、SNI 和 hostname 校验的 HTTPS transport。
-- 征辰 1.54 TFT 板的 I2S0 扬声器、I2S1 麦克风、Boot/音量按键和 ST7789 状态屏。
-- M5Stack CoreS3 的 ES7210 麦克风、AW88298 扬声器、ILI9342 状态屏和 FT6336 触摸输入。
-- 0-100 扬声器音量控制，默认值为 70 并通过 NVS 持久化；征辰板使用平方软件增益和
-  音量按键，CoreS3 使用 AW88298 硬件音量。
-- 中英文配对码语音播报，使用内嵌 Ogg/Opus 资源并在运行时解码到 PSRAM。
-- 自动或用户请求进入配网模式时，播放所选语言的本地配网提示音。
-- 会话开始前完成 Agora RTM 登录，并在服务端确认声纹注册后于通话页面显示状态。
-- 16 kHz、单声道、signed 16-bit PCM，Cloud AEC 默认开启。
+`mybot-esp32` is an independent ESP-IDF firmware project that brings the mybot AI voice-chat SDK
+to ESP32-S3 devices. It owns board initialization, Wi-Fi provisioning, persistent storage, secure
+HTTPS transport, audio capture/playback, input, display, and the firmware lifecycle around mybot.
 
-板名包含 ML307，但 xiaozhi 对该板的首次启动默认同样选择 Wi-Fi。当前 Agora/AOSL socket
-后端依赖 lwIP，因此首个版本固定使用 Wi-Fi；ML307 AT socket 没有注册为 lwIP netif，4G RTC
-不在当前支持范围内。
+The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are Zhengchen
+1.54 TFT ML307 and M5Stack CoreS3.
 
-## 构建
+> Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
+> assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
+> redistributing source or firmware images.
+
+## Features
+
+- Native ESP-IDF component build of the pinned mybot SDK.
+- Wi-Fi station reconnect and first-boot captive-portal provisioning.
+- NVS persistence for device credentials and 0-100 speaker volume.
+- HTTPS through `esp-tls` with the system CA bundle, SNI, and hostname verification.
+- 16 kHz mono signed-16 PCM capture/playback with configurable 20/40/60 ms packet duration.
+- Agora RTSA full-duplex audio, Cloud AEC, AI QoS, RTM channel subscription, and voice-print status.
+- Chinese and English local pairing-code and Wi-Fi provisioning prompts.
+- Compile-time board profiles with isolated Flash, PSRAM, partition, driver, and pin configuration.
+
+## Supported Boards
+
+| Board profile | Audio | Display and input | Storage |
+| --- | --- | --- | --- |
+| `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
+| `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
+
+Both profiles currently use Wi-Fi networking. The ML307 UART is reserved by the Zhengchen hardware
+profile, but the modem AT socket is not an lwIP network interface and is not supported by the RTC
+transport.
+
+## Build
+
+Install ESP-IDF v5.5.2 by following the
+[official setup guide](https://docs.espressif.com/projects/esp-idf/en/v5.5.2/esp32s3/get-started/index.html),
+then activate that installation in the current shell:
 
 ```sh
-get_idf
-idf.py --version                 # 必须为 ESP-IDF v5.5.2
+. /path/to/esp-idf/export.sh
+test "$(idf.py --version)" = "ESP-IDF v5.5.2"
+```
+
+Use a separate build directory and generated sdkconfig for each board:
+
+```sh
 idf.py -B build/zhengchen-1.54tft-ml307 \
   -DMYBOT_BOARD=zhengchen-1.54tft-ml307 \
   -DSDKCONFIG=build/zhengchen-1.54tft-ml307/sdkconfig build
@@ -38,80 +61,98 @@ idf.py -B build/m5stack-core-s3 \
   -DSDKCONFIG=build/m5stack-core-s3/sdkconfig build
 ```
 
-当前默认 Board 为 `zhengchen-1.54tft-ml307`，但仍建议显式选择 Board 并使用隔离构建目录。
-Board profile 会自动追加对应的 Flash、PSRAM 和分区默认配置。不同 Board 必须使用不同的
-构建目录；新增 Board 的结构和约束见 [docs/BOARD_PORTING.md](docs/BOARD_PORTING.md)。
+The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
+Board defaults supply the required Flash, PSRAM, and partition settings.
 
-烧录和查看日志（将构建目录替换为目标 Board）：
+Flash and monitor the selected build:
 
 ```sh
 idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 ```
 
-首次启动且 NVS 没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
-`http://192.168.4.1` 完成配网。网络连接是 mybot 启动的先决条件，设备拿到 IP 后才启动
-mybot 服务；配网期间状态屏显示 `WIFI SETUP`。
+## Provisioning and Controls
 
-征辰板运行时长按 Boot 键 3 秒会请求配网，短按 Boot 键开始或结束对话。CoreS3 短触
-屏幕开始或结束对话，长按屏幕 3 秒请求配网。两块板都会先停止 mybot，再进入配网；
-重新拿到 IP 后自动启动 mybot。
+When NVS contains no Wi-Fi credentials, the device creates a configuration AP whose SSID starts
+with `mybot-`. Connect to it and open `http://192.168.4.1`. mybot starts only after the station has
+a usable IP address; the display shows `WIFI SETUP` while provisioning.
 
-服务端默认使用中国区：
+- Zhengchen: short-press Boot to start/stop a conversation; hold Boot for 3 seconds to provision.
+- CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
+
+A provisioning request stops mybot first. After Wi-Fi reconnects and obtains an IP address, the
+firmware starts mybot again.
+
+The default device-service endpoint is:
 
 ```text
 https://mybot.sh2.agoralab.co/api
 ```
 
-可通过 `idf.py -B build/zhengchen-1.54tft-ml307 menuconfig` 的 `mybot` 菜单切换中英文、服务地址、音频 ptime、Cloud AEC
-和 AI QoS。
+Use `idf.py -B <build-dir> menuconfig` and the `mybot` menu to select the language, endpoint, audio
+packet duration, Cloud AEC, and AI QoS.
 
-## 硬件
+## Hardware Notes
 
-### 征辰 1.54 TFT ML307
+### Zhengchen 1.54 TFT ML307
 
-| 能力 | 引脚/配置 |
+| Capability | Pins/configuration |
 | --- | --- |
-| 麦克风 I2S1 RX | WS GPIO4、BCLK GPIO5、DIN GPIO6 |
-| 扬声器 I2S0 TX | DOUT GPIO7、BCLK GPIO15、WS GPIO16 |
-| 按键 | Boot GPIO0、音量加 GPIO10、音量减 GPIO39 |
-| ST7789 | MOSI GPIO41、SCLK GPIO42、CS GPIO21、DC GPIO40、RESET GPIO45 |
-| 背光 | GPIO20 |
-| 电源保持 | GPIO2 输出高 |
-| ML307（预留） | ESP TX GPIO12、RX GPIO11 |
-
-目标模组配置按 xiaozhi 基线固定为 16 MB QIO Flash、8 MB Octal PSRAM、240 MHz CPU。
+| Microphone I2S1 RX | WS GPIO4, BCLK GPIO5, DIN GPIO6 |
+| Speaker I2S0 TX | DOUT GPIO7, BCLK GPIO15, WS GPIO16 |
+| Buttons | Boot GPIO0, volume up GPIO10, volume down GPIO39 |
+| ST7789 | MOSI GPIO41, SCLK GPIO42, CS GPIO21, DC GPIO40, RESET GPIO45 |
+| Backlight / power hold | GPIO20 / GPIO2 high |
+| ML307 UART (reserved) | ESP TX GPIO12, RX GPIO11 |
 
 ### M5Stack CoreS3
 
-| 能力 | 引脚/配置 |
+| Capability | Pins/configuration |
 | --- | --- |
-| 公共 I2C1 | SDA GPIO12、SCL GPIO11 |
-| ES7210/AW88298 I2S0 | MCLK GPIO0、BCLK GPIO34、WS GPIO33、DIN GPIO14、DOUT GPIO13 |
-| ILI9342 SPI3 | MOSI GPIO37、SCLK GPIO36、CS GPIO3、DC GPIO35 |
-| FT6336 触摸 | I2C 地址 `0x38`，20 ms 轮询 |
-| 电源与背光 | AXP2101，I2C 地址 `0x34` |
-| LCD/功放复位 | AW9523，I2C 地址 `0x58` |
+| Shared I2C1 | SDA GPIO12, SCL GPIO11 |
+| ES7210/AW88298 I2S0 | MCLK GPIO0, BCLK GPIO34, WS GPIO33, DIN GPIO14, DOUT GPIO13 |
+| ILI9342 SPI3 | MOSI GPIO37, SCLK GPIO36, CS GPIO3, DC GPIO35 |
+| FT6336 / AXP2101 / AW9523 | I2C addresses `0x38` / `0x34` / `0x58` |
 
-CoreS3 profile 固定为 16 MB QIO Flash、8 MB Quad PSRAM、240 MHz CPU。GPIO0 是音频
-MCLK，不作为按键使用。CoreS3 没有独立音量键，首版使用持久化设备音量。
+GPIO0 is audio MCLK on CoreS3 and is not used as a button. CoreS3 has no dedicated volume keys;
+the firmware restores its persisted device volume at startup.
 
-## 目录
+## Repository Layout
 
 ```text
-components/aosl/             AOSL v1.0.4 + ESP32-S3 平台适配
-components/agora_rtc/        ESP32-S3 Agora RTSA
-components/mybot_sdk/        mybot 到 ESP-IDF 的构建包装
-components/mybot_platform/   ESP-IDF common、可复用驱动和 Board profile
-third_party/mybot/           固定版本的 mybot 公共头与 core 源码
-main/                        固件入口和 Kconfig
+components/agora_rtc/        ESP32-S3 Agora RTSA package
+components/aosl/             AOSL with ESP32-S3 platform integration
+components/mybot_sdk/        ESP-IDF build wrapper for the mybot SDK
+components/mybot_platform/   Common services, reusable drivers, and board profiles
+third_party/mybot/           Pinned mybot public headers and core sources
+main/                        Firmware entry point and project Kconfig
 ```
 
-第三方来源和固定版本见 [VENDORED_SOURCES.md](VENDORED_SOURCES.md)，贡献和发布要求分别见
-[CONTRIBUTING.md](CONTRIBUTING.md) 与 [docs/RELEASING.md](docs/RELEASING.md)。
+## Validation and Limitations
 
-## 已知限制
+CI builds both board profiles, both languages, and 20/40/60 ms audio packet durations where
+applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have also been validated
+on real hardware. A successful build is not a substitute for hardware validation on a release
+device.
 
-- M5Stack CoreS3 尚未完成真实硬件烧录、双向 RTC 音频和长期运行验证。
-- CoreS3 摄像头、电池状态和自动休眠尚未接入。
-- ML307 网络、唤醒词、电池和低功耗尚未接入。
-- NVS encryption、Flash encryption 和 Secure Boot 需在产品烧录流程中配置。
+Known limitations:
+
+- ML307/4G networking, local wake words, battery reporting, and low-power operation are not wired up.
+- CoreS3 camera, battery reporting, and automatic sleep are not wired up.
+- NVS encryption, Flash encryption, and Secure Boot belong to the product provisioning process.
+
+## Documentation
+
+- [Board porting](docs/BOARD_PORTING.md)
+- [Contributing](CONTRIBUTING.md)
+- [Support](SUPPORT.md)
+- [Release checklist](docs/RELEASING.md)
+- [Vendored dependency baselines](VENDORED_SOURCES.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+
+## License and Dependencies
+
+Project-maintained code is licensed under [Apache-2.0](LICENSE) unless a file carries another SPDX
+identifier. The repository also contains dependencies and media assets under separate licenses or
+distribution terms, including AOSL and Agora RTSA. The root license does not override those terms.
+Review [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and every bundled license before use or
+redistribution.

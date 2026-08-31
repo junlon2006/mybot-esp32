@@ -1,66 +1,44 @@
-# Prerequisites
-*.d
+# ESP-IDF generated output
+/build/
+/build-*/
+/sdkconfig
+/sdkconfig.old
+/managed_components/
+/.cache/
+compile_commands.json
+*.bin
 
-# Object files
+# Compiled objects and libraries
+*.d
 *.o
-*.ko
 *.obj
 *.elf
-
-# Linker output
-*.ilk
 *.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
 *.a
-*.la
-*.lo
-!components/agora_rtc/lib/xtensa/libagora-rtc-sdk.a
-
-# Shared objects (inc. Windows DLLs)
-*.dll
 *.so
 *.so.*
 *.dylib
-
-# Executables
+*.dll
 *.exe
 *.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+!components/agora_rtc/lib/xtensa/libagora-rtc-sdk.a
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# Logs
+*.log
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swx
 
-# debug information files
-*.dwo
+# Patch leftovers
+*.orig
+*.rej
 
-# ESP-IDF generated files
-/build*/
-/sdkconfig
-/sdkconfig.old
-/.cache/
-*.bin
+# Operating-system metadata
+.DS_Store
+._*
 
-# Local Codex development guidance (do not publish)
+# Repository-local agent guidance; not part of public source changes
 /skills/
