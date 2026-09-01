@@ -28,7 +28,7 @@ static esp_err_t write_register(uint8_t reg, uint8_t value) {
 }
 
 static esp_err_t initialize_axp2101(void) {
-    /* Keep the non-C board reference power and charger sequence byte-for-byte. */
+    /* Keep the AMOLED 1.75 family reference power and charger sequence byte-for-byte. */
     static const uint8_t registers[][2] = {
         {0x22, 0x06}, {0x27, 0x10}, {0x80, 0x01}, {0x90, 0x00}, {0x91, 0x00}, {0x82, 0x12},
         {0x92, 0x1c}, {0x90, 0x01}, {0x64, 0x02}, {0x61, 0x02}, {0x62, 0x08}, {0x63, 0x01},
@@ -155,6 +155,7 @@ int mybot_amoled175_hardware_init(void) {
         return -1;
     }
 
+#if MYBOT_AMOLED175_HAS_TCA9554
     const esp_err_t probe =
         i2c_master_probe(s_hardware.bus, MYBOT_AMOLED175_TCA9554_ADDRESS, I2C_TIMEOUT_MS);
     if (probe == ESP_OK) {
@@ -176,11 +177,12 @@ int mybot_amoled175_hardware_init(void) {
         }
         return -1;
     }
+#endif
 
     s_hardware.initialized = true;
     ESP_LOGI(TAG,
-             "event=hardware action=initialize result=ok board_variant=non_c i2c_port=%d "
-             "axp2101=0x%02x",
+             "event=hardware action=initialize result=ok "
+             "board_variant=" MYBOT_AMOLED175_BOARD_VARIANT " i2c_port=%d axp2101=0x%02x",
              MYBOT_AMOLED175_I2C_PORT, MYBOT_AMOLED175_AXP2101_ADDRESS);
     return 0;
 }
