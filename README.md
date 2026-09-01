@@ -11,8 +11,8 @@ initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, 
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are the Zhengchen
-1.54 TFT ML307 and Wi-Fi variants, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800
-Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
+1.54 TFT ML307 and Wi-Fi variants, Waveshare ESP32-S3 Touch AMOLED 1.75, M5Stack CoreS3, M5Stack
+StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -35,6 +35,7 @@ Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
+| `esp32-s3-touch-amoled-1.75` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 and main button | 8 MB QIO Flash, 8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 and AIC3104 | XIAO Boot and XVF onboard buttons; no display | 8 MB Flash, 8 MB Octal PSRAM |
@@ -65,6 +66,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/zhengchen-1.54tft-wifi \
   -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
   -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/esp32-s3-touch-amoled-1.75 \
+  -DMYBOT_BOARD=esp32-s3-touch-amoled-1.75 \
+  -DSDKCONFIG=build/esp32-s3-touch-amoled-1.75/sdkconfig build
 
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
@@ -111,6 +116,8 @@ a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
 
 - Zhengchen ML307 and Wi-Fi: short-press Boot to start/stop a conversation; hold Boot for 3 seconds
   to provision. The volume buttons adjust and persist speaker volume.
+- Waveshare AMOLED 1.75: tap the display or short-press Boot to start/stop a conversation; hold
+  either input for 3 seconds to provision.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
 - StickS3: short-press the main button to start/stop a conversation; hold it for 3 seconds to
   provision.
@@ -156,6 +163,24 @@ inside the Board audio driver.
 
 GPIO9 charge status, GPIO8 battery ADC, temperature monitoring, automatic sleep, and low-power
 behavior are not part of the initial Wi-Fi profile.
+
+### Waveshare ESP32-S3 Touch AMOLED 1.75
+
+| Capability | Pins/configuration |
+| --- | --- |
+| Shared I2C0 | SDA GPIO15, SCL GPIO14; AXP2101 `0x34`, ES8311 `0x18`, ES7210 `0x40`, CST9217 `0x5a` |
+| ES7210/ES8311 I2S0 | MCLK GPIO42, BCLK GPIO9, WS GPIO45, DIN GPIO10, DOUT GPIO8; PA GPIO46 |
+| CO5300 QSPI | SPI2, CS GPIO12, CLK GPIO38, D0-D3 GPIO4/GPIO5/GPIO6/GPIO7, RESET GPIO39 |
+| Input | CST9217 RESET GPIO40 / INT GPIO11; Boot GPIO0 |
+
+This profile targets only the original non-C board with a 466 x 466 CO5300 panel and a (6, 0)
+display offset. It is not compatible with the 1.75C revision, which uses different audio MCLK, LCD
+reset, and touch-reset pins.
+
+The initial audio path configures the physical link directly at mybot's 16 kHz mono signed-16
+boundary, captures the ES7210 primary microphone slot, and keeps Cloud AEC enabled. The playback
+reference channel and local AEC are not exposed. RTC, IMU, TF card, battery reporting, automatic
+sleep, and power-off gestures are outside the initial profile.
 
 ### M5Stack CoreS3
 
@@ -230,15 +255,17 @@ main/                        Firmware entry point and project Kconfig
 
 CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
 applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
-real hardware. The Zhengchen Wi-Fi, M5Stack StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles
-have not yet completed real-device validation; a successful build is not a substitute for hardware
-validation on a release device.
+real hardware. The Zhengchen Wi-Fi, Waveshare AMOLED 1.75, M5Stack StickS3, ReSpeaker Flex, and
+SenseCAP Watcher profiles have not yet completed real-device validation; a successful build is not
+a substitute for hardware validation on a release device.
 
 Known limitations:
 
 - ML307/4G networking and local wake words are not wired up.
 - Zhengchen charge status, battery ADC, temperature monitoring, automatic sleep, and low-power
   operation are not wired up. The Wi-Fi profile's physical PSRAM capacity is not yet confirmed.
+- Waveshare AMOLED 1.75 support excludes the 1.75C revision and does not yet expose the playback
+  reference channel, local AEC, RTC, IMU, TF card, battery reporting, or low-power operation.
 - CoreS3 camera, battery reporting, and automatic sleep are not wired up.
 - StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power
   operation are not wired up.

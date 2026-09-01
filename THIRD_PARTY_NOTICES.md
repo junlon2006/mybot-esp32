@@ -13,6 +13,9 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif codec device 1.5.11 | Apache-2.0 | `components/esp_codec_dev` |
 | Espressif ILI9341 LCD driver 2.0.2 | Apache-2.0 | `components/esp_lcd_ili9341` |
 | Espressif SPD2010 LCD driver 2.0.0~1 | Apache-2.0 | `components/esp_lcd_spd2010` |
+| Espressif CO5300 LCD driver 2.1.0 | Apache-2.0 | `components/esp_lcd_co5300` |
+| Espressif LCD touch 1.2.1 | Apache-2.0 | `components/esp_lcd_touch` |
+| Waveshare CST9217 touch driver 1.0.4 | Apache-2.0 | `components/esp_lcd_touch_cst9217` |
 | Espressif IO expander 1.2.1 | Apache-2.0 | `components/esp_io_expander` |
 | Espressif TCA95xx 16-bit IO expander 2.0.2 | Apache-2.0 | `components/esp_io_expander_tca95xx_16bit` |
 | Espressif button 4.2.0 | Apache-2.0 | `components/button` |
@@ -24,6 +27,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | M5Stack StickS3-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
+| Waveshare AMOLED 1.75-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
 ## AOSL
@@ -94,6 +98,17 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 
 The vendored M5PM1 production sources retain the upstream M5Stack MIT license in
 `components/m5pm1/LICENSE`.
+
+The Waveshare ESP32-S3 Touch AMOLED 1.75 hardware mapping, AXP2101 sequence, CO5300 initialization,
+CST9217 integration, and codec routing are derived in part from the MIT-licensed
+`github.com/junlon2006/xiaozhi-esp32` reference at commit
+`2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0`. The following paths remain covered by its MIT terms;
+the complete copyright and permission notice is retained in
+`components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
+
+- `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75/`
+- `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`
+- `components/mybot_platform/src/drivers/display/amoled175_co5300_lcd.c`
 
 ## Vendored SDK Notice
 

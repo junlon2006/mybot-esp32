@@ -43,7 +43,8 @@ KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD�
 
 即使两块 Board 使用同一个 ESP-IDF target，也必须隔离构建。例如
 `zhengchen-1.54tft-ml307` 与 `zhengchen-1.54tft-wifi` 使用 16 MB Flash，并将 Octal PSRAM
-配置为 80 MHz；`m5stack-core-s3` 使用 16 MB Flash 与 Quad PSRAM；
+配置为 80 MHz；`esp32-s3-touch-amoled-1.75` 使用 16 MB Flash 与 8 MB Octal PSRAM；
+`m5stack-core-s3` 使用 16 MB Flash 与 Quad PSRAM；
 `respeaker-flex-xvf3800-circular4-xiao` 与 `m5stack-stick-s3` 使用 8 MB Flash 与 Octal
 PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
 
@@ -93,6 +94,20 @@ SDK 会分别初始化和销毁采集与播放；配网提示音也可能在 SDK
 速度、音调、稳定性、采集与全双工交互。如果必须使用 24 kHz 输出，应在 Board driver 内加入
 有状态的 16 kHz 到 24 kHz 重采样，并保持 SDK 契约不变。GPIO9 充电状态、GPIO8 电池 ADC、
 温度监测、休眠和低功耗不在首版范围。
+
+`esp32-s3-touch-amoled-1.75` profile 仅支持原始非 C 硬件。1.75C 的音频 MCLK、LCD reset
+与触摸 reset 引脚不同，未来接入时必须使用独立 Board profile。Board 常驻 I2C0 总线先完成
+AXP2101 上电，再由 CO5300、CST9217 与 codec 客户端挂接。RTC、IMU、TF 卡、电池状态和自动
+休眠不在首版范围。
+
+ES7210 与 ES8311 共用 I2S0 时钟域。首版只选择主麦，TX/RX 统一配置为两槽 16 kHz 标准
+I2S；采集提取左 slot，播放将单声道复制到两个 slot，并保持 Cloud AEC。仅采集时也必须保持
+TX 运行以提供 MCLK/BCLK/WS。播放参考输入与本地 AEC 不通过 mybot 音频接口暴露。
+
+CO5300 QSPI 使用 466 x 16 RGB565 全宽 DMA 条带和 (6, 0) panel gap，每次传输保持偶数像素
+边界；首版明确不引入完整 framebuffer 与 LVGL。CST9217 与 Boot 输入由 Board 常驻持有，使
+mybot 停止期间任一输入仍能请求配网。在非 C 发布硬件完成电源、音频 slot、显示和触摸验证前，
+该 profile 仅属于构建支持。
 
 ReSpeaker Flex profile 是硬件音频前端而非原始麦克风 codec 的示例。XVF3800 必须预先单独
 烧录 Circular-4 16 kHz 双通道 I2S 固件，并负责 AEC、波束成形、AGC 与降噪。ESP32-S3
