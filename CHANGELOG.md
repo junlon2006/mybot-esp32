@@ -22,6 +22,8 @@ Versioning and Conventional Commits.
 - Voice-print registration-in-progress status shown immediately on the conversation screen.
 - ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3 Board profile, including shared I2S audio,
   AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
+- SenseCAP Watcher Board profile with ES8311/ES7243E audio, SPD2010 status display, rotary input,
+  TCA9555 power sequencing, and a factory-data-preserving 32 MB partition layout.
 - Target firmware CI for all supported boards, both languages, and supported audio packet times.
 
 ### Changed
@@ -49,6 +51,8 @@ Versioning and Conventional Commits.
 - ReSpeaker Flex requires separately flashed XVF3800 Circular-4 16 kHz I2S firmware; hardware
   validation, Linear-4 support, XVF firmware update, LED-ring status, and LCD output are not yet
   complete.
+- SenseCAP Watcher real-device validation, camera, touch, LED, battery reporting, shutdown, and
+  low-power behavior are not yet complete.
 
 ### Fixed
 

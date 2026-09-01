@@ -10,8 +10,8 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307、M5Stack CoreS3，以及搭配
-XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4。
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307、M5Stack CoreS3、搭配
+XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -34,6 +34,7 @@ XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4。
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 与 AIC3104 | XIAO Boot 与 XVF 板载按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
+| `sensecap-watcher` | ES8311 与 ES7243E | SPD2010 与旋转编码器 | 32 MB QIO Flash、Octal PSRAM |
 
 所有 profile 当前均使用 Wi-Fi。征辰板预留 ML307 UART，但 Modem AT socket 不是 lwIP
 网络接口，当前 RTC 传输不支持该网络路径。
@@ -62,6 +63,10 @@ idf.py -B build/m5stack-core-s3 \
 idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
   -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
   -DSDKCONFIG=build/respeaker-flex-xvf3800-circular4-xiao/sdkconfig build
+
+idf.py -B build/sensecap-watcher \
+  -DMYBOT_BOARD=sensecap-watcher \
+  -DSDKCONFIG=build/sensecap-watcher/sdkconfig build
 ```
 
 默认 profile 是 `zhengchen-1.54tft-ml307`，但建议始终显式选择 Board。Board defaults 会
@@ -73,6 +78,16 @@ idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
 idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 ```
 
+首次烧录 SenseCAP Watcher 前，先备份其 200 KiB 出厂数据分区：
+
+```sh
+python -m esptool --chip esp32s3 --baud 2000000 --before default_reset \
+  --after hard_reset --no-stub read_flash 0x9000 204800 nvsfactory.bin
+```
+
+必须使用 `sensecap-watcher` profile 构建并通过 `idf.py flash` 烧录；不要对该设备执行
+`erase-flash`。擦除或替换 `nvsfactory` 区域可能永久丢失出厂标识和服务恢复数据。
+
 ## 配网与控制
 
 NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
@@ -83,6 +98,7 @@ NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。�
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
 - ReSpeaker Flex：短按 XIAO Boot 或 XVF 板载按键（GPI0/X1D09）开始/结束对话；长按任一
   按键 3 秒进入配网。
+- SenseCAP Watcher：旋转编码器调节音量，短按开始/结束对话，长按 3 秒进入配网。
 
 请求配网时固件会先停止 mybot；Wi-Fi 重新连接并获取 IP 后自动再次启动。
 
@@ -136,6 +152,19 @@ GPIO0 是 CoreS3 的音频 MCLK，不作为按键使用。CoreS3 没有独立音
 I2S 固件**。ESP32-S3 工作在 I2S 从机模式。GPIO43 与 GPIO44 由 I2S 占用，控制台应使用
 USB Serial/JTAG。声学处理由 XVF3800 完成，因此该 profile 禁用 Cloud AEC，避免重复 AEC。
 
+### SenseCAP Watcher
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| ES8311/ES7243E I2S0 | MCLK GPIO10、BCLK GPIO11、WS GPIO12、DIN GPIO15、DOUT GPIO16 |
+| 公共 I2C0 | SDA GPIO47、SCL GPIO48；TCA9555 地址 `0x21` |
+| SPD2010 QSPI | CLK GPIO7、D0 GPIO9、D1 GPIO1、D2 GPIO14、D3 GPIO13、CS GPIO45 |
+| 输入 / 背光 | 编码器 GPIO41/GPIO42、TCA9555 P0.3 编码器按键、背光 GPIO8 |
+
+此 profile 直接以 mybot 的 16 kHz 单声道 signed-16 边界驱动 codec。TCA9555 管理系统、LCD
+与 codec 功放的上电时序。专用 32 MB 分区表保留出厂数据区，并提供两个 4 MB OTA slot。
+首版不包含摄像头、触摸、LED、电池状态、关机手势和自动休眠。
+
 ## 目录结构
 
 ```text
@@ -150,8 +179,8 @@ main/                        固件入口与工程 Kconfig
 ## 验证与限制
 
 CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。ReSpeaker Flex profile 尚未完成真机验证；编译成功不能
-替代发布硬件上的真实设备验证。
+已完成真机配网与双向语音交互验证。ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成
+真机验证；编译成功不能替代发布硬件上的真实设备验证。
 
 已知限制：
 
@@ -159,6 +188,8 @@ CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音�
 - CoreS3 摄像头、电池状态与自动休眠尚未接入。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未
   支持 Linear-4、XVF3800 固件升级、LED 环状态显示与 LCD 输出。
+- SenseCAP Watcher 尚未支持摄像头、触摸、LED、电池状态、关机与低功耗；烧录时必须保留
+  出厂数据分区。
 - NVS encryption、Flash encryption 与 Secure Boot 由产品烧录流程配置。
 
 ## 文档

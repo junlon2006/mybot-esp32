@@ -10,6 +10,12 @@ set(component_srcs
     "platform/esp_codec_dev_os.c"
 )
 
+if(CONFIG_CODEC_ES8311_SUPPORT)
+    list(APPEND component_srcs "device/es8311/es8311.c")
+endif()
+if(CONFIG_CODEC_ES7243E_SUPPORT)
+    list(APPEND component_srcs "device/es7243e/es7243e.c")
+endif()
 if(CONFIG_CODEC_ES7210_SUPPORT)
     list(APPEND component_srcs "device/es7210/es7210.c")
 endif()

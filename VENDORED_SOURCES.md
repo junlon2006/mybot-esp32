@@ -12,7 +12,11 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/esp_audio_codec` | ESP Component Registry `espressif/esp_audio_codec` | 2.5.0, commit `3bb83597d07b604e1ab5b78dd4370a28d6fa802d` |
 | `components/esp_codec_dev` | `github.com/espressif/esp-adf` | 1.5.11, commit `73befa9ebffdd6e5065b7145329f115910e13ab5` |
 | `components/esp_lcd_ili9341` | `github.com/espressif/esp-bsp` | 2.0.2, commit `fc8bd325efcdef6d5802554659debba303058af6` |
+| `components/esp_lcd_spd2010` | ESP Component Registry `espressif/esp_lcd_spd2010` | 2.0.0~1, commit `12f6ca1182ec48889b17ec570fadaaf267cb336e` |
+| `components/esp_io_expander` | ESP Component Registry `espressif/esp_io_expander` | 1.2.1, commit `eb76dc6ecf21ccc4ee7ee58bfea3d3d31fa090cf` |
+| `components/esp_io_expander_tca95xx_16bit` | ESP Component Registry `espressif/esp_io_expander_tca95xx_16bit` | 2.0.2, commit `53f6127ba3a1dd80fbdf9a76b759ccd1a8dc0101` |
 | `components/button` | ESP Component Registry `espressif/button` | 4.2.0, commit `5f9cb98ae4d0e8153c4b4d1accf471214e5b6fe8` |
+| `components/knob` | ESP Component Registry `espressif/knob` | 1.1.0, commit `5f9cb98ae4d0e8153c4b4d1accf471214e5b6fe8` |
 | `components/cmake_utilities` | ESP Component Registry `espressif/cmake_utilities` | 0.5.0 |
 | `components/mybot_platform/assets` | `github.com/junlon2006/mybot-bk7258` | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
 
@@ -22,6 +26,7 @@ their application layer and dependency set are not vendored into this repository
 | Paths | Source | Pinned revision |
 | --- | --- | --- |
 | `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao`, `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`, `partitions/v2/8m.csv` | `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` | commit `b06024382eb104c998aead4841e1df647193065b` |
+| `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/spd2010_lcd.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 
 Firmware integration differences are limited to the active ESP32-S3 build:
 
@@ -29,9 +34,14 @@ Firmware integration differences are limited to the active ESP32-S3 build:
   DSCP/TOS support required by the bundled RTSA package.
 - Component Registry manifests and download-cache checksum metadata are omitted because dependencies
   are local or supplied by ESP-IDF v5.5.2.
-- The codec-device source set contains only the common adapters and devices used by supported boards.
+- The codec-device source set contains only the common adapters and ES8311, ES7243E, ES7210, and
+  AW88298 devices used by supported boards; codec-setting errors are propagated to platform callers.
+- The TCA95xx constructor removes its I2C device if register reset fails.
+- The SenseCAP profile uses explicit IO-expander calls and disables the optional global GPIO API
+  wrapper.
 - The Wi-Fi component accepts an explicit provisioning SSID and waits for its DNS worker at teardown.
-- The button component defines its pinned version macros without the Component Registry manifest.
+- The button, knob, and SPD2010 components define their pinned version macros without Component
+  Registry manifests.
 
 When updating a dependency, update this file and `THIRD_PARTY_NOTICES.md`, build from a clean
 sdkconfig, and report the board validation performed.

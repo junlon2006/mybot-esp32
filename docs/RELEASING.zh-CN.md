@@ -30,6 +30,8 @@ git diff --check
 - [ ] 负向测试无效 CA、hostname 不匹配、TLS 超时、NVS 值缺失与 Wi-Fi 丢失。
 - [ ] 确认日志与发布归档不包含任何凭据。
 - [ ] 确认发布配置采用预期的 NVS/Flash encryption 与 Secure Boot 策略。
+- [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不
+      改变该区域，且发布流程不得包含 `erase-flash`。
 
 ## 发布
 

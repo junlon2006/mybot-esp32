@@ -12,11 +12,16 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif audio codec 2.5.0 | Espressif Modified MIT and file-specific terms | `components/esp_audio_codec` |
 | Espressif codec device 1.5.11 | Apache-2.0 | `components/esp_codec_dev` |
 | Espressif ILI9341 LCD driver 2.0.2 | Apache-2.0 | `components/esp_lcd_ili9341` |
+| Espressif SPD2010 LCD driver 2.0.0~1 | Apache-2.0 | `components/esp_lcd_spd2010` |
+| Espressif IO expander 1.2.1 | Apache-2.0 | `components/esp_io_expander` |
+| Espressif TCA95xx 16-bit IO expander 2.0.2 | Apache-2.0 | `components/esp_io_expander_tca95xx_16bit` |
 | Espressif button 4.2.0 | Apache-2.0 | `components/button` |
+| Espressif knob 1.1.0 | Apache-2.0 | `components/knob` |
 | Espressif CMake utilities 0.5.0 | Apache-2.0 | `components/cmake_utilities` |
 | Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets`, `components/mybot_platform/src/common/ogg_opus_decoder.c` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
+| SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
 ## AOSL
@@ -63,6 +68,17 @@ the complete copyright and permission notice is retained in
 - `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao/`
 - `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`
 - `partitions/v2/8m.csv`
+
+The SenseCAP Watcher hardware mapping, codec integration, SPD2010 display integration, and partition
+layout are derived in part from the MIT-licensed `github.com/junlon2006/xiaozhi-esp32` reference at
+commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0`. The following paths remain covered by its MIT terms;
+the complete copyright and permission notice is retained in
+`components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
+
+- `components/mybot_platform/boards/sensecap-watcher/`
+- `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`
+- `components/mybot_platform/src/drivers/display/spd2010_lcd.c`
+- `partitions/v2/32m-sensecap.csv`
 
 ## Vendored SDK Notice
 

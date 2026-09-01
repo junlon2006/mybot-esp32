@@ -11,7 +11,8 @@ initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, 
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are Zhengchen
-1.54 TFT ML307, M5Stack CoreS3, and ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3.
+1.54 TFT ML307, M5Stack CoreS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and
+SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -35,6 +36,7 @@ The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 and AIC3104 | XIAO Boot and XVF onboard buttons; no display | 8 MB Flash, 8 MB Octal PSRAM |
+| `sensecap-watcher` | ES8311 and ES7243E | SPD2010 and rotary encoder | 32 MB QIO Flash, Octal PSRAM |
 
 All profiles currently use Wi-Fi networking. The ML307 UART is reserved by the Zhengchen hardware
 profile, but the modem AT socket is not an lwIP network interface and is not supported by the RTC
@@ -65,6 +67,10 @@ idf.py -B build/m5stack-core-s3 \
 idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
   -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
   -DSDKCONFIG=build/respeaker-flex-xvf3800-circular4-xiao/sdkconfig build
+
+idf.py -B build/sensecap-watcher \
+  -DMYBOT_BOARD=sensecap-watcher \
+  -DSDKCONFIG=build/sensecap-watcher/sdkconfig build
 ```
 
 The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
@@ -76,6 +82,17 @@ Flash and monitor the selected build:
 idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 ```
 
+Before first flashing a SenseCAP Watcher, back up its 200 KiB factory-data partition:
+
+```sh
+python -m esptool --chip esp32s3 --baud 2000000 --before default_reset \
+  --after hard_reset --no-stub read_flash 0x9000 204800 nvsfactory.bin
+```
+
+Always build the `sensecap-watcher` profile and use `idf.py flash`; never run `erase-flash` on this
+device. Erasing or replacing the `nvsfactory` region can permanently remove factory identifiers and
+service-recovery data.
+
 ## Provisioning and Controls
 
 When NVS contains no Wi-Fi credentials, the device creates a configuration AP whose SSID starts
@@ -86,6 +103,8 @@ a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
 - ReSpeaker Flex: short-press XIAO Boot or the XVF onboard button (GPI0/X1D09) to start/stop a
   conversation; hold either button for 3 seconds to provision.
+- SenseCAP Watcher: rotate the encoder to adjust volume, short-press it to start/stop a conversation,
+  and hold it for 3 seconds to provision.
 
 A provisioning request stops mybot first. After Wi-Fi reconnects and obtains an IP address, the
 firmware starts mybot again.
@@ -142,6 +161,20 @@ before this profile can capture or play audio. The ESP32-S3 is the I2S slave. GP
 reserved for I2S, so use USB Serial/JTAG for the console. XVF3800 performs the acoustic processing;
 Cloud AEC is disabled for this profile to avoid applying AEC twice.
 
+### SenseCAP Watcher
+
+| Capability | Pins/configuration |
+| --- | --- |
+| ES8311/ES7243E I2S0 | MCLK GPIO10, BCLK GPIO11, WS GPIO12, DIN GPIO15, DOUT GPIO16 |
+| Shared I2C0 | SDA GPIO47, SCL GPIO48; TCA9555 at `0x21` |
+| SPD2010 QSPI | CLK GPIO7, D0 GPIO9, D1 GPIO1, D2 GPIO14, D3 GPIO13, CS GPIO45 |
+| Input / backlight | Encoder GPIO41/GPIO42, encoder button on TCA9555 P0.3, backlight GPIO8 |
+
+The profile drives the codec bus directly at mybot's 16 kHz mono signed-16 boundary. TCA9555 owns
+the system, LCD, and codec-amplifier power sequence. The dedicated 32 MB partition table preserves
+the factory-data region and provides two 4 MB OTA slots. Camera, touch, LED, battery reporting,
+power-off gestures, and automatic sleep are not part of the initial port.
+
 ## Repository Layout
 
 ```text
@@ -157,8 +190,8 @@ main/                        Firmware entry point and project Kconfig
 
 CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
 applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
-real hardware. The ReSpeaker Flex profile has not yet completed real-device validation; a successful
-build is not a substitute for hardware validation on a release device.
+real hardware. The ReSpeaker Flex and SenseCAP Watcher profiles have not yet completed real-device
+validation; a successful build is not a substitute for hardware validation on a release device.
 
 Known limitations:
 
@@ -167,6 +200,8 @@ Known limitations:
 - ReSpeaker Flex support is limited to Circular-4 and requires separately flashed XVF3800 16 kHz
   I2S firmware; Linear-4, XVF3800 firmware update, LED-ring status, and LCD output are not
   implemented.
+- SenseCAP Watcher camera, touch, LED, battery reporting, shutdown, and low-power operation are not
+  implemented. Its factory-data partition must be preserved when flashing.
 - NVS encryption, Flash encryption, and Secure Boot belong to the product provisioning process.
 
 ## Documentation

@@ -318,17 +318,18 @@ int esp_codec_dev_set_out_vol(esp_codec_dev_handle_t handle, int volume)
     }
     const audio_codec_if_t *codec = dev->codec_if;
     float db_value = _get_vol_db(&dev->vol_curve, volume);
-    dev->volume = volume;
     // Prefer to use software volume setting
     if (dev->sw_vol) {
-        dev->sw_vol->set_vol(dev->sw_vol, db_value);
-        return ESP_CODEC_DEV_OK;
+        ret = dev->sw_vol->set_vol(dev->sw_vol, db_value);
+    } else if (codec && codec->set_vol) {
+        ret = codec->set_vol(codec, db_value);
+    } else {
+        return ESP_CODEC_DEV_NOT_SUPPORT;
     }
-    if (codec && codec->set_vol) {
-        codec->set_vol(codec, db_value);
-        return ESP_CODEC_DEV_OK;
+    if (ret == ESP_CODEC_DEV_OK) {
+        dev->volume = volume;
     }
-    return ESP_CODEC_DEV_NOT_SUPPORT;
+    return ret;
 }
 
 int esp_codec_dev_set_vol_handler(esp_codec_dev_handle_t handle, const audio_codec_vol_if_t *vol_handler)
@@ -418,9 +419,11 @@ int esp_codec_dev_set_in_gain(esp_codec_dev_handle_t handle, float db)
     }
     const audio_codec_if_t *codec = dev->codec_if;
     if (codec && codec->set_mic_gain) {
-        codec->set_mic_gain(codec, (int) db);
-        dev->mic_gain = db;
-        return ESP_CODEC_DEV_OK;
+        ret = codec->set_mic_gain(codec, (int)db);
+        if (ret == ESP_CODEC_DEV_OK) {
+            dev->mic_gain = db;
+        }
+        return ret;
     }
     return ESP_CODEC_DEV_NOT_SUPPORT;
 }
@@ -437,8 +440,7 @@ int esp_codec_dev_set_in_channel_gain(esp_codec_dev_handle_t handle, uint16_t ch
     }
     const audio_codec_if_t *codec = dev->codec_if;
     if (codec && codec->set_mic_channel_gain) {
-        codec->set_mic_channel_gain(codec, channel_mask, (int) db);
-        return ESP_CODEC_DEV_OK;
+        return codec->set_mic_channel_gain(codec, channel_mask, (int)db);
     }
     return ESP_CODEC_DEV_NOT_SUPPORT;
 }
@@ -509,21 +511,31 @@ int esp_codec_dev_close(esp_codec_dev_handle_t handle)
     if (dev->output_opened == false && dev->input_opened == false) {
         return ESP_CODEC_DEV_OK;
     }
+    int ret = ESP_CODEC_DEV_OK;
     const audio_codec_if_t *codec = dev->codec_if;
     if (dev->disable_when_closed && codec) {
         if (codec->enable) {
-            codec->enable(codec, false);
+            int disable_ret = codec->enable(codec, false);
+            if (disable_ret != ESP_CODEC_DEV_OK) {
+                ret = disable_ret;
+            }
         }
     }
     const audio_codec_data_if_t *data_if = dev->data_if;
     if (data_if->enable) {
-        data_if->enable(data_if, dev->dev_caps, false);
+        int disable_ret = data_if->enable(data_if, dev->dev_caps, false);
+        if (ret == ESP_CODEC_DEV_OK && disable_ret != ESP_CODEC_DEV_OK) {
+            ret = disable_ret;
+        }
     }
     if (dev->sw_vol) {
-        dev->sw_vol->close(dev->sw_vol);
+        int close_ret = dev->sw_vol->close(dev->sw_vol);
+        if (ret == ESP_CODEC_DEV_OK && close_ret != ESP_CODEC_DEV_OK) {
+            ret = close_ret;
+        }
     }
     dev->output_opened = dev->input_opened = false;
-    return ESP_CODEC_DEV_OK;
+    return ret;
 }
 
 void esp_codec_dev_delete(esp_codec_dev_handle_t handle)
