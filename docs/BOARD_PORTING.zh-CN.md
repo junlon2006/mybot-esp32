@@ -43,8 +43,9 @@ KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD�
 
 即使两块 Board 使用同一个 ESP-IDF target，也必须隔离构建。例如
 `zhengchen-1.54tft-ml307` 与 `zhengchen-1.54tft-wifi` 使用 16 MB Flash，并将 Octal PSRAM
-配置为 80 MHz；`esp32-s3-touch-amoled-1.75` 与 `esp32-s3-touch-amoled-1.75c` 均使用安全的
-16 MB Flash profile 与 8 MB Octal PSRAM；
+配置为 80 MHz；`esp-vocat` 使用 16 MB Flash 与 80 MHz Octal PSRAM；
+`esp32-s3-touch-amoled-1.75` 与 `esp32-s3-touch-amoled-1.75c` 均使用安全的 16 MB Flash
+profile 与 8 MB Octal PSRAM；
 `m5stack-core-s3` 使用 16 MB Flash 与 Quad PSRAM；
 `respeaker-flex-xvf3800-circular4-xiao` 与 `m5stack-stick-s3` 使用 8 MB Flash 与 Octal
 PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
@@ -95,6 +96,27 @@ SDK 会分别初始化和销毁采集与播放；配网提示音也可能在 SDK
 速度、音调、稳定性、采集与全双工交互。如果必须使用 24 kHz 输出，应在 Board driver 内加入
 有状态的 16 kHz 到 24 kHz 重采样，并保持 SDK 契约不变。GPIO9 充电状态、GPIO8 电池 ADC、
 温度监测、休眠和低功耗不在首版范围。
+
+`esp-vocat` 在一个编译期 Board profile 中支持 PCB V1.0 与 V1.2，因为两个版本使用相同的
+target、存储、分区与 component 配置。这属于运行时硬件版本探测，不是运行时 Board 选择。
+Board prepare 在 GPIO2/GPIO1 创建原生 I2C0，将 GPIO48 拉低并等待 50 ms，然后探测 `0x18`
+的 ES8311；成功时冻结 V1.0 映射，否则将 GPIO48 拉高并重试 V1.2。两次探测都失败时必须终止
+prepare。冻结版本映射前不得初始化音频、显示或存在复用冲突的 GPIO。
+
+V1.0 使用音频 DIN GPIO15、PA GPIO4 与 GPIO3 低有效 LCD reset；V1.2 使用 DIN GPIO3、
+PA GPIO15 与 GPIO47 高有效 reset。GPIO9 以低电平启用外设电源。GPIO43/GPIO44 与默认
+UART0 控制台及板载 LED/背光接线重叠，因此该 profile 使用 USB Serial/JTAG。
+
+ESP-VoCat 采集与播放使用相同的两槽标准 I2S 时钟，直接运行在 SDK 的 16 kHz 采样率。采集
+提取 MIC1/slot0，播放将单声道复制到两个 TX slot；仅采集时也必须保持 TX 运行以
+提供共享时钟。如果发布硬件无法稳定使用 16 kHz，应在该 driver 内实现有状态的 24 到 16 kHz
+与 16 到 24 kHz 转换，不改变 mybot 契约。
+
+360 x 360 ST77916 圆屏使用 Board 专用初始化序列与全宽 RGB565 DMA 条带。CST816S 使用
+GPIO10 任意沿中断，仅在事件后读取控制器；20 ms 定时检查只在按住期间运行，用于识别 3 秒
+长按。该 profile 禁止 CST816S ID 读取，因为已支持的触摸固件批次不保证响应该寄存器。
+CST816S 与 Boot 输入由 Board 常驻持有，使 mybot 停止期间仍可长按配网。电量、BMI270、
+PCB 电容控制、SD、LED 行为、摄像头扩展、本地 AEC、参考音频、关机与低功耗均不在首版范围。
 
 `esp32-s3-touch-amoled-1.75` 与 `esp32-s3-touch-amoled-1.75c` profile 共用 Board 生命周期、
 AXP2101、音频、CO5300 与 CST9217 实现，但保留独立身份和引脚头文件。原始版使用音频 MCLK

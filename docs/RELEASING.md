@@ -35,6 +35,13 @@ git diff --check
       test GPIO2 power hold, ST7789 output, Boot and volume buttons, and verify GPIO11/GPIO12 remain
       unused. Validate 16 kHz capture/playback speed, pitch, stability, and full-duplex interaction
       against the hardware's 24 kHz speaker-output requirement.
+- [ ] For ESP-VoCat, test PCB V1.0 and V1.2 separately. Verify GPIO48 detection, revision-specific
+      DIN/PA/LCD-reset pins and reset polarity, GPIO9 peripheral power, USB Serial/JTAG logging,
+      detected Flash/PSRAM capacity, the ST77916 initialization/colors/round edges/backlight,
+      CST816S press/release interrupt edges without startup ID reads, Boot provisioning while mybot
+      is stopped, primary-mic slot routing, 16 kHz full-duplex audio, PA pop/noise, Cloud AEC,
+      volume persistence, and repeated start/stop.
+      Record any display-touch batch that requires the vendor touch-firmware update.
 - [ ] For Waveshare AMOLED 1.75, use only the non-C profile; test USB and battery boot, AXP2101
       rails and charger settings, 8 MB PSRAM detection, MCLK GPIO42, LCD reset GPIO39, touch reset
       GPIO40, optional TCA9554 detection, ES7210 primary-mic routing, 16 kHz full-duplex audio, PA

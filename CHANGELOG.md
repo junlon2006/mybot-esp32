@@ -14,6 +14,9 @@ Versioning and Conventional Commits.
   display, CST9217 touch input, and ES7210/ES8311 audio.
 - Waveshare ESP32-S3 Touch AMOLED 1.75C Board profile with revision-specific audio MCLK, display
   reset, and touch-reset pins, sharing the established power, audio, display, and input drivers.
+- Espressif ESP-VoCat Board profile with PCB V1.0/V1.2 runtime detection, ST77916 QSPI display,
+  CST816S touch input, and ES7210/ES8311 full-duplex audio.
+- Pinned ST77916 2.0.2 and CST816S 1.1.1~1 production components.
 - Pinned CO5300 2.1.0, LCD touch 1.2.1, and CST9217 1.0.4 production components.
 - mybot 1.0.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
@@ -62,6 +65,9 @@ Versioning and Conventional Commits.
 - Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback
   validation, charge/battery inputs, temperature monitoring, and power management are not yet
   complete.
+- ESP-VoCat real-device validation for both PCB revisions is not yet complete. Battery reporting,
+  IMU, PCB capacitive controls, SD card, LED, camera expansion, local AEC, reference audio,
+  shutdown, and low-power behavior are not supported by the initial profile.
 - Waveshare AMOLED 1.75 and 1.75C real-device validation, playback-reference input, local AEC,
   battery reporting, and low-power operation are not yet complete. The 1.75C profile does not
   support RTC, IMU, TF card, or TCA9554 and conservatively addresses 16 MB of Flash pending

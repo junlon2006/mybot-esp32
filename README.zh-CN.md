@@ -10,9 +10,9 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、Waveshare
-ESP32-S3 Touch AMOLED 1.75 与 1.75C、M5Stack CoreS3、M5Stack StickS3、搭配 XIAO
-ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、Espressif
+ESP-VoCat、Waveshare ESP32-S3 Touch AMOLED 1.75 与 1.75C、M5Stack CoreS3、M5Stack
+StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -34,6 +34,7 @@ ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、80 MHz Octal PSRAM |
+| `esp-vocat` | ES7210 与 ES8311 | ST77916、CST816S 触摸与 Boot | 16 MB QIO Flash、80 MHz Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75c` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 安全的 16 MB QIO Flash profile、8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
@@ -65,6 +66,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/zhengchen-1.54tft-wifi \
   -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
   -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/esp-vocat \
+  -DMYBOT_BOARD=esp-vocat \
+  -DSDKCONFIG=build/esp-vocat/sdkconfig build
 
 idf.py -B build/esp32-s3-touch-amoled-1.75 \
   -DMYBOT_BOARD=esp32-s3-touch-amoled-1.75 \
@@ -118,6 +123,7 @@ NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。�
 
 - 征辰 ML307 与 Wi-Fi：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并
   持久化扬声器音量。
+- ESP-VoCat：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒进入配网。
 - Waveshare AMOLED 1.75 与 1.75C：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒
   进入配网。
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
@@ -161,6 +167,29 @@ slot。板卡原始扬声器配置使用 24 kHz 输出，因此必须通过真�
 
 首版 Wi-Fi profile 不包含 GPIO9 充电状态、GPIO8 电池 ADC、温度监测、自动休眠和低功耗
 能力。
+
+### Espressif ESP-VoCat
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| 公共 I2C0 | SDA GPIO2、SCL GPIO1；ES8311 `0x18`、ES7210 `0x40`、CST816S `0x15` |
+| ES7210/ES8311 I2S0 | MCLK GPIO42、BCLK GPIO40、WS GPIO39、DOUT GPIO41 |
+| ST77916 QSPI | SPI2、CLK GPIO18、CS GPIO14、D0-D3 GPIO46/GPIO13/GPIO11/GPIO12、背光 GPIO44 |
+| 输入/电源 | CST816S INT GPIO10、Boot GPIO0、低有效外设电源 GPIO9 |
+
+profile 会在初始化显示与音频前探测 PCB 版本。V1.0 使用音频 DIN GPIO15、PA GPIO4 与
+GPIO3 低有效 LCD reset；V1.2 使用 DIN GPIO3、PA GPIO15 与 GPIO47 高有效 LCD reset。如果
+GPIO48 两种电源状态都无法探测到 `0x18` 的 ES8311，Board prepare 会直接失败，不会选择可能
+驱动冲突引脚的默认版本。
+
+360 x 360 圆屏使用专用 ST77916 初始化序列与条带 DMA 渲染，不依赖 framebuffer、LVGL 或
+外部动画资源。ESP32-S3 默认 UART0 引脚与背光及板载 LED 重叠，因此控制台使用 USB
+Serial/JTAG。
+
+物理音频链路直接使用 mybot 的 16 kHz 边界。采集与播放共享两槽标准 I2S 时钟域；采集仅向
+SDK 暴露主麦 slot，播放将单声道复制到两个输出 slot。第二麦克风、播放参考通道、本地 AEC、
+电量计、IMU、PCB 电容滑条、SD 卡、摄像头扩展和低功耗不在首版范围。当前生产资料标识
+16 MB PSRAM 模组，但发布前仍需通过启动日志确认实际 PSRAM 容量和两个 PCB 版本的引脚映射。
 
 ### Waveshare ESP32-S3 Touch AMOLED 1.75 与 1.75C
 
@@ -257,15 +286,17 @@ main/                        固件入口与工程 Kconfig
 ## 验证与限制
 
 CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。征辰 Wi-Fi、两个 Waveshare AMOLED 1.75 硬件版本、
-M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；编译成功
-不能替代发布硬件上的真实设备验证。
+已完成真机配网与双向语音交互验证。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
+硬件版本、M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
+编译成功不能替代发布硬件上的真实设备验证。
 
 已知限制：
 
 - ML307/4G 网络与本地唤醒词尚未接入。
 - 征辰板充电状态、电池 ADC、温度监测、自动休眠与低功耗尚未接入；Wi-Fi profile 的实际
   PSRAM 容量尚未确认。
+- ESP-VoCat 尚未接入电量、IMU、PCB 电容控制、SD 卡、LED、摄像头扩展、本地 AEC、参考
+  音频、关机与低功耗；PCB V1.0 还有固件无法修复的已知硬件供电稳定性问题。
 - Waveshare AMOLED 1.75 与 1.75C 尚未接入播放参考通道、本地 AEC、电池状态与低功耗；
   1.75C profile 不支持 RTC、IMU、TF 卡与 TCA9554。
 - CoreS3 摄像头、电池状态与自动休眠尚未接入。

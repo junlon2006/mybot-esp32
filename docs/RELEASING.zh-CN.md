@@ -33,6 +33,11 @@ git diff --check
 - [ ] 对征辰 Wi-Fi，通过启动日志确认 16 MB Flash 与实际 PSRAM 容量；验证 GPIO2 电源保持、
       ST7789、Boot 与音量按键，并确认 GPIO11/GPIO12 保持未使用。结合硬件的 24 kHz 扬声器
       输出要求，验证 16 kHz 采集/播放的速度、音调、稳定性与全双工交互。
+- [ ] 对 ESP-VoCat，分别验证 PCB V1.0 与 V1.2。确认 GPIO48 探测、各版本 DIN/PA/LCD reset
+      引脚与 reset 极性、GPIO9 外设电源、USB Serial/JTAG 日志、实际 Flash/PSRAM 容量、
+      ST77916 初始化/颜色/圆屏边缘/背光、CST816S 按下/释放中断且启动不读取 ID、mybot 停止
+      期间 Boot 配网、主麦 slot 路由、16 kHz 全双工、PA 爆音/噪声、Cloud AEC、音量持久化
+      和反复启停。对需要厂商触摸固件升级的屏幕批次单独记录。
 - [ ] 对 Waveshare AMOLED 1.75，仅使用非 C profile；验证 USB 与电池启动、AXP2101 电源轨
       和充电配置、8 MB PSRAM、MCLK GPIO42、LCD reset GPIO39、触摸 reset GPIO40、可选
       TCA9554 探测、ES7210 主麦路由、16 kHz 全双工音频、PA 爆音/噪声、CO5300

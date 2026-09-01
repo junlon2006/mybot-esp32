@@ -45,9 +45,9 @@ settings that do not satisfy the selected profile.
 
 This is required even for Boards sharing the same ESP-IDF target. For example, the
 `zhengchen-1.54tft-ml307` and `zhengchen-1.54tft-wifi` profiles use 16 MB Flash and configure Octal
-PSRAM at 80 MHz, the `esp32-s3-touch-amoled-1.75` and `esp32-s3-touch-amoled-1.75c` profiles use a
-safe 16 MB Flash profile and 8 MB Octal PSRAM, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM,
-and
+PSRAM at 80 MHz, `esp-vocat` uses 16 MB Flash and Octal PSRAM at 80 MHz, the
+`esp32-s3-touch-amoled-1.75` and `esp32-s3-touch-amoled-1.75c` profiles use a safe 16 MB Flash
+profile and 8 MB Octal PSRAM, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
 `m5stack-stick-s3` and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
 
@@ -103,6 +103,33 @@ output, so real-device acceptance must cover playback speed, pitch, stability, c
 full-duplex interaction. If 24 kHz output is required, add stateful 16-to-24 kHz resampling inside
 the Board driver and keep the SDK contract unchanged. GPIO9 charge status, GPIO8 battery ADC,
 temperature monitoring, sleep, and low-power behavior remain outside the initial profile.
+
+The `esp-vocat` profile supports PCB V1.0 and V1.2 under one compile-time Board because they share
+the same target, storage, partition, and component configuration. This is runtime hardware-revision
+detection, not runtime Board selection. Board preparation creates native I2C0 on GPIO2/GPIO1, drives
+GPIO48 low, waits 50 ms, and probes ES8311 at `0x18`. A successful probe freezes the V1.0 map;
+otherwise it drives GPIO48 high and retries for V1.2. If both probes fail, preparation must fail.
+No audio, display, or conflicting GPIO may initialize before the revision map is frozen.
+
+V1.0 selects audio DIN GPIO15, PA GPIO4, and active-low LCD reset GPIO3. V1.2 selects DIN GPIO3,
+PA GPIO15, and active-high reset GPIO47. GPIO9 enables the peripheral rail at a low output level.
+The profile uses USB Serial/JTAG because GPIO43/GPIO44 overlap the default UART0 console and the
+Board LED/backlight wiring.
+
+ESP-VoCat capture and playback use identical two-slot standard-I2S clocks at the SDK's 16 kHz rate;
+capture extracts MIC1/slot0 and playback duplicates mono samples into both TX slots. Keep TX enabled
+during capture-only operation to supply shared clocks. If a release device cannot sustain 16 kHz,
+put stateful 24-to-16 and 16-to-24 kHz conversion inside this driver without changing the mybot
+contract.
+
+The 360 x 360 ST77916 round display uses its Board-specific initialization sequence and full-width
+RGB565 DMA strips. CST816S input uses GPIO10 any-edge interrupts and reads the controller only after
+an event; a 20 ms timer runs only while pressed to detect the 3-second hold. The profile disables
+CST816S ID reads because supported touch-firmware batches do not consistently answer that register.
+CST816S and Boot input remain Board-owned, allowing long-press provisioning while mybot is stopped.
+Battery reporting, BMI270, PCB capacitive controls, SD, LED behavior, camera
+expansion, local AEC, reference audio, shutdown, and low-power behavior remain outside the initial
+profile.
 
 The `esp32-s3-touch-amoled-1.75` and `esp32-s3-touch-amoled-1.75c` profiles share Board lifecycle,
 AXP2101, audio, CO5300, and CST9217 implementations, but keep independent identities and pin

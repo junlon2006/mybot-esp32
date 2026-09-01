@@ -14,7 +14,9 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif ILI9341 LCD driver 2.0.2 | Apache-2.0 | `components/esp_lcd_ili9341` |
 | Espressif SPD2010 LCD driver 2.0.0~1 | Apache-2.0 | `components/esp_lcd_spd2010` |
 | Espressif CO5300 LCD driver 2.1.0 | Apache-2.0 | `components/esp_lcd_co5300` |
+| Espressif ST77916 LCD driver 2.0.2 | Apache-2.0 | `components/esp_lcd_st77916` |
 | Espressif LCD touch 1.2.1 | Apache-2.0 | `components/esp_lcd_touch` |
+| Espressif CST816S touch driver 1.1.1~1 | Apache-2.0 | `components/esp_lcd_touch_cst816s` |
 | Waveshare CST9217 touch driver 1.0.4 | Apache-2.0 | `components/esp_lcd_touch_cst9217` |
 | Espressif IO expander 1.2.1 | Apache-2.0 | `components/esp_io_expander` |
 | Espressif TCA95xx 16-bit IO expander 2.0.2 | Apache-2.0 | `components/esp_io_expander_tca95xx_16bit` |
@@ -28,6 +30,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | M5Stack StickS3-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | Waveshare AMOLED 1.75/1.75C-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
+| ESP-VoCat-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
 ## AOSL
@@ -111,6 +114,16 @@ the complete copyright and permission notice is retained in
 - `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c/`
 - `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/amoled175_co5300_lcd.c`
+
+The ESP-VoCat PCB detection, hardware mapping, ST77916 initialization, CST816S input behavior, and
+codec routing are derived in part from the MIT-licensed `github.com/junlon2006/xiaozhi-esp32`
+reference at commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0`. The following paths remain
+covered by its MIT terms; the complete copyright and permission notice is retained in
+`components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
+
+- `components/mybot_platform/boards/esp-vocat/`
+- `components/mybot_platform/src/drivers/audio/vocat_codec_audio.c`
+- `components/mybot_platform/src/drivers/display/vocat_st77916_lcd.c`
 
 ## Vendored SDK Notice
 

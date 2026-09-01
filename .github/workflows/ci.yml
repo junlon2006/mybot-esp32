@@ -105,6 +105,22 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: esp-vocat
+            language: zh-CN
+            ptime: 20
+            defaults: ci/ptime20.defaults
+          - board: esp-vocat
+            language: zh-CN
+            ptime: 40
+            defaults: ci/ptime40.defaults
+          - board: esp-vocat
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: esp-vocat
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: esp32-s3-touch-amoled-1.75
             language: zh-CN
             ptime: 20
