@@ -11,8 +11,9 @@ initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, 
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are the Zhengchen
-1.54 TFT ML307 and Wi-Fi variants, Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C, M5Stack CoreS3,
-M5Stack StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
+1.54 TFT ML307 and Wi-Fi variants, Espressif ESP-VoCat, Waveshare ESP32-S3 Touch AMOLED 1.75 and
+1.75C, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and
+SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -35,6 +36,7 @@ M5Stack StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and SenseC
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
+| `esp-vocat` | ES7210 and ES8311 | ST77916, CST816S touch and Boot | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
 | `esp32-s3-touch-amoled-1.75` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75c` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | Safe 16 MB QIO Flash profile, 8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
@@ -67,6 +69,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/zhengchen-1.54tft-wifi \
   -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
   -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/esp-vocat \
+  -DMYBOT_BOARD=esp-vocat \
+  -DSDKCONFIG=build/esp-vocat/sdkconfig build
 
 idf.py -B build/esp32-s3-touch-amoled-1.75 \
   -DMYBOT_BOARD=esp32-s3-touch-amoled-1.75 \
@@ -121,6 +127,8 @@ a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
 
 - Zhengchen ML307 and Wi-Fi: short-press Boot to start/stop a conversation; hold Boot for 3 seconds
   to provision. The volume buttons adjust and persist speaker volume.
+- ESP-VoCat: tap the display or short-press Boot to start/stop a conversation; hold either input for
+  3 seconds to provision.
 - Waveshare AMOLED 1.75 and 1.75C: tap the display or short-press Boot to start/stop a conversation;
   hold either input for 3 seconds to provision.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
@@ -168,6 +176,32 @@ inside the Board audio driver.
 
 GPIO9 charge status, GPIO8 battery ADC, temperature monitoring, automatic sleep, and low-power
 behavior are not part of the initial Wi-Fi profile.
+
+### Espressif ESP-VoCat
+
+| Capability | Pins/configuration |
+| --- | --- |
+| Shared I2C0 | SDA GPIO2, SCL GPIO1; ES8311 `0x18`, ES7210 `0x40`, CST816S `0x15` |
+| ES7210/ES8311 I2S0 | MCLK GPIO42, BCLK GPIO40, WS GPIO39, DOUT GPIO41 |
+| ST77916 QSPI | SPI2, CLK GPIO18, CS GPIO14, D0-D3 GPIO46/GPIO13/GPIO11/GPIO12, backlight GPIO44 |
+| Input / power | CST816S INT GPIO10, Boot GPIO0, peripheral power GPIO9 active low |
+
+The profile detects its PCB revision before initializing the display or audio. V1.0 uses audio DIN
+GPIO15, PA GPIO4, and an active-low LCD reset on GPIO3. V1.2 uses DIN GPIO3, PA GPIO15, and an
+active-high LCD reset on GPIO47. If neither GPIO48 power state exposes the ES8311 at `0x18`, Board
+preparation fails instead of selecting a potentially destructive fallback pin map.
+
+The 360 x 360 round display uses the panel-specific ST77916 initialization sequence and a strip DMA
+renderer; no framebuffer, LVGL, or external animation assets are required. USB Serial/JTAG owns the
+console because the normal ESP32-S3 UART0 pins overlap the backlight and board LED.
+
+The physical audio link runs directly at mybot's 16 kHz boundary. Capture and playback share a
+two-slot standard-I2S clock domain; capture exposes only the primary microphone slot and playback
+duplicates mono samples into both output slots. The second microphone, playback-reference channel,
+local AEC, battery gauge, IMU, PCB capacitive slider, SD card, camera expansion, and low-power
+behavior are outside the initial profile. Current production material identifies a 16 MB PSRAM
+module, but release hardware must confirm detected PSRAM capacity and both PCB pin maps from startup
+logs.
 
 ### Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C
 
@@ -272,15 +306,18 @@ main/                        Firmware entry point and project Kconfig
 
 CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
 applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
-real hardware. The Zhengchen Wi-Fi, both Waveshare AMOLED 1.75 revisions, M5Stack StickS3,
-ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device validation; a
-successful build is not a substitute for hardware validation on a release device.
+real hardware. The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
+StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
+validation; a successful build is not a substitute for hardware validation on a release device.
 
 Known limitations:
 
 - ML307/4G networking and local wake words are not wired up.
 - Zhengchen charge status, battery ADC, temperature monitoring, automatic sleep, and low-power
   operation are not wired up. The Wi-Fi profile's physical PSRAM capacity is not yet confirmed.
+- ESP-VoCat battery reporting, IMU, PCB capacitive controls, SD card, LED, camera expansion, local
+  AEC, reference audio, shutdown, and low-power operation are not wired up. PCB V1.0 also has a
+  known hardware power-integrity issue that firmware cannot correct.
 - Waveshare AMOLED 1.75 and 1.75C do not yet expose the playback reference channel, local AEC,
   battery reporting, or low-power operation. RTC, IMU, TF card, and TCA9554 are not supported on
   the 1.75C profile.
