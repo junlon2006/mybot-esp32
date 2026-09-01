@@ -46,8 +46,8 @@ settings that do not satisfy the selected profile.
 This is required even for Boards sharing the same ESP-IDF target. For example,
 `zhengchen-1.54tft-ml307` uses 16 MB Flash and Octal PSRAM,
 `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
-`respeaker-flex-xvf3800-circular4-xiao` uses 8 MB Flash and Octal PSRAM. `sensecap-watcher` uses
-32 MB Flash with 32-bit addressing and Octal PSRAM.
+`m5stack-stick-s3` and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash and Octal PSRAM.
+`sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
 
 ```sh
 idf.py -B build/<board-id> \
@@ -105,3 +105,11 @@ The initial Watcher audio path configures ES8311 and ES7243E directly for 16 kHz
 PCM. If real hardware cannot sustain that clock configuration, keep the physical link at 24 kHz and
 add stateful resampling in the Board driver without changing the SDK boundary. SPD2010 QSPI updates
 must align the X start and width to four pixels; full-width 412-pixel strips satisfy this constraint.
+
+M5Stack StickS3 uses M5PM1 G2 as the shared process-lifetime power rail for its ST7789P3 display and
+ES8311 codec. G3 belongs to the playback lifecycle and must remain off until the codec is ready to
+play. Its physical I2S link is stereo while the SDK boundary remains 16 kHz mono signed-16 PCM:
+capture selects the microphone slot and playback duplicates mono samples into both slots. The
+135 x 240 display uses a (52, 40) panel offset, so every label and pairing code must be measured
+against the 135-pixel logical width. The GPIO11 input remains Board-owned so a long press can request
+provisioning while mybot is stopped.

@@ -97,6 +97,22 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: m5stack-stick-s3
+            language: zh-CN
+            ptime: 20
+            defaults: ci/ptime20.defaults
+          - board: m5stack-stick-s3
+            language: zh-CN
+            ptime: 40
+            defaults: ci/ptime40.defaults
+          - board: m5stack-stick-s3
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: m5stack-stick-s3
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: respeaker-flex-xvf3800-circular4-xiao
             language: zh-CN
             ptime: 20

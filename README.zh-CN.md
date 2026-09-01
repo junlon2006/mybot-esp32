@@ -10,8 +10,8 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307、M5Stack CoreS3、搭配
-XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307、M5Stack CoreS3、M5Stack
+StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -33,6 +33,7 @@ XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
+| `m5stack-stick-s3` | ES8311 | ST7789P3 与主按键 | 8 MB QIO Flash、8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 与 AIC3104 | XIAO Boot 与 XVF 板载按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
 | `sensecap-watcher` | ES8311 与 ES7243E | SPD2010 与旋转编码器 | 32 MB QIO Flash、Octal PSRAM |
 
@@ -59,6 +60,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/m5stack-core-s3/sdkconfig build
+
+idf.py -B build/m5stack-stick-s3 \
+  -DMYBOT_BOARD=m5stack-stick-s3 \
+  -DSDKCONFIG=build/m5stack-stick-s3/sdkconfig build
 
 idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
   -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
@@ -96,6 +101,7 @@ NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。�
 
 - 征辰板：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网。
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
+- StickS3：短按主按键开始/结束对话；长按 3 秒进入配网。
 - ReSpeaker Flex：短按 XIAO Boot 或 XVF 板载按键（GPI0/X1D09）开始/结束对话；长按任一
   按键 3 秒进入配网。
 - SenseCAP Watcher：旋转编码器调节音量，短按开始/结束对话，长按 3 秒进入配网。
@@ -135,6 +141,19 @@ Cloud AEC 与 AI QoS。
 
 GPIO0 是 CoreS3 的音频 MCLK，不作为按键使用。CoreS3 没有独立音量键，固件启动时恢复
 持久化的设备音量。
+
+### M5Stack StickS3
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| 公共 I2C0 | SDA GPIO47、SCL GPIO48；M5PM1 地址 `0x6e`、ES8311 地址 `0x18` |
+| ES8311 I2S0 | MCLK GPIO18、BCLK GPIO17、WS GPIO15、DIN GPIO16、DOUT GPIO14 |
+| ST7789P3 SPI3 | MOSI GPIO39、SCLK GPIO40、CS GPIO41、DC GPIO45、RESET GPIO21、背光 GPIO38 |
+| 输入 | 主按键 GPIO11，低电平有效 |
+
+M5PM1 G2 同时为显示屏和 codec 供电，在固件运行期间保持开启；G3 仅在播放期间开启扬声器
+功放。显示区域为 135 x 240，偏移为 (52, 40)。首版不使用 GPIO12、IMU、红外、电池状态、
+关机手势和低功耗能力。
 
 ### ReSpeaker Flex XVF3800 Circular-4 与 XIAO ESP32S3
 
@@ -179,13 +198,14 @@ main/                        固件入口与工程 Kconfig
 ## 验证与限制
 
 CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成
-真机验证；编译成功不能替代发布硬件上的真实设备验证。
+已完成真机配网与双向语音交互验证。M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher
+profile 尚未完成真机验证；编译成功不能替代发布硬件上的真实设备验证。
 
 已知限制：
 
 - ML307/4G 网络、本地唤醒词、电池状态与低功耗尚未接入。
 - CoreS3 摄像头、电池状态与自动休眠尚未接入。
+- StickS3 GPIO12、IMU、红外、电池状态、关机手势与低功耗尚未接入。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未
   支持 Linear-4、XVF3800 固件升级、LED 环状态显示与 LCD 输出。
 - SenseCAP Watcher 尚未支持摄像头、触摸、LED、电池状态、关机与低功耗；烧录时必须保留

@@ -18,10 +18,12 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif button 4.2.0 | Apache-2.0 | `components/button` |
 | Espressif knob 1.1.0 | Apache-2.0 | `components/knob` |
 | Espressif CMake utilities 0.5.0 | Apache-2.0 | `components/cmake_utilities` |
+| M5Stack M5PM1 1.0.7 | MIT | `components/m5pm1` |
 | Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets`, `components/mybot_platform/src/common/ogg_opus_decoder.c` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
+| M5Stack StickS3-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
 ## AOSL
@@ -79,6 +81,19 @@ the complete copyright and permission notice is retained in
 - `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/spd2010_lcd.c`
 - `partitions/v2/32m-sensecap.csv`
+
+The M5Stack StickS3 hardware mapping, M5PM1 sequencing, ES8311 integration, and ST7789P3 display
+configuration are derived in part from the MIT-licensed `github.com/junlon2006/xiaozhi-esp32`
+reference at commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0`. The following paths remain
+covered by its MIT terms; the complete copyright and permission notice is retained in
+`components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
+
+- `components/mybot_platform/boards/m5stack-stick-s3/`
+- `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`
+- `components/mybot_platform/src/drivers/display/sticks3_st7789_lcd.c`
+
+The vendored M5PM1 production sources retain the upstream M5Stack MIT license in
+`components/m5pm1/LICENSE`.
 
 ## Vendored SDK Notice
 

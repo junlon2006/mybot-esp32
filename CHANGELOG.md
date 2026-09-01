@@ -15,6 +15,8 @@ Versioning and Conventional Commits.
 - Localized Wi-Fi provisioning prompts played after the configuration AP starts.
 - M5Stack CoreS3 Board profile with ILI9342 display, FT6336 touch input, and
   ES7210/AW88298 audio support.
+- M5Stack StickS3 Board profile with M5PM1 power sequencing, ES8311 audio, ST7789P3 status display,
+  and main-button input.
 - Real-device CoreS3 provisioning and bidirectional voice validation.
 - Agora RTM login and voice-print registration status displayed during active conversations.
 - RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
@@ -52,6 +54,8 @@ Versioning and Conventional Commits.
   validation, Linear-4 support, XVF firmware update, LED-ring status, and LCD output are not yet
   complete.
 - SenseCAP Watcher real-device validation, camera, touch, LED, battery reporting, shutdown, and
+  low-power behavior are not yet complete.
+- M5Stack StickS3 real-device validation, GPIO12, IMU, infrared, battery reporting, shutdown, and
   low-power behavior are not yet complete.
 
 ### Fixed

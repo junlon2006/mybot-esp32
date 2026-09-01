@@ -44,7 +44,8 @@ KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD�
 即使两块 Board 使用同一个 ESP-IDF target，也必须隔离构建。例如
 `zhengchen-1.54tft-ml307` 使用 16 MB Flash 与 Octal PSRAM，`m5stack-core-s3` 使用 16 MB
 Flash 与 Quad PSRAM，而 `respeaker-flex-xvf3800-circular4-xiao` 使用 8 MB Flash 与 Octal
-PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
+PSRAM。`m5stack-stick-s3` 同样使用 8 MB Flash 与 Octal PSRAM。`sensecap-watcher` 使用带
+32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -96,3 +97,9 @@ SenseCAP Watcher 必须使用专用分区表。其 `nvsfactory` 分区从 `0x900
 Watcher 首版将 ES8311 与 ES7243E 直接配置为 16 kHz 单声道 signed-16 PCM。如果真机无法
 稳定使用该时钟配置，应保留 24 kHz 物理链路并在 Board driver 内加入有状态重采样，不改变
 SDK 边界。SPD2010 QSPI 刷新的 X 起点与宽度必须按 4 像素对齐；412 像素全宽条带满足该约束。
+
+M5Stack StickS3 的 M5PM1 G2 是 ST7789P3 显示屏与 ES8311 codec 共用的进程级电源，固件
+运行期间保持开启；G3 归播放生命周期管理，codec 准备播放前不得开启。物理 I2S 链路使用
+双声道，但 SDK 边界仍为 16 kHz 单声道 signed-16 PCM：采集选择麦克风 slot，播放将单声道
+样本复制到两个 slot。135 x 240 显示区域使用 (52, 40) panel offset，所有状态文字与配对码
+必须按 135 像素逻辑宽度计算。GPIO11 由 Board 常驻持有，使 mybot 停止期间仍能长按请求配网。
