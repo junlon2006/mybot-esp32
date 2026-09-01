@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd. */
 #include "ogg_opus_decoder.h"
 
 #include "decoder/esp_audio_dec.h"

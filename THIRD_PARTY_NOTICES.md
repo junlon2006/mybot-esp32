@@ -16,6 +16,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif CMake utilities 0.5.0 | Apache-2.0 | `components/cmake_utilities` |
 | Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets`, `components/mybot_platform/src/common/ogg_opus_decoder.c` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
+| ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
 ## AOSL
@@ -51,6 +52,17 @@ full permission text in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`
 - `components/mybot_platform/src/drivers/audio/cores3_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/ili9342_lcd.c`
 - `components/mybot_platform/src/drivers/input/ft6336_touch.c`
+
+The ReSpeaker Flex hardware mapping, AIC3104 initialization, XVF3800 control and button polling,
+and I2S conversion are derived in part from the MIT-licensed
+`github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` reference at commit
+`b06024382eb104c998aead4841e1df647193065b`. The following paths remain covered by its MIT terms;
+the complete copyright and permission notice is retained in
+`components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
+
+- `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao/`
+- `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`
+- `partitions/v2/8m.csv`
 
 ## Vendored SDK Notice
 

@@ -10,7 +10,8 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 M5Stack CoreS3。
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307、M5Stack CoreS3，以及搭配
+XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -32,8 +33,9 @@ mybot 外围的固件生命周期。
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
+| `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 与 AIC3104 | XIAO Boot 与 XVF 板载按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
 
-两个 profile 当前均使用 Wi-Fi。征辰板预留 ML307 UART，但 Modem AT socket 不是 lwIP
+所有 profile 当前均使用 Wi-Fi。征辰板预留 ML307 UART，但 Modem AT socket 不是 lwIP
 网络接口，当前 RTC 传输不支持该网络路径。
 
 ## 构建
@@ -56,6 +58,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/m5stack-core-s3/sdkconfig build
+
+idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
+  -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
+  -DSDKCONFIG=build/respeaker-flex-xvf3800-circular4-xiao/sdkconfig build
 ```
 
 默认 profile 是 `zhengchen-1.54tft-ml307`，但建议始终显式选择 Board。Board defaults 会
@@ -70,11 +76,13 @@ idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 ## 配网与控制
 
 NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
-`http://192.168.4.1` 完成配网。STA 获取可用 IP 后才启动 mybot；配网期间显示
-`WIFI SETUP`。
+`http://192.168.4.1` 完成配网。STA 获取可用 IP 后才启动 mybot；配备显示屏的板卡在配网
+期间显示 `WIFI SETUP`。
 
 - 征辰板：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网。
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
+- ReSpeaker Flex：短按 XIAO Boot 或 XVF 板载按键（GPI0/X1D09）开始/结束对话；长按任一
+  按键 3 秒进入配网。
 
 请求配网时固件会先停止 mybot；Wi-Fi 重新连接并获取 IP 后自动再次启动。
 
@@ -112,6 +120,22 @@ Cloud AEC 与 AI QoS。
 GPIO0 是 CoreS3 的音频 MCLK，不作为按键使用。CoreS3 没有独立音量键，固件启动时恢复
 持久化的设备音量。
 
+### ReSpeaker Flex XVF3800 Circular-4 与 XIAO ESP32S3
+
+此 profile 面向搭配 XIAO ESP32S3 的
+[Seeed ReSpeaker Flex Circular-4](https://wiki.seeedstudio.com/cn/respeaker_flex_introduction/)。
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| XVF3800 I2S0 | BCLK GPIO8、WS GPIO7、DOUT GPIO44、DIN GPIO43 |
+| 公共 I2C0 | SDA GPIO5、SCL GPIO6、400 kHz |
+| XVF3800 / AIC3104 | I2C 地址 `0x2c` / `0x18` |
+| 按键 | XIAO Boot GPIO0；XVF 板载按键 GPI0/X1D09 通过 I2C resource 36 读取 |
+
+此 profile 能够采集或播放音频前，必须单独为 XVF3800 烧录 Circular-4 **16 kHz 双通道
+I2S 固件**。ESP32-S3 工作在 I2S 从机模式。GPIO43 与 GPIO44 由 I2S 占用，控制台应使用
+USB Serial/JTAG。声学处理由 XVF3800 完成，因此该 profile 禁用 Cloud AEC，避免重复 AEC。
+
 ## 目录结构
 
 ```text
@@ -125,13 +149,16 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 构建两种 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。编译成功不能替代发布硬件上的真实设备验证。
+CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
+已完成真机配网与双向语音交互验证。ReSpeaker Flex profile 尚未完成真机验证；编译成功不能
+替代发布硬件上的真实设备验证。
 
 已知限制：
 
 - ML307/4G 网络、本地唤醒词、电池状态与低功耗尚未接入。
 - CoreS3 摄像头、电池状态与自动休眠尚未接入。
+- ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未
+  支持 Linear-4、XVF3800 固件升级、LED 环状态显示与 LCD 输出。
 - NVS encryption、Flash encryption 与 Secure Boot 由产品烧录流程配置。
 
 ## 文档
