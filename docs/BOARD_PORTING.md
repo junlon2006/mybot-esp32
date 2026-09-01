@@ -44,9 +44,10 @@ Use a separate build directory and sdkconfig for every Board. The build cache re
 settings that do not satisfy the selected profile.
 
 This is required even for Boards sharing the same ESP-IDF target. For example, the
-`zhengchen-1.54tft-ml307` and `zhengchen-1.54tft-wifi` profiles use 16 MB Flash and configure
-Octal PSRAM at 80 MHz, `esp32-s3-touch-amoled-1.75` uses 16 MB Flash and 8 MB Octal PSRAM,
-`m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
+`zhengchen-1.54tft-ml307` and `zhengchen-1.54tft-wifi` profiles use 16 MB Flash and configure Octal
+PSRAM at 80 MHz, the `esp32-s3-touch-amoled-1.75` and `esp32-s3-touch-amoled-1.75c` profiles use a
+safe 16 MB Flash profile and 8 MB Octal PSRAM, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM,
+and
 `m5stack-stick-s3` and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
 
@@ -103,11 +104,19 @@ full-duplex interaction. If 24 kHz output is required, add stateful 16-to-24 kHz
 the Board driver and keep the SDK contract unchanged. GPIO9 charge status, GPIO8 battery ADC,
 temperature monitoring, sleep, and low-power behavior remain outside the initial profile.
 
-The `esp32-s3-touch-amoled-1.75` profile targets only the original non-C hardware. The 1.75C
-revision uses different audio MCLK, LCD-reset, and touch-reset pins and must have a separate Board
-profile if it is added later. A Board-owned I2C0 bus initializes AXP2101 power before CO5300,
-CST9217, and codec clients attach. RTC, IMU, TF card, battery reporting, and automatic sleep remain
-outside the initial profile.
+The `esp32-s3-touch-amoled-1.75` and `esp32-s3-touch-amoled-1.75c` profiles share Board lifecycle,
+AXP2101, audio, CO5300, and CST9217 implementations, but keep independent identities and pin
+headers. The original revision uses audio MCLK GPIO42, LCD reset GPIO39, touch reset GPIO40, and an
+optional TCA9554 probe at `0x20`; 1.75C uses GPIO16, GPIO1, and GPIO2 respectively and never probes
+TCA9554. These profiles must not be cross-flashed. A Board-owned I2C0 bus initializes AXP2101 power
+before CO5300, CST9217, and codec clients attach.
+
+Both defaults use 16 MB QIO Flash, 8 MB Octal PSRAM at 80 MHz, and `partitions/v2/16m.csv`. The
+1.75C product page describes 32 MB Flash while the reference firmware targets 16 MB and available
+hardware materials conflict. Keep the conservative address space until startup detection confirms
+the release hardware; only then add and validate a larger partition profile. RTC, IMU, TF card,
+battery reporting, and automatic sleep remain outside both initial profiles, and 1.75C does not
+probe or depend on TCA9554.
 
 Its ES7210 and ES8311 share one I2S0 clock domain. The initial implementation selects only the
 primary microphone and configures identical two-slot 16 kHz standard-I2S TX/RX, extracts the left
@@ -118,8 +127,8 @@ are not exposed through the mybot audio contract.
 CO5300 QSPI rendering uses full-width 466 x 16 RGB565 DMA strips with a (6, 0) panel gap. Every
 transfer region keeps even start/end pixel boundaries; a full framebuffer and LVGL are intentionally
 excluded. CST9217 and Boot input remain Board-owned so either can request provisioning while mybot
-is stopped. This profile is a build target only until power, audio-slot, display, and touch behavior
-are verified on the non-C release device.
+is stopped. Each profile is a build target only until power, audio-slot, display, and touch behavior
+are verified on its matching release device.
 
 The ReSpeaker Flex profile is an example of a hardware audio front end rather than a raw microphone
 codec. Its XVF3800 must run separately flashed Circular-4 16 kHz, two-channel I2S firmware and owns

@@ -98,7 +98,9 @@ static int board_prepare(void) {
         return -1;
     }
 
-    ESP_LOGI(TAG, "event=board_prepare board=%s variant=non_c result=ok", MYBOT_BOARD_NAME);
+    ESP_LOGI(TAG,
+             "event=board_prepare board=%s variant=" MYBOT_AMOLED175_BOARD_VARIANT " result=ok",
+             MYBOT_BOARD_NAME);
     return 0;
 }
 

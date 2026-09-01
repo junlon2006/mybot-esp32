@@ -13,10 +13,11 @@
 - Flash/PSRAM 配置和任何硬件改动；
 - 复现步骤与最后一个正常版本。
 
-当前支持征辰 1.54 TFT ML307 与 Wi-Fi profile、Waveshare ESP32-S3 Touch AMOLED 1.75、
-M5Stack CoreS3、M5Stack StickS3，以及搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800
-Circular-4 和 SenseCAP Watcher 的 Wi-Fi 固件路径。征辰 Wi-Fi 与 Waveshare AMOLED
-profile 已覆盖构建验证，但仍需完成真机验证。在实现并验证兼容网络路径之前，ML307/4G
-相关问题按特性请求处理。
+当前支持征辰 1.54 TFT ML307 与 Wi-Fi profile、Waveshare ESP32-S3 Touch AMOLED 1.75
+与 1.75C profile、M5Stack CoreS3、M5Stack StickS3，以及搭配 XIAO ESP32S3 的 ReSpeaker
+Flex XVF3800 Circular-4 和 SenseCAP Watcher 的 Wi-Fi 固件路径。征辰 Wi-Fi 与两个
+Waveshare AMOLED profile 已覆盖构建验证，但仍需完成真机验证。两个 AMOLED 硬件版本必须
+使用匹配的 profile，禁止交叉烧录。在实现并验证兼容网络路径之前，ML307/4G 相关问题按
+特性请求处理。
 
 本项目不提供支持 SLA。Agora 商业 SDK 或云服务问题应通过对应的 Agora 支持渠道处理。

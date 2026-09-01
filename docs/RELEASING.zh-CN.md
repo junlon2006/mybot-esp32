@@ -33,9 +33,16 @@ git diff --check
 - [ ] 对征辰 Wi-Fi，通过启动日志确认 16 MB Flash 与实际 PSRAM 容量；验证 GPIO2 电源保持、
       ST7789、Boot 与音量按键，并确认 GPIO11/GPIO12 保持未使用。结合硬件的 24 kHz 扬声器
       输出要求，验证 16 kHz 采集/播放的速度、音调、稳定性与全双工交互。
-- [ ] 对 Waveshare AMOLED 1.75，拒绝在 1.75C 硬件上发布；验证 USB 与电池启动、AXP2101
-      电源轨和充电配置、8 MB PSRAM、ES7210 主麦路由、16 kHz 全双工音频、PA 爆音/噪声、
-      CO5300 gap/颜色/对齐/亮度、CST9217 方向，以及 mybot 停止期间触摸和 Boot 配网。
+- [ ] 对 Waveshare AMOLED 1.75，仅使用非 C profile；验证 USB 与电池启动、AXP2101 电源轨
+      和充电配置、8 MB PSRAM、MCLK GPIO42、LCD reset GPIO39、触摸 reset GPIO40、可选
+      TCA9554 探测、ES7210 主麦路由、16 kHz 全双工音频、PA 爆音/噪声、CO5300
+      gap/颜色/对齐/亮度、CST9217 方向，以及 mybot 停止期间触摸和 Boot 配网。
+- [ ] 对 Waveshare AMOLED 1.75C，仅使用 C profile；验证 USB 与电池启动、AXP2101 电源轨、
+      8 MB PSRAM、MCLK GPIO16、LCD reset GPIO1、触摸 reset GPIO2、不探测 TCA9554、主麦
+      路由、全双工音频、PA 噪声、显示/触摸与配网。扩展安全的 16 MB 分区布局前，必须先确认
+      启动日志检测到的 Flash 容量。
+- [ ] 对两个 Waveshare AMOLED 版本分别尝试配置另一版本的 profile 做负向测试，并确认发布
+      流程绝不会交叉烧录两个固件制品。
 - [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不
       改变该区域，且发布流程不得包含 `erase-flash`。
 - [ ] 对 M5Stack StickS3，验证 USB 与电池启动、M5PM1 G2/G3 时序、扬声器爆音/噪声、

@@ -27,7 +27,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | M5Stack StickS3-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
-| Waveshare AMOLED 1.75-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
+| Waveshare AMOLED 1.75/1.75C-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
 ## AOSL
@@ -99,14 +99,16 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 The vendored M5PM1 production sources retain the upstream M5Stack MIT license in
 `components/m5pm1/LICENSE`.
 
-The Waveshare ESP32-S3 Touch AMOLED 1.75 hardware mapping, AXP2101 sequence, CO5300 initialization,
-CST9217 integration, and codec routing are derived in part from the MIT-licensed
+The Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C hardware mappings, AXP2101 sequence, CO5300
+initialization, CST9217 integration, and codec routing are derived in part from the MIT-licensed
 `github.com/junlon2006/xiaozhi-esp32` reference at commit
 `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0`. The following paths remain covered by its MIT terms;
 the complete copyright and permission notice is retained in
 `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
 
+- `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75-common/`
 - `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75/`
+- `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c/`
 - `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/amoled175_co5300_lcd.c`
 

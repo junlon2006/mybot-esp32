@@ -121,6 +121,22 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: esp32-s3-touch-amoled-1.75c
+            language: zh-CN
+            ptime: 20
+            defaults: ci/ptime20.defaults
+          - board: esp32-s3-touch-amoled-1.75c
+            language: zh-CN
+            ptime: 40
+            defaults: ci/ptime40.defaults
+          - board: esp32-s3-touch-amoled-1.75c
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: esp32-s3-touch-amoled-1.75c
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: m5stack-core-s3
             language: zh-CN
             ptime: 60

@@ -59,7 +59,7 @@ idf_component_register(
     INCLUDE_DIRS "include"
     PRIV_INCLUDE_DIRS
         "src/internal"
-        "${MYBOT_BOARD_INCLUDE_DIR}"
+        ${MYBOT_BOARD_INCLUDE_DIR}
     REQUIRES
         mybot_sdk
         aosl

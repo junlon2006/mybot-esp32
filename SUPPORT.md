@@ -14,10 +14,11 @@ Include:
 - reproduction steps and the last known working version.
 
 The supported firmware network path is Wi-Fi on the Zhengchen 1.54 TFT ML307 and Wi-Fi profiles,
-Waveshare ESP32-S3 Touch AMOLED 1.75, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800
-Circular-4 with XIAO ESP32S3, and SenseCAP Watcher. The Zhengchen Wi-Fi and Waveshare AMOLED
-profiles have build coverage but still require real-device validation. ML307/4G reports are feature
-requests until a compatible network path is implemented and validated.
+Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C profiles, M5Stack CoreS3, M5Stack StickS3,
+ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and SenseCAP Watcher. The Zhengchen Wi-Fi and
+both Waveshare AMOLED profiles have build coverage but still require real-device validation. The
+two AMOLED revisions require their matching profile and must not be cross-flashed. ML307/4G reports
+are feature requests until a compatible network path is implemented and validated.
 
 This project has no support SLA. Questions about commercial Agora SDK or cloud services belong in
 the applicable Agora support channel.

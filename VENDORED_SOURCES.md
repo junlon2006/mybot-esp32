@@ -34,7 +34,7 @@ are not vendored into this repository.
 | `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/spd2010_lcd.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`, `components/mybot_platform/src/drivers/display/sticks3_st7789_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/zhengchen-1.54tft-wifi/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
-| `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75`, `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`, `components/mybot_platform/src/drivers/display/amoled175_co5300_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75-common`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c`, `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`, `components/mybot_platform/src/drivers/display/amoled175_co5300_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 
 Firmware integration differences are limited to the active ESP32-S3 build:
 
