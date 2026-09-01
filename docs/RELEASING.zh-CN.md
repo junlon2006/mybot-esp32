@@ -33,6 +33,9 @@ git diff --check
 - [ ] 对征辰 Wi-Fi，通过启动日志确认 16 MB Flash 与实际 PSRAM 容量；验证 GPIO2 电源保持、
       ST7789、Boot 与音量按键，并确认 GPIO11/GPIO12 保持未使用。结合硬件的 24 kHz 扬声器
       输出要求，验证 16 kHz 采集/播放的速度、音调、稳定性与全双工交互。
+- [ ] 对 Waveshare AMOLED 1.75，拒绝在 1.75C 硬件上发布；验证 USB 与电池启动、AXP2101
+      电源轨和充电配置、8 MB PSRAM、ES7210 主麦路由、16 kHz 全双工音频、PA 爆音/噪声、
+      CO5300 gap/颜色/对齐/亮度、CST9217 方向，以及 mybot 停止期间触摸和 Boot 配网。
 - [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不
       改变该区域，且发布流程不得包含 `erase-flash`。
 - [ ] 对 M5Stack StickS3，验证 USB 与电池启动、M5PM1 G2/G3 时序、扬声器爆音/噪声、

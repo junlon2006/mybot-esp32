@@ -45,7 +45,8 @@ settings that do not satisfy the selected profile.
 
 This is required even for Boards sharing the same ESP-IDF target. For example, the
 `zhengchen-1.54tft-ml307` and `zhengchen-1.54tft-wifi` profiles use 16 MB Flash and configure
-Octal PSRAM at 80 MHz, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
+Octal PSRAM at 80 MHz, `esp32-s3-touch-amoled-1.75` uses 16 MB Flash and 8 MB Octal PSRAM,
+`m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
 `m5stack-stick-s3` and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
 
@@ -101,6 +102,24 @@ output, so real-device acceptance must cover playback speed, pitch, stability, c
 full-duplex interaction. If 24 kHz output is required, add stateful 16-to-24 kHz resampling inside
 the Board driver and keep the SDK contract unchanged. GPIO9 charge status, GPIO8 battery ADC,
 temperature monitoring, sleep, and low-power behavior remain outside the initial profile.
+
+The `esp32-s3-touch-amoled-1.75` profile targets only the original non-C hardware. The 1.75C
+revision uses different audio MCLK, LCD-reset, and touch-reset pins and must have a separate Board
+profile if it is added later. A Board-owned I2C0 bus initializes AXP2101 power before CO5300,
+CST9217, and codec clients attach. RTC, IMU, TF card, battery reporting, and automatic sleep remain
+outside the initial profile.
+
+Its ES7210 and ES8311 share one I2S0 clock domain. The initial implementation selects only the
+primary microphone and configures identical two-slot 16 kHz standard-I2S TX/RX, extracts the left
+capture slot, duplicates mono playback into both slots, and keeps Cloud AEC enabled. Capture-only
+operation must keep TX running to supply MCLK/BCLK/WS. The playback-reference input and local AEC
+are not exposed through the mybot audio contract.
+
+CO5300 QSPI rendering uses full-width 466 x 16 RGB565 DMA strips with a (6, 0) panel gap. Every
+transfer region keeps even start/end pixel boundaries; a full framebuffer and LVGL are intentionally
+excluded. CST9217 and Boot input remain Board-owned so either can request provisioning while mybot
+is stopped. This profile is a build target only until power, audio-slot, display, and touch behavior
+are verified on the non-C release device.
 
 The ReSpeaker Flex profile is an example of a hardware audio front end rather than a raw microphone
 codec. Its XVF3800 must run separately flashed Circular-4 16 kHz, two-channel I2S firmware and owns

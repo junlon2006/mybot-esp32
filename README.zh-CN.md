@@ -10,9 +10,9 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、M5Stack
-CoreS3、M5Stack StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及
-SenseCAP Watcher。
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、Waveshare
+ESP32-S3 Touch AMOLED 1.75、M5Stack CoreS3、M5Stack StickS3、搭配 XIAO ESP32S3 的
+ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -34,6 +34,7 @@ SenseCAP Watcher。
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、80 MHz Octal PSRAM |
+| `esp32-s3-touch-amoled-1.75` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 与主按键 | 8 MB QIO Flash、8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 与 AIC3104 | XIAO Boot 与 XVF 板载按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
@@ -63,6 +64,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/zhengchen-1.54tft-wifi \
   -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
   -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/esp32-s3-touch-amoled-1.75 \
+  -DMYBOT_BOARD=esp32-s3-touch-amoled-1.75 \
+  -DSDKCONFIG=build/esp32-s3-touch-amoled-1.75/sdkconfig build
 
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
@@ -108,6 +113,7 @@ NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。�
 
 - 征辰 ML307 与 Wi-Fi：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并
   持久化扬声器音量。
+- Waveshare AMOLED 1.75：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒进入配网。
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
 - StickS3：短按主按键开始/结束对话；长按 3 秒进入配网。
 - ReSpeaker Flex：短按 XIAO Boot 或 XVF 板载按键（GPI0/X1D09）开始/结束对话；长按任一
@@ -149,6 +155,22 @@ slot。板卡原始扬声器配置使用 24 kHz 输出，因此必须通过真�
 
 首版 Wi-Fi profile 不包含 GPIO9 充电状态、GPIO8 电池 ADC、温度监测、自动休眠和低功耗
 能力。
+
+### Waveshare ESP32-S3 Touch AMOLED 1.75
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| 公共 I2C0 | SDA GPIO15、SCL GPIO14；AXP2101 `0x34`、ES8311 `0x18`、ES7210 `0x40`、CST9217 `0x5a` |
+| ES7210/ES8311 I2S0 | MCLK GPIO42、BCLK GPIO9、WS GPIO45、DIN GPIO10、DOUT GPIO8；PA GPIO46 |
+| CO5300 QSPI | SPI2、CS GPIO12、CLK GPIO38、D0-D3 GPIO4/GPIO5/GPIO6/GPIO7、RESET GPIO39 |
+| 输入 | CST9217 RESET GPIO40 / INT GPIO11；Boot GPIO0 |
+
+此 profile 仅支持原始非 C 版本，使用 466 x 466 CO5300 和 (6, 0) 显示偏移。1.75C 的音频
+MCLK、LCD reset 与触摸 reset 引脚不同，不能使用本固件。
+
+首版物理音频链路直接使用 mybot 的 16 kHz 单声道 signed-16 边界，采集 ES7210 主麦 slot，
+并保持 Cloud AEC。播放参考通道与本地 AEC 不向上暴露。RTC、IMU、TF 卡、电池状态、自动休眠
+与关机手势不在首版范围。
 
 ### M5Stack CoreS3
 
@@ -218,14 +240,17 @@ main/                        固件入口与工程 Kconfig
 ## 验证与限制
 
 CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。征辰 Wi-Fi、M5Stack StickS3、ReSpeaker Flex 与
-SenseCAP Watcher profile 尚未完成真机验证；编译成功不能替代发布硬件上的真实设备验证。
+已完成真机配网与双向语音交互验证。征辰 Wi-Fi、Waveshare AMOLED 1.75、M5Stack StickS3、
+ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；编译成功不能替代发布硬件上的
+真实设备验证。
 
 已知限制：
 
 - ML307/4G 网络与本地唤醒词尚未接入。
 - 征辰板充电状态、电池 ADC、温度监测、自动休眠与低功耗尚未接入；Wi-Fi profile 的实际
   PSRAM 容量尚未确认。
+- Waveshare AMOLED 1.75 不兼容 1.75C，且尚未接入播放参考通道、本地 AEC、RTC、IMU、
+  TF 卡、电池状态与低功耗。
 - CoreS3 摄像头、电池状态与自动休眠尚未接入。
 - StickS3 GPIO12、IMU、红外、电池状态、关机手势与低功耗尚未接入。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未

@@ -10,6 +10,9 @@ Versioning and Conventional Commits.
 - ESP-IDF v5.5.2 project for the Zhengchen 1.54 TFT ESP32-S3 board.
 - Zhengchen 1.54 TFT Wi-Fi Board profile with shared I2S, ST7789, Boot, volume-button, and
   power-hold support while leaving the ML307 UART pins unused.
+- Waveshare ESP32-S3 Touch AMOLED 1.75 Board profile with AXP2101 power sequencing, CO5300 QSPI
+  display, CST9217 touch input, and ES7210/ES8311 audio.
+- Pinned CO5300 2.1.0, LCD touch 1.2.1, and CST9217 1.0.4 production components.
 - mybot 1.0.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
@@ -57,6 +60,8 @@ Versioning and Conventional Commits.
 - Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback
   validation, charge/battery inputs, temperature monitoring, and power management are not yet
   complete.
+- Waveshare AMOLED 1.75 real-device validation, playback-reference input, local AEC, RTC, IMU,
+  TF card, battery reporting, and low-power operation are not yet complete; 1.75C is not supported.
 - ReSpeaker Flex requires separately flashed XVF3800 Circular-4 16 kHz I2S firmware; hardware
   validation, Linear-4 support, XVF firmware update, LED-ring status, and LCD output are not yet
   complete.
