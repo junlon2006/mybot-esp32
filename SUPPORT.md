@@ -13,8 +13,8 @@ Include:
 - Flash/PSRAM configuration and any hardware modifications;
 - reproduction steps and the last known working version.
 
-The supported firmware network path is Wi-Fi on Zhengchen 1.54 TFT ML307, M5Stack CoreS3, and
-ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3.
+The supported firmware network path is Wi-Fi on Zhengchen 1.54 TFT ML307, M5Stack CoreS3,
+ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 ML307/4G reports are feature requests until a compatible network path is implemented and validated.
 
 This project has no support SLA. Questions about commercial Agora SDK or cloud services belong in

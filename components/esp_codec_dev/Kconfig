@@ -7,6 +7,14 @@ menu "Audio Codec Device Configuration"
             Use the legacy I2C driver instead of the ESP-IDF 5.3 and newer
             master-bus API.
 
+    config CODEC_ES8311_SUPPORT
+        bool "Support ES8311 codec"
+        default n
+
+    config CODEC_ES7243E_SUPPORT
+        bool "Support ES7243E codec"
+        default n
+
     config CODEC_ES7210_SUPPORT
         bool "Support ES7210 codec"
         default n

@@ -44,7 +44,7 @@ KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD�
 即使两块 Board 使用同一个 ESP-IDF target，也必须隔离构建。例如
 `zhengchen-1.54tft-ml307` 使用 16 MB Flash 与 Octal PSRAM，`m5stack-core-s3` 使用 16 MB
 Flash 与 Quad PSRAM，而 `respeaker-flex-xvf3800-circular4-xiao` 使用 8 MB Flash 与 Octal
-PSRAM。
+PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -87,3 +87,12 @@ ReSpeaker Flex profile 是硬件音频前端而非原始麦克风 codec 的示�
 工作在 I2S 从机模式，将选定的 32-bit 采集 slot 转换到 SDK 的单声道 signed-16 边界。该
 profile 必须禁用 Cloud AEC，避免重复处理。构建成功无法验证 XVF 固件、时钟方向、通道路由
 或声学性能，这些项目必须通过真机测试确认。
+
+SenseCAP Watcher 必须使用专用分区表。其 `nvsfactory` 分区从 `0x9000` 开始，长度为
+200 KiB，不能替换为其他 Board 的通用 NVS 布局。mybot 的普通 `nvs` 必须位于独立分区；
+禁止执行 `erase-flash`，并在首次烧录前备份出厂分区。标准 `idf.py flash` 不会写入
+`nvsfactory`。
+
+Watcher 首版将 ES8311 与 ES7243E 直接配置为 16 kHz 单声道 signed-16 PCM。如果真机无法
+稳定使用该时钟配置，应保留 24 kHz 物理链路并在 Board driver 内加入有状态重采样，不改变
+SDK 边界。SPD2010 QSPI 刷新的 X 起点与宽度必须按 4 像素对齐；412 像素全宽条带满足该约束。

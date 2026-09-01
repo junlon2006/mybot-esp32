@@ -113,6 +113,22 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: sensecap-watcher
+            language: zh-CN
+            ptime: 20
+            defaults: ci/ptime20.defaults
+          - board: sensecap-watcher
+            language: zh-CN
+            ptime: 40
+            defaults: ci/ptime40.defaults
+          - board: sensecap-watcher
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: sensecap-watcher
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain

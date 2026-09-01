@@ -31,6 +31,8 @@ git diff --check
 - [ ] Negative-test invalid CA, hostname mismatch, TLS timeout, missing NVS values, and Wi-Fi loss.
 - [ ] Confirm logs and release archives contain no credentials.
 - [ ] Confirm release configurations enable the intended NVS/Flash encryption and Secure Boot policy.
+- [ ] For SenseCAP Watcher, back up and checksum the 200 KiB `nvsfactory` region before first flash;
+      verify normal flashing leaves it unchanged and never publish an `erase-flash` procedure.
 
 ## Publish
 
