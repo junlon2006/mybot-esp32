@@ -105,8 +105,10 @@ static void deinit_time_sync(void) {
 }
 
 void app_main(void) {
-    ESP_LOGI(TAG, "mybot %s, Agora RTSA %s, ESP-IDF %s", mybot_version_string(),
-             agora_rtc_get_version(), esp_get_idf_version());
+    const esp_app_desc_t *app_description = esp_app_get_description();
+    ESP_LOGI(TAG, "mybot %s, Agora RTSA %s, ESP-IDF %s, build %s %s", mybot_version_string(),
+             agora_rtc_get_version(), esp_get_idf_version(), app_description->date,
+             app_description->time);
 
     if (init_nvs() < 0) {
         ESP_LOGE(TAG, "NVS initialization failed");
@@ -132,7 +134,6 @@ void app_main(void) {
     }
 
     mybot_config_t config = {0};
-    const esp_app_desc_t *app_description = esp_app_get_description();
     snprintf(config.device_id, sizeof(config.device_id), "esp32s3-%02x%02x%02x%02x%02x%02x", mac[0],
              mac[1], mac[2], mac[3], mac[4], mac[5]);
     snprintf(config.server_base, sizeof(config.server_base), "%s", CONFIG_MYBOT_SERVER_BASE);
