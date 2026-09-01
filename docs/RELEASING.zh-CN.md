@@ -32,6 +32,8 @@ git diff --check
 - [ ] 确认发布配置采用预期的 NVS/Flash encryption 与 Secure Boot 策略。
 - [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不
       改变该区域，且发布流程不得包含 `erase-flash`。
+- [ ] 对 M5Stack StickS3，验证 USB 与电池启动、M5PM1 G2/G3 时序、扬声器爆音/噪声、
+      16 kHz 采集 slot、ST7789P3 偏移与颜色，以及 mybot 停止期间 GPIO11 长按配网。
 
 ## 发布
 

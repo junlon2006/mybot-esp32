@@ -33,6 +33,9 @@ git diff --check
 - [ ] Confirm release configurations enable the intended NVS/Flash encryption and Secure Boot policy.
 - [ ] For SenseCAP Watcher, back up and checksum the 200 KiB `nvsfactory` region before first flash;
       verify normal flashing leaves it unchanged and never publish an `erase-flash` procedure.
+- [ ] For M5Stack StickS3, test USB and battery boot, M5PM1 G2/G3 sequencing, speaker pop/noise,
+      16 kHz capture slot routing, ST7789P3 offsets/colors, and GPIO11 provisioning while mybot is
+      stopped.
 
 ## Publish
 

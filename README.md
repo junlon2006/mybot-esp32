@@ -11,8 +11,8 @@ initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, 
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are Zhengchen
-1.54 TFT ML307, M5Stack CoreS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and
-SenseCAP Watcher.
+1.54 TFT ML307, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO
+ESP32S3, and SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -35,6 +35,7 @@ SenseCAP Watcher.
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
+| `m5stack-stick-s3` | ES8311 | ST7789P3 and main button | 8 MB QIO Flash, 8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 and AIC3104 | XIAO Boot and XVF onboard buttons; no display | 8 MB Flash, 8 MB Octal PSRAM |
 | `sensecap-watcher` | ES8311 and ES7243E | SPD2010 and rotary encoder | 32 MB QIO Flash, Octal PSRAM |
 
@@ -63,6 +64,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/m5stack-core-s3/sdkconfig build
+
+idf.py -B build/m5stack-stick-s3 \
+  -DMYBOT_BOARD=m5stack-stick-s3 \
+  -DSDKCONFIG=build/m5stack-stick-s3/sdkconfig build
 
 idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
   -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
@@ -101,6 +106,8 @@ a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
 
 - Zhengchen: short-press Boot to start/stop a conversation; hold Boot for 3 seconds to provision.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
+- StickS3: short-press the main button to start/stop a conversation; hold it for 3 seconds to
+  provision.
 - ReSpeaker Flex: short-press XIAO Boot or the XVF onboard button (GPI0/X1D09) to start/stop a
   conversation; hold either button for 3 seconds to provision.
 - SenseCAP Watcher: rotate the encoder to adjust volume, short-press it to start/stop a conversation,
@@ -142,6 +149,20 @@ packet duration, Cloud AEC, and AI QoS.
 
 GPIO0 is audio MCLK on CoreS3 and is not used as a button. CoreS3 has no dedicated volume keys;
 the firmware restores its persisted device volume at startup.
+
+### M5Stack StickS3
+
+| Capability | Pins/configuration |
+| --- | --- |
+| Shared I2C0 | SDA GPIO47, SCL GPIO48; M5PM1 at `0x6e`, ES8311 at `0x18` |
+| ES8311 I2S0 | MCLK GPIO18, BCLK GPIO17, WS GPIO15, DIN GPIO16, DOUT GPIO14 |
+| ST7789P3 SPI3 | MOSI GPIO39, SCLK GPIO40, CS GPIO41, DC GPIO45, RESET GPIO21, backlight GPIO38 |
+| Input | Main button GPIO11, active low |
+
+M5PM1 G2 powers both the display and codec and remains enabled while the firmware runs. G3 enables
+the speaker amplifier only during playback. The display uses a 135 x 240 window at offset (52, 40).
+The initial profile leaves GPIO12, the IMU, infrared functions, battery reporting, shutdown gestures,
+and low-power behavior unused.
 
 ### ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3
 
@@ -190,13 +211,16 @@ main/                        Firmware entry point and project Kconfig
 
 CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
 applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
-real hardware. The ReSpeaker Flex and SenseCAP Watcher profiles have not yet completed real-device
-validation; a successful build is not a substitute for hardware validation on a release device.
+real hardware. The M5Stack StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet
+completed real-device validation; a successful build is not a substitute for hardware validation on
+a release device.
 
 Known limitations:
 
 - ML307/4G networking, local wake words, battery reporting, and low-power operation are not wired up.
 - CoreS3 camera, battery reporting, and automatic sleep are not wired up.
+- StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power
+  operation are not wired up.
 - ReSpeaker Flex support is limited to Circular-4 and requires separately flashed XVF3800 16 kHz
   I2S firmware; Linear-4, XVF3800 firmware update, LED-ring status, and LCD output are not
   implemented.
