@@ -89,6 +89,22 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: zhengchen-1.54tft-wifi
+            language: zh-CN
+            ptime: 20
+            defaults: ci/ptime20.defaults
+          - board: zhengchen-1.54tft-wifi
+            language: zh-CN
+            ptime: 40
+            defaults: ci/ptime40.defaults
+          - board: zhengchen-1.54tft-wifi
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: zhengchen-1.54tft-wifi
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: m5stack-core-s3
             language: zh-CN
             ptime: 60

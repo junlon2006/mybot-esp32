@@ -43,9 +43,9 @@ Use a separate build directory and sdkconfig for every Board. The build cache re
 `MYBOT_BOARD` in place, and component configuration rejects stale Flash, PSRAM, or partition
 settings that do not satisfy the selected profile.
 
-This is required even for Boards sharing the same ESP-IDF target. For example,
-`zhengchen-1.54tft-ml307` uses 16 MB Flash and Octal PSRAM,
-`m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
+This is required even for Boards sharing the same ESP-IDF target. For example, the
+`zhengchen-1.54tft-ml307` and `zhengchen-1.54tft-wifi` profiles use 16 MB Flash and configure
+Octal PSRAM at 80 MHz, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
 `m5stack-stick-s3` and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
 
@@ -88,6 +88,19 @@ and the provisioning prompt can open playback before the first SDK start.
 An input source that must request provisioning while mybot is stopped may be owned by the Board for
 the process lifetime. In that case, the SDK key operations only attach and detach the event callback:
 the Board must prevent callbacks after detach and wait for any callback already in flight.
+
+The Zhengchen ML307 and Wi-Fi profiles share `boards/zhengchen-1.54tft-common/board.c` because their
+display, I2S, buttons, and power-hold contracts are identical. Profile-specific headers retain the
+Board identity and optional modem pins; the Wi-Fi profile must not configure or access GPIO11 and
+GPIO12. Its physical PSRAM capacity must be confirmed from the startup log even though the profile
+selects Octal PSRAM at 80 MHz.
+
+The initial Zhengchen Wi-Fi path keeps the SDK boundary at 16 kHz mono signed-16 PCM and uses a
+16 kHz mono 32-bit left-slot physical I2S link. The original speaker configuration uses 24 kHz
+output, so real-device acceptance must cover playback speed, pitch, stability, capture, and
+full-duplex interaction. If 24 kHz output is required, add stateful 16-to-24 kHz resampling inside
+the Board driver and keep the SDK contract unchanged. GPIO9 charge status, GPIO8 battery ADC,
+temperature monitoring, sleep, and low-power behavior remain outside the initial profile.
 
 The ReSpeaker Flex profile is an example of a hardware audio front end rather than a raw microphone
 codec. Its XVF3800 must run separately flashed Circular-4 16 kHz, two-channel I2S firmware and owns

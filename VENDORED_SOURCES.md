@@ -21,14 +21,16 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/m5pm1` | ESP Component Registry `m5stack/m5pm1` | 1.0.7, content hash `731f79d0629e245787440f5419aac5d7a82befeb25f97689d6a2d0331a24a72d` |
 | `components/mybot_platform/assets` | `github.com/junlon2006/mybot-bk7258` | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
 
-External implementation references used for project-maintained board ports are pinned separately;
-their application layer and dependency set are not vendored into this repository.
+External implementation references and hardware-mapping verification baselines used for
+project-maintained board ports are pinned separately; their application layer and dependency set
+are not vendored into this repository.
 
 | Paths | Source | Pinned revision |
 | --- | --- | --- |
 | `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao`, `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`, `partitions/v2/8m.csv` | `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` | commit `b06024382eb104c998aead4841e1df647193065b` |
 | `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/spd2010_lcd.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`, `components/mybot_platform/src/drivers/display/sticks3_st7789_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/zhengchen-1.54tft-wifi/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 
 Firmware integration differences are limited to the active ESP32-S3 build:
 

@@ -42,10 +42,10 @@ KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD�
 `MYBOT_BOARD`；组件配置也会拒绝不满足所选 profile 的旧 Flash、PSRAM 或分区设置。
 
 即使两块 Board 使用同一个 ESP-IDF target，也必须隔离构建。例如
-`zhengchen-1.54tft-ml307` 使用 16 MB Flash 与 Octal PSRAM，`m5stack-core-s3` 使用 16 MB
-Flash 与 Quad PSRAM，而 `respeaker-flex-xvf3800-circular4-xiao` 使用 8 MB Flash 与 Octal
-PSRAM。`m5stack-stick-s3` 同样使用 8 MB Flash 与 Octal PSRAM。`sensecap-watcher` 使用带
-32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
+`zhengchen-1.54tft-ml307` 与 `zhengchen-1.54tft-wifi` 使用 16 MB Flash，并将 Octal PSRAM
+配置为 80 MHz；`m5stack-core-s3` 使用 16 MB Flash 与 Quad PSRAM；
+`respeaker-flex-xvf3800-circular4-xiao` 与 `m5stack-stick-s3` 使用 8 MB Flash 与 Octal
+PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -82,6 +82,17 @@ SDK 会分别初始化和销毁采集与播放；配网提示音也可能在 SDK
 如果输入源需要在 mybot 停止期间继续触发配网，可以由 Board 在进程生命周期内持有该输入源。
 此时 SDK key ops 只负责挂载和摘除事件回调；Board 必须保证摘除后不再发起新回调，并等待已经
 进入执行的回调结束。
+
+征辰 ML307 与 Wi-Fi profile 的显示、I2S、按键及电源保持契约一致，因此共用
+`boards/zhengchen-1.54tft-common/board.c`。profile 专属头文件保留 Board 身份和可选 Modem
+引脚；Wi-Fi profile 不得配置或访问 GPIO11 与 GPIO12。即使 profile 已将 Octal PSRAM 配置
+为 80 MHz，仍需通过启动日志确认实际 PSRAM 容量。
+
+征辰 Wi-Fi 首版保持 16 kHz 单声道 signed-16 PCM 的 SDK 边界，物理 I2S 使用 16 kHz
+单声道 32-bit left slot。板卡原始扬声器配置使用 24 kHz 输出，因此真机验收必须覆盖播放
+速度、音调、稳定性、采集与全双工交互。如果必须使用 24 kHz 输出，应在 Board driver 内加入
+有状态的 16 kHz 到 24 kHz 重采样，并保持 SDK 契约不变。GPIO9 充电状态、GPIO8 电池 ADC、
+温度监测、休眠和低功耗不在首版范围。
 
 ReSpeaker Flex profile 是硬件音频前端而非原始麦克风 codec 的示例。XVF3800 必须预先单独
 烧录 Circular-4 16 kHz 双通道 I2S 固件，并负责 AEC、波束成形、AGC 与降噪。ESP32-S3

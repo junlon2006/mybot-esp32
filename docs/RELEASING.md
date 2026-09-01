@@ -31,6 +31,10 @@ git diff --check
 - [ ] Negative-test invalid CA, hostname mismatch, TLS timeout, missing NVS values, and Wi-Fi loss.
 - [ ] Confirm logs and release archives contain no credentials.
 - [ ] Confirm release configurations enable the intended NVS/Flash encryption and Secure Boot policy.
+- [ ] For Zhengchen Wi-Fi, confirm 16 MB Flash and the physical PSRAM capacity from startup logs;
+      test GPIO2 power hold, ST7789 output, Boot and volume buttons, and verify GPIO11/GPIO12 remain
+      unused. Validate 16 kHz capture/playback speed, pitch, stability, and full-duplex interaction
+      against the hardware's 24 kHz speaker-output requirement.
 - [ ] For SenseCAP Watcher, back up and checksum the 200 KiB `nvsfactory` region before first flash;
       verify normal flashing leaves it unchanged and never publish an `erase-flash` procedure.
 - [ ] For M5Stack StickS3, test USB and battery boot, M5PM1 G2/G3 sequencing, speaker pop/noise,
