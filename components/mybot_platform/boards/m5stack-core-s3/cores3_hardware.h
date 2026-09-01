@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd. */
 /* Copyright (c) 2025 Project Contributors */
 #ifndef MYBOT_CORES3_HARDWARE_H_
 #define MYBOT_CORES3_HARDWARE_H_

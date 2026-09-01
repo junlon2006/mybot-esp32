@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd.
 # Copyright (c) 2025 Project Contributors
 
 set(MYBOT_BOARD_TARGET "esp32s3")

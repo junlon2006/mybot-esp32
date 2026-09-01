@@ -56,8 +56,8 @@ full permission text in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`
 The ReSpeaker Flex hardware mapping, AIC3104 initialization, XVF3800 control and button polling,
 and I2S conversion are derived in part from the MIT-licensed
 `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` reference at commit
-`b06024382eb104c998aead4841e1df647193065b`. The following paths retain its copyright and MIT SPDX
-notices; the full MIT permission text is retained in
+`b06024382eb104c998aead4841e1df647193065b`. The following paths remain covered by its MIT terms;
+the complete copyright and permission notice is retained in
 `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
 
 - `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao/`

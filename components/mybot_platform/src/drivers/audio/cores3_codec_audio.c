@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2025 Shenzhen Xinzhi Future Technology Co., Ltd. */
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
 #include "cores3_hardware.h"
