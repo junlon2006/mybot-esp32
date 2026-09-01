@@ -44,7 +44,9 @@ Use a separate build directory and sdkconfig for every Board. The build cache re
 settings that do not satisfy the selected profile.
 
 This is required even for Boards sharing the same ESP-IDF target. For example,
-`zhengchen-1.54tft-ml307` uses Octal PSRAM while `m5stack-core-s3` uses Quad PSRAM.
+`zhengchen-1.54tft-ml307` uses 16 MB Flash and Octal PSRAM,
+`m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
+`respeaker-flex-xvf3800-circular4-xiao` uses 8 MB Flash and Octal PSRAM.
 
 ```sh
 idf.py -B build/<board-id> \
@@ -81,3 +83,14 @@ registered status when `MYBOT_LCD_INDICATOR_VP_REGISTERED` is set.
 When capture and playback share one physical I2S peripheral, keep the peripheral and codec state in
 a ref-counted Board driver. The SDK initializes and destroys capture and playback independently,
 and the provisioning prompt can open playback before the first SDK start.
+
+An input source that must request provisioning while mybot is stopped may be owned by the Board for
+the process lifetime. In that case, the SDK key operations only attach and detach the event callback:
+the Board must prevent callbacks after detach and wait for any callback already in flight.
+
+The ReSpeaker Flex profile is an example of a hardware audio front end rather than a raw microphone
+codec. Its XVF3800 must run separately flashed Circular-4 16 kHz, two-channel I2S firmware and owns
+AEC, beamforming, AGC, and noise suppression. The ESP32-S3 uses I2S slave mode and converts the
+selected 32-bit capture slot to the SDK's mono signed-16 boundary. Keep Cloud AEC disabled for this
+profile to prevent double processing. A build does not validate the XVF firmware, clock direction,
+channel routing, or acoustic performance; those require real-device tests.

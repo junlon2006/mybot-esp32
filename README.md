@@ -11,7 +11,7 @@ initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, 
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are Zhengchen
-1.54 TFT ML307 and M5Stack CoreS3.
+1.54 TFT ML307, M5Stack CoreS3, and ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -34,8 +34,9 @@ The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
+| `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 and AIC3104 | XIAO Boot and XVF onboard buttons; no display | 8 MB Flash, 8 MB Octal PSRAM |
 
-Both profiles currently use Wi-Fi networking. The ML307 UART is reserved by the Zhengchen hardware
+All profiles currently use Wi-Fi networking. The ML307 UART is reserved by the Zhengchen hardware
 profile, but the modem AT socket is not an lwIP network interface and is not supported by the RTC
 transport.
 
@@ -60,6 +61,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/m5stack-core-s3/sdkconfig build
+
+idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
+  -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
+  -DSDKCONFIG=build/respeaker-flex-xvf3800-circular4-xiao/sdkconfig build
 ```
 
 The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
@@ -75,10 +80,12 @@ idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
 
 When NVS contains no Wi-Fi credentials, the device creates a configuration AP whose SSID starts
 with `mybot-`. Connect to it and open `http://192.168.4.1`. mybot starts only after the station has
-a usable IP address; the display shows `WIFI SETUP` while provisioning.
+a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
 
 - Zhengchen: short-press Boot to start/stop a conversation; hold Boot for 3 seconds to provision.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
+- ReSpeaker Flex: short-press XIAO Boot or the XVF onboard button (GPI0/X1D09) to start/stop a
+  conversation; hold either button for 3 seconds to provision.
 
 A provisioning request stops mybot first. After Wi-Fi reconnects and obtains an IP address, the
 firmware starts mybot again.
@@ -117,6 +124,24 @@ packet duration, Cloud AEC, and AI QoS.
 GPIO0 is audio MCLK on CoreS3 and is not used as a button. CoreS3 has no dedicated volume keys;
 the firmware restores its persisted device volume at startup.
 
+### ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3
+
+This profile targets the
+[Seeed ReSpeaker Flex Circular-4 assembly](https://wiki.seeedstudio.com/respeaker_flex_introduction/)
+with a XIAO ESP32S3.
+
+| Capability | Pins/configuration |
+| --- | --- |
+| XVF3800 I2S0 | BCLK GPIO8, WS GPIO7, DOUT GPIO44, DIN GPIO43 |
+| Shared I2C0 | SDA GPIO5, SCL GPIO6, 400 kHz |
+| XVF3800 / AIC3104 | I2C addresses `0x2c` / `0x18` |
+| Buttons | XIAO Boot GPIO0; XVF onboard button GPI0/X1D09 through I2C resource 36 |
+
+The XVF3800 must be flashed separately with the Circular-4 **16 kHz, two-channel I2S firmware**
+before this profile can capture or play audio. The ESP32-S3 is the I2S slave. GPIO43 and GPIO44 are
+reserved for I2S, so use USB Serial/JTAG for the console. XVF3800 performs the acoustic processing;
+Cloud AEC is disabled for this profile to avoid applying AEC twice.
+
 ## Repository Layout
 
 ```text
@@ -130,15 +155,18 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds both board profiles, both languages, and 20/40/60 ms audio packet durations where
-applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have also been validated
-on real hardware. A successful build is not a substitute for hardware validation on a release
-device.
+CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
+applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
+real hardware. The ReSpeaker Flex profile has not yet completed real-device validation; a successful
+build is not a substitute for hardware validation on a release device.
 
 Known limitations:
 
 - ML307/4G networking, local wake words, battery reporting, and low-power operation are not wired up.
 - CoreS3 camera, battery reporting, and automatic sleep are not wired up.
+- ReSpeaker Flex support is limited to Circular-4 and requires separately flashed XVF3800 16 kHz
+  I2S firmware; Linear-4, XVF3800 firmware update, LED-ring status, and LCD output are not
+  implemented.
 - NVS encryption, Flash encryption, and Secure Boot belong to the product provisioning process.
 
 ## Documentation

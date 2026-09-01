@@ -42,7 +42,9 @@ KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD�
 `MYBOT_BOARD`；组件配置也会拒绝不满足所选 profile 的旧 Flash、PSRAM 或分区设置。
 
 即使两块 Board 使用同一个 ESP-IDF target，也必须隔离构建。例如
-`zhengchen-1.54tft-ml307` 使用 Octal PSRAM，而 `m5stack-core-s3` 使用 Quad PSRAM。
+`zhengchen-1.54tft-ml307` 使用 16 MB Flash 与 Octal PSRAM，`m5stack-core-s3` 使用 16 MB
+Flash 与 Quad PSRAM，而 `respeaker-flex-xvf3800-circular4-xiao` 使用 8 MB Flash 与 Octal
+PSRAM。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -75,3 +77,13 @@ indicator 时显示声纹注册中，收到该 indicator 后切换到注册完�
 
 采集与播放共用一个物理 I2S 外设时，Board driver 应通过引用计数管理外设和 codec 状态。
 SDK 会分别初始化和销毁采集与播放；配网提示音也可能在 SDK 首次启动前打开播放设备。
+
+如果输入源需要在 mybot 停止期间继续触发配网，可以由 Board 在进程生命周期内持有该输入源。
+此时 SDK key ops 只负责挂载和摘除事件回调；Board 必须保证摘除后不再发起新回调，并等待已经
+进入执行的回调结束。
+
+ReSpeaker Flex profile 是硬件音频前端而非原始麦克风 codec 的示例。XVF3800 必须预先单独
+烧录 Circular-4 16 kHz 双通道 I2S 固件，并负责 AEC、波束成形、AGC 与降噪。ESP32-S3
+工作在 I2S 从机模式，将选定的 32-bit 采集 slot 转换到 SDK 的单声道 signed-16 边界。该
+profile 必须禁用 Cloud AEC，避免重复处理。构建成功无法验证 XVF 固件、时钟方向、通道路由
+或声学性能，这些项目必须通过真机测试确认。

@@ -16,6 +16,13 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/cmake_utilities` | ESP Component Registry `espressif/cmake_utilities` | 0.5.0 |
 | `components/mybot_platform/assets` | `github.com/junlon2006/mybot-bk7258` | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
 
+External implementation references used for project-maintained board ports are pinned separately;
+their application layer and dependency set are not vendored into this repository.
+
+| Paths | Source | Pinned revision |
+| --- | --- | --- |
+| `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao`, `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`, `partitions/v2/8m.csv` | `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` | commit `b06024382eb104c998aead4841e1df647193065b` |
+
 Firmware integration differences are limited to the active ESP32-S3 build:
 
 - The AOSL ESP32-S3 HAL uses FreeRTOS delays, byte-sized task stacks, PSRAM allocation, and IPv4

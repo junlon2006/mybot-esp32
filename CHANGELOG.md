@@ -20,7 +20,9 @@ Versioning and Conventional Commits.
 - RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
 - AOSL socket DSCP support required by the RTSA 1.10.1 network implementation.
 - Voice-print registration-in-progress status shown immediately on the conversation screen.
-- Target firmware CI for both supported boards, both languages, and supported audio packet times.
+- ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3 Board profile, including shared I2S audio,
+  AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
+- Target firmware CI for all supported boards, both languages, and supported audio packet times.
 
 ### Changed
 
@@ -44,6 +46,9 @@ Versioning and Conventional Commits.
 ### Known limitations
 
 - ML307/4G, wake words, battery and power management are not yet supported.
+- ReSpeaker Flex requires separately flashed XVF3800 Circular-4 16 kHz I2S firmware; hardware
+  validation, Linear-4 support, XVF firmware update, LED-ring status, and LCD output are not yet
+  complete.
 
 ### Fixed
 

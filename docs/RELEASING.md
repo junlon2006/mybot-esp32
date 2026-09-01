@@ -23,7 +23,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] CI passes for both boards, both languages, and 20/40/60 ms packet durations.
+- [ ] CI passes for all supported boards, both languages, and 20/40/60 ms packet durations.
 - [ ] Both OTA slots retain sufficient rollback headroom.
 - [ ] Format, SPDX, whitespace, and commit-message checks pass.
 - [ ] On each release board, test provisioning, reconnect, pairing, HTTPS, bidirectional audio,
