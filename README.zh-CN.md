@@ -10,8 +10,9 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307、M5Stack CoreS3、M5Stack
-StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、M5Stack
+CoreS3、M5Stack StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及
+SenseCAP Watcher。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -32,13 +33,15 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
 | Board profile | 音频 | 显示与输入 | 存储 |
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
+| `zhengchen-1.54tft-wifi` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、80 MHz Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 与主按键 | 8 MB QIO Flash、8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 与 AIC3104 | XIAO Boot 与 XVF 板载按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
 | `sensecap-watcher` | ES8311 与 ES7243E | SPD2010 与旋转编码器 | 32 MB QIO Flash、Octal PSRAM |
 
-所有 profile 当前均使用 Wi-Fi。征辰板预留 ML307 UART，但 Modem AT socket 不是 lwIP
-网络接口，当前 RTC 传输不支持该网络路径。
+所有 profile 当前均使用 Wi-Fi。征辰 ML307 profile 预留 Modem UART，但 Modem AT socket
+不是 lwIP 网络接口，当前 RTC 传输不支持该网络路径。Wi-Fi profile 不配置也不访问 Modem
+UART 使用的 GPIO11 与 GPIO12。
 
 ## 构建
 
@@ -56,6 +59,10 @@ test "$(idf.py --version)" = "ESP-IDF v5.5.2"
 idf.py -B build/zhengchen-1.54tft-ml307 \
   -DMYBOT_BOARD=zhengchen-1.54tft-ml307 \
   -DSDKCONFIG=build/zhengchen-1.54tft-ml307/sdkconfig build
+
+idf.py -B build/zhengchen-1.54tft-wifi \
+  -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
+  -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
 
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
@@ -80,7 +87,7 @@ idf.py -B build/sensecap-watcher \
 烧录并查看日志：
 
 ```sh
-idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
+idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/tty.wchusbserial1430 flash monitor
 ```
 
 首次烧录 SenseCAP Watcher 前，先备份其 200 KiB 出厂数据分区：
@@ -99,7 +106,8 @@ NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。�
 `http://192.168.4.1` 完成配网。STA 获取可用 IP 后才启动 mybot；配备显示屏的板卡在配网
 期间显示 `WIFI SETUP`。
 
-- 征辰板：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网。
+- 征辰 ML307 与 Wi-Fi：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并
+  持久化扬声器音量。
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
 - StickS3：短按主按键开始/结束对话；长按 3 秒进入配网。
 - ReSpeaker Flex：短按 XIAO Boot 或 XVF 板载按键（GPI0/X1D09）开始/结束对话；长按任一
@@ -119,7 +127,7 @@ Cloud AEC 与 AI QoS。
 
 ## 硬件说明
 
-### 征辰 1.54 TFT ML307
+### 征辰 1.54 TFT ML307 与 Wi-Fi
 
 | 能力 | 引脚/配置 |
 | --- | --- |
@@ -128,7 +136,19 @@ Cloud AEC 与 AI QoS。
 | 按键 | Boot GPIO0、音量加 GPIO10、音量减 GPIO39 |
 | ST7789 | MOSI GPIO41、SCLK GPIO42、CS GPIO21、DC GPIO40、RESET GPIO45 |
 | 背光 / 电源保持 | GPIO20 / GPIO2 输出高 |
-| ML307 UART（预留） | ESP TX GPIO12、RX GPIO11 |
+| ML307 UART（仅 `zhengchen-1.54tft-ml307`） | ESP TX GPIO12、RX GPIO11 |
+
+两个 profile 共用显示、音频、按键和 GPIO2 电源保持实现。Wi-Fi profile 不配置 GPIO11 与
+GPIO12；其 defaults 使用 16 MB QIO Flash 和 80 MHz Octal PSRAM，发布前需通过启动日志
+确认实际 PSRAM 容量。
+
+mybot 边界为 16 kHz 单声道 signed-16 PCM；首版物理 I2S 使用 16 kHz 单声道 32-bit left
+slot。板卡原始扬声器配置使用 24 kHz 输出，因此必须通过真机确认播放速度、音调、稳定性和
+双向音频。如果硬件必须使用 24 kHz 输出，应保持 SDK 侧 16 kHz 边界，并在 Board 音频驱动
+内加入有状态重采样。
+
+首版 Wi-Fi profile 不包含 GPIO9 充电状态、GPIO8 电池 ADC、温度监测、自动休眠和低功耗
+能力。
 
 ### M5Stack CoreS3
 
@@ -198,12 +218,14 @@ main/                        固件入口与工程 Kconfig
 ## 验证与限制
 
 CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher
-profile 尚未完成真机验证；编译成功不能替代发布硬件上的真实设备验证。
+已完成真机配网与双向语音交互验证。征辰 Wi-Fi、M5Stack StickS3、ReSpeaker Flex 与
+SenseCAP Watcher profile 尚未完成真机验证；编译成功不能替代发布硬件上的真实设备验证。
 
 已知限制：
 
-- ML307/4G 网络、本地唤醒词、电池状态与低功耗尚未接入。
+- ML307/4G 网络与本地唤醒词尚未接入。
+- 征辰板充电状态、电池 ADC、温度监测、自动休眠与低功耗尚未接入；Wi-Fi profile 的实际
+  PSRAM 容量尚未确认。
 - CoreS3 摄像头、电池状态与自动休眠尚未接入。
 - StickS3 GPIO12、IMU、红外、电池状态、关机手势与低功耗尚未接入。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未

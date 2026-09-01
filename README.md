@@ -10,9 +10,9 @@
 initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, audio
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
-The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are Zhengchen
-1.54 TFT ML307, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO
-ESP32S3, and SenseCAP Watcher.
+The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are the Zhengchen
+1.54 TFT ML307 and Wi-Fi variants, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800
+Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -34,14 +34,15 @@ ESP32S3, and SenseCAP Watcher.
 | Board profile | Audio | Display and input | Storage |
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
+| `zhengchen-1.54tft-wifi` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 and main button | 8 MB QIO Flash, 8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 and AIC3104 | XIAO Boot and XVF onboard buttons; no display | 8 MB Flash, 8 MB Octal PSRAM |
 | `sensecap-watcher` | ES8311 and ES7243E | SPD2010 and rotary encoder | 32 MB QIO Flash, Octal PSRAM |
 
-All profiles currently use Wi-Fi networking. The ML307 UART is reserved by the Zhengchen hardware
-profile, but the modem AT socket is not an lwIP network interface and is not supported by the RTC
-transport.
+All profiles currently use Wi-Fi networking. The ML307 profile reserves the Zhengchen modem UART,
+but the modem AT socket is not an lwIP network interface and is not supported by the RTC transport.
+The Wi-Fi profile does not configure or access the modem UART pins, GPIO11 and GPIO12.
 
 ## Build
 
@@ -60,6 +61,10 @@ Use a separate build directory and generated sdkconfig for each board:
 idf.py -B build/zhengchen-1.54tft-ml307 \
   -DMYBOT_BOARD=zhengchen-1.54tft-ml307 \
   -DSDKCONFIG=build/zhengchen-1.54tft-ml307/sdkconfig build
+
+idf.py -B build/zhengchen-1.54tft-wifi \
+  -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
+  -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
 
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
@@ -84,7 +89,7 @@ Board defaults supply the required Flash, PSRAM, and partition settings.
 Flash and monitor the selected build:
 
 ```sh
-idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/ttyUSB0 flash monitor
+idf.py -B build/zhengchen-1.54tft-ml307 -p /dev/tty.wchusbserial1430 flash monitor
 ```
 
 Before first flashing a SenseCAP Watcher, back up its 200 KiB factory-data partition:
@@ -104,7 +109,8 @@ When NVS contains no Wi-Fi credentials, the device creates a configuration AP wh
 with `mybot-`. Connect to it and open `http://192.168.4.1`. mybot starts only after the station has
 a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
 
-- Zhengchen: short-press Boot to start/stop a conversation; hold Boot for 3 seconds to provision.
+- Zhengchen ML307 and Wi-Fi: short-press Boot to start/stop a conversation; hold Boot for 3 seconds
+  to provision. The volume buttons adjust and persist speaker volume.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
 - StickS3: short-press the main button to start/stop a conversation; hold it for 3 seconds to
   provision.
@@ -127,7 +133,7 @@ packet duration, Cloud AEC, and AI QoS.
 
 ## Hardware Notes
 
-### Zhengchen 1.54 TFT ML307
+### Zhengchen 1.54 TFT ML307 and Wi-Fi
 
 | Capability | Pins/configuration |
 | --- | --- |
@@ -136,7 +142,20 @@ packet duration, Cloud AEC, and AI QoS.
 | Buttons | Boot GPIO0, volume up GPIO10, volume down GPIO39 |
 | ST7789 | MOSI GPIO41, SCLK GPIO42, CS GPIO21, DC GPIO40, RESET GPIO45 |
 | Backlight / power hold | GPIO20 / GPIO2 high |
-| ML307 UART (reserved) | ESP TX GPIO12, RX GPIO11 |
+| ML307 UART (`zhengchen-1.54tft-ml307` only) | ESP TX GPIO12, RX GPIO11 |
+
+The two profiles share the display, audio, buttons, and GPIO2 power-hold implementation. The Wi-Fi
+profile leaves GPIO11 and GPIO12 unconfigured. Its defaults select 16 MB QIO Flash and Octal PSRAM
+at 80 MHz; confirm the physical PSRAM capacity from the startup log before release.
+
+The mybot boundary is 16 kHz mono signed-16 PCM; the initial physical I2S link uses 16 kHz mono
+32-bit left-slot words. The board's original speaker configuration uses 24 kHz output, so
+real-device validation must confirm playback speed, pitch, stability, and bidirectional audio. If
+the hardware requires 24 kHz output, keep the SDK boundary at 16 kHz and add stateful resampling
+inside the Board audio driver.
+
+GPIO9 charge status, GPIO8 battery ADC, temperature monitoring, automatic sleep, and low-power
+behavior are not part of the initial Wi-Fi profile.
 
 ### M5Stack CoreS3
 
@@ -211,13 +230,15 @@ main/                        Firmware entry point and project Kconfig
 
 CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
 applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
-real hardware. The M5Stack StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet
-completed real-device validation; a successful build is not a substitute for hardware validation on
-a release device.
+real hardware. The Zhengchen Wi-Fi, M5Stack StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles
+have not yet completed real-device validation; a successful build is not a substitute for hardware
+validation on a release device.
 
 Known limitations:
 
-- ML307/4G networking, local wake words, battery reporting, and low-power operation are not wired up.
+- ML307/4G networking and local wake words are not wired up.
+- Zhengchen charge status, battery ADC, temperature monitoring, automatic sleep, and low-power
+  operation are not wired up. The Wi-Fi profile's physical PSRAM capacity is not yet confirmed.
 - CoreS3 camera, battery reporting, and automatic sleep are not wired up.
 - StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power
   operation are not wired up.

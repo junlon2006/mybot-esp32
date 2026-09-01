@@ -114,20 +114,37 @@ int mybot_esp32s3_buttons_start(void) {
     }
     portEXIT_CRITICAL(&s_context.lock);
 
-    if (create_button(MYBOT_BOOT_BUTTON_GPIO, &s_context.boot) < 0 ||
-        create_button(MYBOT_VOLUME_UP_BUTTON_GPIO, &s_context.volume_up) < 0 ||
-        create_button(MYBOT_VOLUME_DOWN_BUTTON_GPIO, &s_context.volume_down) < 0 ||
-        iot_button_register_cb(s_context.boot, BUTTON_SINGLE_CLICK, NULL, boot_click, NULL) !=
+    button_handle_t boot = NULL;
+    button_handle_t volume_up = NULL;
+    button_handle_t volume_down = NULL;
+    if (create_button(MYBOT_BOOT_BUTTON_GPIO, &boot) < 0 ||
+        create_button(MYBOT_VOLUME_UP_BUTTON_GPIO, &volume_up) < 0 ||
+        create_button(MYBOT_VOLUME_DOWN_BUTTON_GPIO, &volume_down) < 0 ||
+        iot_button_register_cb(boot, BUTTON_SINGLE_CLICK, NULL, boot_click, NULL) != ESP_OK ||
+        iot_button_register_cb(boot, BUTTON_LONG_PRESS_START, NULL, boot_long_press, NULL) !=
             ESP_OK ||
-        iot_button_register_cb(s_context.boot, BUTTON_LONG_PRESS_START, NULL, boot_long_press,
-                               NULL) != ESP_OK ||
-        iot_button_register_cb(s_context.volume_up, BUTTON_SINGLE_CLICK, NULL, volume_up_click,
-                               NULL) != ESP_OK ||
-        iot_button_register_cb(s_context.volume_down, BUTTON_SINGLE_CLICK, NULL, volume_down_click,
-                               NULL) != ESP_OK) {
+        iot_button_register_cb(volume_up, BUTTON_SINGLE_CLICK, NULL, volume_up_click, NULL) !=
+            ESP_OK ||
+        iot_button_register_cb(volume_down, BUTTON_SINGLE_CLICK, NULL, volume_down_click, NULL) !=
+            ESP_OK) {
+        if (volume_down) {
+            (void)iot_button_delete(volume_down);
+        }
+        if (volume_up) {
+            (void)iot_button_delete(volume_up);
+        }
+        if (boot) {
+            (void)iot_button_delete(boot);
+        }
         ESP_LOGE(TAG, "event=buttons action=initialize result=error");
         return -1;
     }
+
+    portENTER_CRITICAL(&s_context.lock);
+    s_context.boot = boot;
+    s_context.volume_up = volume_up;
+    s_context.volume_down = volume_down;
+    portEXIT_CRITICAL(&s_context.lock);
     return 0;
 }
 

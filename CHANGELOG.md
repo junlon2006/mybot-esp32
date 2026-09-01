@@ -8,6 +8,8 @@ Versioning and Conventional Commits.
 ### Added
 
 - ESP-IDF v5.5.2 project for the Zhengchen 1.54 TFT ESP32-S3 board.
+- Zhengchen 1.54 TFT Wi-Fi Board profile with shared I2S, ST7789, Boot, volume-button, and
+  power-hold support while leaving the ML307 UART pins unused.
 - mybot 1.0.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
@@ -42,6 +44,8 @@ Versioning and Conventional Commits.
   station obtains an IP address.
 - Select the target Board at compile time and separate common platform services, reusable drivers,
   and the Zhengchen board profile without changing its runtime behavior.
+- Share the Zhengchen Board lifecycle between the ML307 and Wi-Fi profiles while keeping their
+  compile-time hardware configuration isolated.
 - Log volume-up and volume-down button presses in the ESP32-S3 platform layer.
 - Shorten the provisioning AP SSID to `mybot-aabb`, using the first two STA MAC bytes.
 - Sync the vendored mybot SDK to the v1.0.0 release (`117a44d`), retaining the ESP32-S3 RTC and
@@ -49,7 +53,10 @@ Versioning and Conventional Commits.
 
 ### Known limitations
 
-- ML307/4G, wake words, battery and power management are not yet supported.
+- ML307/4G and wake words are not yet supported.
+- Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback
+  validation, charge/battery inputs, temperature monitoring, and power management are not yet
+  complete.
 - ReSpeaker Flex requires separately flashed XVF3800 Circular-4 16 kHz I2S firmware; hardware
   validation, Linear-4 support, XVF firmware update, LED-ring status, and LCD output are not yet
   complete.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 set(MYBOT_BOARD_TARGET "esp32s3")
 set(MYBOT_BOARD_SDKCONFIG_DEFAULTS "${CMAKE_CURRENT_LIST_DIR}/sdkconfig.defaults")
 set(MYBOT_BOARD_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}")

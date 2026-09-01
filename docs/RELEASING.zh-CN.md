@@ -30,6 +30,9 @@ git diff --check
 - [ ] 负向测试无效 CA、hostname 不匹配、TLS 超时、NVS 值缺失与 Wi-Fi 丢失。
 - [ ] 确认日志与发布归档不包含任何凭据。
 - [ ] 确认发布配置采用预期的 NVS/Flash encryption 与 Secure Boot 策略。
+- [ ] 对征辰 Wi-Fi，通过启动日志确认 16 MB Flash 与实际 PSRAM 容量；验证 GPIO2 电源保持、
+      ST7789、Boot 与音量按键，并确认 GPIO11/GPIO12 保持未使用。结合硬件的 24 kHz 扬声器
+      输出要求，验证 16 kHz 采集/播放的速度、音调、稳定性与全双工交互。
 - [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不
       改变该区域，且发布流程不得包含 `erase-flash`。
 - [ ] 对 M5Stack StickS3，验证 USB 与电池启动、M5PM1 G2/G3 时序、扬声器爆音/噪声、
