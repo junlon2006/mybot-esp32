@@ -354,7 +354,7 @@ static void dev_on_pair_code(const char *code, void *user_data) {
 
     AOSL_LOG_NTC("pair code: %s", code);
     mybot_presenter_show_pair_code(&runtime->presenter, code);
-    mybot_media_pipeline_play_pair_code(&runtime->media, code);
+    (void)mybot_media_pipeline_play_prompt(&runtime->media, MYBOT_PROMPT_PAIR_CODE, code);
 }
 
 static int dev_on_rtc_token_renewed(const char *token, void *user_data) {
@@ -425,7 +425,7 @@ static void dev_on_state_changed(mybot_device_state_t state, void *user_data) {
     (void)mybot_state_model_set_device_state(&runtime->state_model, state);
 
     if (state != MYBOT_DEVICE_STATE_AWAITING_CLAIM) {
-        mybot_media_pipeline_stop_announcement(&runtime->media);
+        mybot_media_pipeline_stop_prompt(&runtime->media);
     }
     sync_wake_words(runtime);
     mybot_presenter_render_state(&runtime->presenter, &runtime->state_model);
@@ -849,8 +849,9 @@ int mybot_start(const mybot_config_t *cfg) {
     aosl_ctor();
     aosl_atomic_set(&runtime->aosl_ref_held, true);
 
-    runtime->control_mpq = aosl_mpq_create(AOSL_THRD_PRI_NORMAL, CONTROL_MPQ_STACK_SIZE, 1000,
-                                           "control_mpq", NULL, control_worker_fini, runtime);
+    runtime->control_mpq = aosl_mpq_create_flags(AOSL_MPQ_FLAG_SIGP_EVENT, AOSL_THRD_PRI_NORMAL,
+                                                 CONTROL_MPQ_STACK_SIZE, 1000, "control_mpq", NULL,
+                                                 control_worker_fini, runtime);
     if (aosl_mpq_invalid(runtime->control_mpq)) {
         AOSL_LOG_ERR("failed to create application control queue");
         goto fail;
