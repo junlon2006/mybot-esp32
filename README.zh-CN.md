@@ -23,7 +23,8 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
 - Wi-Fi STA 自动重连与首次启动配网页面。
 - NVS 持久化设备凭据和 0-100 扬声器音量。
 - 通过 `esp-tls`、系统 CA bundle、SNI 与 hostname 校验实现 HTTPS。
-- 16 kHz 单声道 signed-16 PCM，音频包长可配置为 20/40/60 ms。
+- 16 kHz 单声道 signed-16 PCM；随附 RTSA 软件包固定使用 60 ms 音频包长。其他包长需要
+  集成者提供匹配的 RTSA 构建。
 - Agora RTSA 全双工音频、Cloud AEC、AI QoS、RTM 频道订阅与声纹状态显示。
 - 中英文配对码与 Wi-Fi 配网本地提示音。
 - 编译期 Board profile，隔离 Flash、PSRAM、分区、驱动和引脚配置。
@@ -285,7 +286,7 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 构建全部 Board profile、两种语言，以及适用的 20/40/60 ms 音频包长。M5Stack CoreS3
+CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长。M5Stack CoreS3
 已完成真机配网与双向语音交互验证。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
 硬件版本、M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。

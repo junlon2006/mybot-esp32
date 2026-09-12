@@ -4,6 +4,30 @@ This project follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep the playback ring buffer strictly SPSC by feeding announcements directly into the playback
+  worker's pending frame; non-frame-aligned prompt tails are zero-padded and never joined to RTC
+  audio.
+- Flush capture, playback, and AEC reference buffers at conversation boundaries through their
+  owning consumer workers, reject uplink sends after the pipeline stops, and retain resources when
+  an MPQ shutdown wait fails.
+- Commit AEC reference PCM only after the playback device accepts the corresponding samples,
+  including short writes; announcement PCM is never used as an AEC reference.
+- Expose online `unprovisioned`, `pairing`, and `awaiting_claim` device phases as the public
+  `MYBOT_STATE_PAIRING` state so `MYBOT_STATE_READY` is reserved for authenticated runtime devices.
+- Restart pairing after an `unbound` response instead of leaving the device without a pending
+  pair-code request.
+- Reject oversized or non-string service response fields instead of silently truncating them, and
+  reserve space for the full 512-byte RTC token plus its terminating NUL without changing the
+  persisted device-auth layout.
+- Validate RTSA downlink callbacks before handing audio to the PCM pipeline, and require the
+  selected `MYBOT_AUDIO_PTIME_MS` to match the bundled or externally supplied RTSA timer cadence.
+- Clear the voiceprint LCD overlay synchronously when a conversation stops so a stale indicator
+  cannot survive the transition back to `READY`.
+
+## [1.1.0] - 2026-09-12
+
 ### Added
 
 - Enable Agora RTM login and point-to-point messaging in the internal RTC wrapper. RTM uses the
@@ -14,13 +38,39 @@ This project follows Semantic Versioning.
   and expose it to LCD platforms as the `MYBOT_LCD_INDICATOR_VP_REGISTERED` overlay indicator. The
   device subscribes to the RTM channel matching the RTC channel before RTC join, and consumes the
   voiceprint status from the channel subscription callback while retaining P2P RTM callbacks.
+- Synchronize the BK725x adapter with the validated BK7258 integration: the application controller
+  now owns the APSTA/STA and MyBot lifecycle with a small polling loop, shared playback ownership is
+  explicit, and the dual LCD renders the voiceprint status indicator (red pending mark, green
+  success mark) on the conversation screen.
 
 ### Changed
 
+- Unify mybot-owned prompt playback behind the media pipeline, allowing a new prompt to replace
+  the current one, dropping buffered RTC downlink audio during prompt playback, and excluding
+  prompt PCM from the cloud AEC reference. Prompt data is drained by the playback consumer before
+  replacement.
+- Use `AOSL_MPQ_FLAG_SIGP_EVENT` for the control and media worker queues so AOSL does not create
+  the default pipe/socket wakeup pair for queues that only use timers and messages. The Linux
+  stdin queue intentionally keeps the default MPQ mode because it owns an `aosl_mpq_add_fd()`
+  registration, which is incompatible with `SIGP_EVENT`.
 - Update the bundled x86_64 Linux Agora RTSA Lite v1.10.1 package to build `1270765`, compiled
   with G.722, RTM channel support, string UIDs, audio jitter buffering, and a fixed 60 ms minimal
   timer interval. Adapt the wrapper to the new RTM message-type callback and canonical
   `agora_rtm_*` P2P APIs; jitter-buffer output duration is now determined by the library build.
+
+### Compatibility
+
+- Extend `mybot_lcd_content_t` with the `indicators` bitmask. Platform LCD implementations must be
+  rebuilt against the 1.1.0 header to render `MYBOT_LCD_INDICATOR_VP_REGISTERED`.
+- Add `MYBOT_STATE_PAIRING = 8`; existing `mybot_state_t` values retain their numeric values.
+
+### Known limitations
+
+- Voiceprint status requires the device service to provide a compatible RTM authentication
+  credential. The current service response exposes `rtc.token`; deployments using token
+  authentication must confirm that it is accepted by RTM or extend the service contract.
+- The bundled Linux RTSA package is built with a 60 ms timer interval; other packet durations need
+  a matching RTSA build and have not been validated by the default CI job.
 
 ## [1.0.0] - 2026-08-26
 

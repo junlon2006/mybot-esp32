@@ -18,7 +18,7 @@ Versioning and Conventional Commits.
   CST816S touch input, and ES7210/ES8311 full-duplex audio.
 - Pinned ST77916 2.0.2 and CST816S 1.1.1~1 production components.
 - Pinned CO5300 2.1.0, LCD touch 1.2.1, and CST9217 1.0.4 production components.
-- mybot 1.0.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
+- mybot 1.1.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
 - Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
 - Embedded Chinese and English Ogg/Opus pairing-code announcements decoded to PSRAM at runtime.
@@ -43,6 +43,10 @@ Versioning and Conventional Commits.
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
 - Sync the vendored mybot SDK to Unreleased commit `27324e7`, adding RTM channel subscription for
   voice-print status.
+- Sync the vendored mybot SDK to v1.1.0 + Unreleased commit `e515f07`, including the serialized RTC
+  MPQ implementation, pairing-state projection, media-session cleanup, and bounded service parsing.
+- Enforce the bundled ESP32-S3 RTSA package's fixed 60 ms cadence at component configuration time;
+  non-60 ms packet durations now require a matching RTSA package.
 - Update the AOSL baseline while retaining the ESP32-S3 FreeRTOS, PSRAM, and board-specific
   adaptations.
 - Align the bilingual project, contribution, support, porting, and release documentation with the

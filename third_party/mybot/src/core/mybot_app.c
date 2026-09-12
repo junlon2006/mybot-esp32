@@ -371,6 +371,11 @@ static void dev_on_conversation_start(const mybot_conversation_params_t *params,
         mybot_device_lifecycle_notify_conversation_ended(&runtime->lifecycle);
         return;
     }
+    if (mybot_media_pipeline_flush_session(&runtime->media) < 0) {
+        AOSL_LOG_ERR("failed to flush media session before RTC join");
+        mybot_device_lifecycle_notify_conversation_ended(&runtime->lifecycle);
+        return;
+    }
 
     mybot_agora_rtc_callbacks_t callbacks;
     memset(&callbacks, 0, sizeof(callbacks));
@@ -408,12 +413,19 @@ static void dev_on_conversation_start(const mybot_conversation_params_t *params,
 
 static void dev_on_conversation_stop(void *user_data) {
     mybot_runtime_t *runtime = user_data;
+    bool app_running = runtime_is_running(runtime);
     runtime->rtc_channel[0] = '\0';
     runtime->rtc_agent_uid[0] = '\0';
     mybot_presenter_set_vp_registered(&runtime->presenter, false);
+    /* Render from the current state snapshot before the lifecycle publishes its
+     * next device state, so the old conversation overlay cannot win a race. */
+    mybot_presenter_render_state(&runtime->presenter, &runtime->state_model);
     mybot_media_pipeline_set_rtc_connected(&runtime->media, false);
     if (mybot_agora_rtc_leave() < 0) {
         AOSL_LOG_ERR("failed to leave RTC conversation");
+    }
+    if (app_running && mybot_media_pipeline_flush_session(&runtime->media) < 0) {
+        AOSL_LOG_ERR("failed to flush media session after RTC leave");
     }
 }
 
@@ -512,12 +524,14 @@ static void cleanup_services(mybot_runtime_t *runtime) {
         }
         runtime->control_timer = AOSL_MPQ_TIMER_INVALID;
     }
+
     if (runtime->lifecycle_initialized) {
         mybot_device_lifecycle_shutdown(&runtime->lifecycle);
         runtime->lifecycle_initialized = false;
     }
-
-    mybot_media_pipeline_stop(&runtime->media);
+    if (mybot_media_pipeline_stop(&runtime->media) < 0) {
+        AOSL_LOG_ERR("media pipeline stop incomplete");
+    }
     mybot_kv_store_deinit(&runtime->kv_store);
 }
 
@@ -562,7 +576,9 @@ static int start_services(mybot_runtime_t *runtime) {
 
 fail:
     cleanup_services(runtime);
-    mybot_media_pipeline_destroy(&runtime->media);
+    if (mybot_media_pipeline_destroy(&runtime->media) < 0) {
+        AOSL_LOG_ERR("media pipeline destroy skipped because stop was incomplete");
+    }
     return -1;
 }
 
@@ -654,8 +670,8 @@ static void on_wifi_event(mybot_wifi_event_t event, void *user_data) {
     }
 
     bool network_published = false;
-    if (state == MYBOT_STATE_READY || state == MYBOT_STATE_IN_CONVERSATION ||
-        state == MYBOT_STATE_WIFI_DISCONNECTED) {
+    if (state == MYBOT_STATE_READY || state == MYBOT_STATE_PAIRING ||
+        state == MYBOT_STATE_IN_CONVERSATION || state == MYBOT_STATE_WIFI_DISCONNECTED) {
         if (event == MYBOT_WIFI_EVENT_STA_CONNECTED) {
             mybot_device_lifecycle_set_network_available(&runtime->lifecycle, true);
             network_published = true;
@@ -738,7 +754,9 @@ static void control_stop_runtime(mybot_runtime_t *runtime) {
     mybot_presenter_deinit(&runtime->presenter);
 
     mybot_agora_rtc_fini();
-    mybot_media_pipeline_destroy(&runtime->media);
+    if (mybot_media_pipeline_destroy(&runtime->media) < 0) {
+        AOSL_LOG_ERR("media pipeline destroy skipped because stop was incomplete");
+    }
 
     mybot_state_model_reset(&runtime->state_model);
     AOSL_LOG_NTC("application control stopped");

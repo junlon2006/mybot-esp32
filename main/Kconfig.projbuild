@@ -24,6 +24,11 @@ menu "mybot"
         prompt "Audio packet duration"
         default MYBOT_AUDIO_PTIME_60
 
+        help
+            The bundled ESP32-S3 Agora RTSA package emits 60 ms jitter-buffer frames.
+            Selecting 20 ms or 40 ms requires a matching RTSA package and fails the
+            component configuration check until that package is supplied.
+
         config MYBOT_AUDIO_PTIME_20
             bool "20 ms"
 

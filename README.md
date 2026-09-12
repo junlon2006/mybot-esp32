@@ -25,7 +25,8 @@ SenseCAP Watcher.
 - Wi-Fi station reconnect and first-boot captive-portal provisioning.
 - NVS persistence for device credentials and 0-100 speaker volume.
 - HTTPS through `esp-tls` with the system CA bundle, SNI, and hostname verification.
-- 16 kHz mono signed-16 PCM capture/playback with configurable 20/40/60 ms packet duration.
+- 16 kHz mono signed-16 PCM capture/playback with 60 ms packets for the bundled RTSA package.
+  Other packet durations require a matching RTSA build supplied by the integrator.
 - Agora RTSA full-duplex audio, Cloud AEC, AI QoS, RTM channel subscription, and voice-print status.
 - Chinese and English local pairing-code and Wi-Fi provisioning prompts.
 - Compile-time board profiles with isolated Flash, PSRAM, partition, driver, and pin configuration.
@@ -304,8 +305,8 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds all board profiles, both languages, and 20/40/60 ms audio packet durations where
-applicable. M5Stack CoreS3 provisioning and bidirectional voice interaction have been validated on
+CI builds all board profiles, both languages, and the bundled RTSA 60 ms cadence. M5Stack CoreS3
+provisioning and bidirectional voice interaction have been validated on
 real hardware. The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
 StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
 validation; a successful build is not a substitute for hardware validation on a release device.
