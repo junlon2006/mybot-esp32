@@ -3,11 +3,13 @@ set(MYBOT_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../third_party/mybot")
 # The bundled ESP32-S3 RTSA package (build 1270872) emits 60 ms jitter-buffer
 # frames. The synchronized SDK validates every downlink frame against this
 # cadence, so reject unsupported values during component configuration.
-if(NOT "${CONFIG_MYBOT_AUDIO_PTIME_MS}" STREQUAL "60")
-    message(FATAL_ERROR
-        "The bundled ESP32-S3 Agora RTSA package supports only 60 ms audio frames; "
-        "CONFIG_MYBOT_AUDIO_PTIME_MS=${CONFIG_MYBOT_AUDIO_PTIME_MS} is unsupported. "
-        "Supply a matching RTSA package before enabling another packet duration.")
+if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+    if(NOT "${CONFIG_MYBOT_AUDIO_PTIME_MS}" STREQUAL "60")
+        message(FATAL_ERROR
+            "The bundled ESP32-S3 Agora RTSA package supports only 60 ms audio frames; "
+            "CONFIG_MYBOT_AUDIO_PTIME_MS=${CONFIG_MYBOT_AUDIO_PTIME_MS} is unsupported. "
+            "Supply a matching RTSA package before enabling another packet duration.")
+    endif()
 endif()
 
 set(MYBOT_VERSION_MAJOR 1)
