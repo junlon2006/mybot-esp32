@@ -37,8 +37,8 @@ typedef struct {
  * Application-level lifecycle state, returned by mybot_get_state().
  *
  * Describes the startup / runtime state of the whole SDK application instance,
- * including Wi-Fi provisioning, service bring-up, conversation activity,
- * connectivity, and shutdown.
+ * including Wi-Fi provisioning, service bring-up, device pairing,
+ * conversation activity, connectivity, and shutdown.
  */
 typedef enum {
     /** Not started, or fully stopped. Entered at the end of mybot_stop()
@@ -59,7 +59,7 @@ typedef enum {
     MYBOT_STATE_READY,
     /** Runtime Wi-Fi link was lost (or failed after provisioning);
      *  device-service traffic is paused and any active RTC conversation is
-     *  ended locally. Returns to MYBOT_STATE_READY on reconnect. */
+     *  ended locally. Returns to the corresponding online state on reconnect. */
     MYBOT_STATE_WIFI_DISCONNECTED,
     /** Unrecoverable failure: Wi-Fi provisioning, service bring-up, or a
      *  runtime event queue failure. The application should report the error
@@ -73,6 +73,10 @@ typedef enum {
      *  device lifecycle returns to MYBOT_STATE_READY. If runtime connectivity
      *  is lost, MYBOT_STATE_WIFI_DISCONNECTED takes precedence while offline. */
     MYBOT_STATE_IN_CONVERSATION = 7,
+    /** The device service is unprovisioned, requesting a pairing code, or
+     *  waiting for the device to be claimed. Conversation start is not
+     *  available until the device reaches MYBOT_STATE_READY. */
+    MYBOT_STATE_PAIRING = 8,
 } mybot_state_t;
 
 /**
@@ -135,8 +139,11 @@ MYBOT_API bool mybot_is_running(void);
 /**
  * @brief Return the current application lifecycle state.
  *
- * @return One of the mybot_state_t values. During a device-service
- *         conversation with usable connectivity, returns
+ * @return One of the mybot_state_t values. While the device service is
+ *         unprovisioned, pairing, or awaiting a claim, returns
+ *         MYBOT_STATE_PAIRING; after it is claimed, returns MYBOT_STATE_READY
+ *         until a conversation is accepted.
+ *         During a conversation with usable connectivity, returns
  *         MYBOT_STATE_IN_CONVERSATION until normal teardown completes. If
  *         runtime connectivity is lost, returns MYBOT_STATE_WIFI_DISCONNECTED
  *         until reconnect.
@@ -147,10 +154,11 @@ MYBOT_API bool mybot_is_running(void);
 MYBOT_API mybot_state_t mybot_get_state(void);
 
 /**
- * @brief Stop the application and release all resources.
+ * @brief Stop the application and release resources whose workers have exited.
  *
- * Signals every worker to stop, waits for all worker threads to exit, and
- * releases audio devices, TLS, Wi-Fi, LCD and RTC resources.
+ * Signals every worker to stop, waits for worker threads to exit, and releases
+ * audio devices, TLS, Wi-Fi, LCD and RTC resources. If a worker cannot be
+ * joined, the associated resources are retained so a later call can retry.
  *
  * Idempotent: safe to call when the application is not running, after a
  * failed mybot_start(), or repeatedly. After it returns, the application

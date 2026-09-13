@@ -5,7 +5,7 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 
 | Path | Source | Pinned revision |
 | --- | --- | --- |
-| `third_party/mybot` | `github.com/junlon2006/mybot` | v1.0.0 + Unreleased, commit `27324e7177b52ad9d8743aba31acf94d0a125f44` |
+| `third_party/mybot` | `github.com/junlon2006/mybot` | v1.1.0 + Unreleased, commit `e515f07179e5665ca297ea5c9774ac0dfed318bb` |
 | `components/aosl` | `github.com/AgoraIO-Community/aosl` | v1.0.4 + post-release fixes, commit `84e086084ebcd0ae2455a0ce5721950c5fe2e656` |
 | `components/agora_rtc` | Agora RTSA Lite package archive | v1.10.1, build 1270872 (`20260828_194128`) |
 | `components/esp-wifi-connect` | `github.com/78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |

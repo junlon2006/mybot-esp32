@@ -75,14 +75,6 @@ jobs:
         include:
           - board: zhengchen-1.54tft-ml307
             language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: zhengchen-1.54tft-ml307
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
-          - board: zhengchen-1.54tft-ml307
-            language: zh-CN
             ptime: 60
             defaults: ci/ptime60.defaults
           - board: zhengchen-1.54tft-ml307
@@ -91,28 +83,12 @@ jobs:
             defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: zhengchen-1.54tft-wifi
             language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: zhengchen-1.54tft-wifi
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
-          - board: zhengchen-1.54tft-wifi
-            language: zh-CN
             ptime: 60
             defaults: ci/ptime60.defaults
           - board: zhengchen-1.54tft-wifi
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
-          - board: esp-vocat
-            language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: esp-vocat
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
           - board: esp-vocat
             language: zh-CN
             ptime: 60
@@ -123,28 +99,12 @@ jobs:
             defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: esp32-s3-touch-amoled-1.75
             language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: esp32-s3-touch-amoled-1.75
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
-          - board: esp32-s3-touch-amoled-1.75
-            language: zh-CN
             ptime: 60
             defaults: ci/ptime60.defaults
           - board: esp32-s3-touch-amoled-1.75
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
-          - board: esp32-s3-touch-amoled-1.75c
-            language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: esp32-s3-touch-amoled-1.75c
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
           - board: esp32-s3-touch-amoled-1.75c
             language: zh-CN
             ptime: 60
@@ -163,14 +123,6 @@ jobs:
             defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: m5stack-stick-s3
             language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: m5stack-stick-s3
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
-          - board: m5stack-stick-s3
-            language: zh-CN
             ptime: 60
             defaults: ci/ptime60.defaults
           - board: m5stack-stick-s3
@@ -179,28 +131,12 @@ jobs:
             defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: respeaker-flex-xvf3800-circular4-xiao
             language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: respeaker-flex-xvf3800-circular4-xiao
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
-          - board: respeaker-flex-xvf3800-circular4-xiao
-            language: zh-CN
             ptime: 60
             defaults: ci/ptime60.defaults
           - board: respeaker-flex-xvf3800-circular4-xiao
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
-          - board: sensecap-watcher
-            language: zh-CN
-            ptime: 20
-            defaults: ci/ptime20.defaults
-          - board: sensecap-watcher
-            language: zh-CN
-            ptime: 40
-            defaults: ci/ptime40.defaults
           - board: sensecap-watcher
             language: zh-CN
             ptime: 60

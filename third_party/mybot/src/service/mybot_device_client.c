@@ -53,7 +53,8 @@ static int encode_path_segment(const char *value, char *encoded, size_t encoded_
 static int build_device_url(const char *base_url, const char *device_id, const char *suffix,
                             char *url, size_t url_size) {
     char encoded_id[MYBOT_DEVICE_CLIENT_MAX_ID * 3];
-    if (!base_url || !suffix ||
+    if (!base_url || !device_id || !device_id[0] || !suffix ||
+        strlen(device_id) >= MYBOT_DEVICE_CLIENT_MAX_ID ||
         encode_path_segment(device_id, encoded_id, sizeof(encoded_id)) < 0) {
         return -1;
     }
@@ -70,21 +71,35 @@ static int build_authorization_header(const char *scheme, const char *credential
     return written >= 0 && (size_t)written < header_size ? 0 : -1;
 }
 
-static void copy_json_string(const mybot_json_t *object, const char *name, char *destination,
-                             size_t destination_size) {
-    const char *value = mybot_json_get_string(mybot_json_get_object_item(object, name));
-    if (value && destination_size > 0) {
-        snprintf(destination, destination_size, "%s", value);
+static int copy_json_string(const mybot_json_t *object, const char *name, char *destination,
+                            size_t destination_size) {
+    mybot_json_t *item = mybot_json_get_object_item(object, name);
+    /* Callers use the zero result for optional response fields. */
+    if (!item || item->type == MYBOT_JSON_NULL) {
+        return 0;
     }
+    const char *value = mybot_json_get_string(item);
+    if (!value) {
+        return -1;
+    }
+    if (!destination || destination_size == 0 || strlen(value) >= destination_size) {
+        return -1;
+    }
+    memcpy(destination, value, strlen(value) + 1);
+    return 0;
 }
 
 static int copy_optional_json_string(const mybot_json_t *object, const char *name,
                                      char *destination, size_t destination_size) {
-    const char *value = mybot_json_get_string(mybot_json_get_object_item(object, name));
-    if (!value) {
+    mybot_json_t *item = mybot_json_get_object_item(object, name);
+    if (!item || item->type == MYBOT_JSON_NULL) {
         return 0;
     }
-    if (destination_size == 0 || strlen(value) >= destination_size) {
+    const char *value = mybot_json_get_string(item);
+    if (!value) {
+        return -1;
+    }
+    if (!destination || destination_size == 0 || strlen(value) >= destination_size) {
         return -1;
     }
     memcpy(destination, value, strlen(value) + 1);
@@ -100,7 +115,8 @@ static int copy_json_account(const mybot_json_t *object, const char *name, char 
     const char *string_value = mybot_json_get_string(item);
     if (string_value) {
         size_t len = strlen(string_value);
-        if (destination_size == 0 || (required && len == 0) || len >= destination_size) {
+        if (!destination || destination_size == 0 || (required && len == 0) ||
+            len >= destination_size) {
             return -1;
         }
         memcpy(destination, string_value, len + 1);
@@ -108,7 +124,7 @@ static int copy_json_account(const mybot_json_t *object, const char *name, char 
     }
 
     int64_t integer_value;
-    if (mybot_json_get_integer(item, &integer_value)) {
+    if (destination && destination_size > 0 && mybot_json_get_integer(item, &integer_value)) {
         int written = snprintf(destination, destination_size, "%lld", (long long)integer_value);
         if (written > 0 && (size_t)written < destination_size) {
             return 0;
@@ -120,7 +136,7 @@ static int copy_json_account(const mybot_json_t *object, const char *name, char 
 static int copy_required_json_string(const mybot_json_t *object, const char *name,
                                      char *destination, size_t destination_size) {
     const char *value = mybot_json_get_string(mybot_json_get_object_item(object, name));
-    if (!value || !value[0] || destination_size == 0) {
+    if (!value || !value[0] || !destination || destination_size == 0) {
         return -1;
     }
 
@@ -251,8 +267,15 @@ static int parse_rtc_block(mybot_json_t *root, mybot_device_conversation_t *resp
         return -1;
     }
 
-    copy_json_string(rtc, "app_id", resp->rtc_app_id, sizeof(resp->rtc_app_id));
-    copy_json_string(rtc, "channel", resp->rtc_channel, sizeof(resp->rtc_channel));
+    /* All identity fields are required: without the app id the RTC SDK cannot
+     * be initialized, and without the agent account RTM voiceprint events
+     * cannot be correlated with this conversation.  Reject the response here
+     * instead of allowing a partially initialized session downstream. */
+    if (copy_required_json_string(rtc, "app_id", resp->rtc_app_id, sizeof(resp->rtc_app_id)) < 0 ||
+        copy_required_json_string(rtc, "channel", resp->rtc_channel, sizeof(resp->rtc_channel)) <
+            0) {
+        return -1;
+    }
     if (copy_optional_json_string(rtc, "token", resp->rtc_token, sizeof(resp->rtc_token)) < 0) {
         return -1;
     }
@@ -260,17 +283,17 @@ static int parse_rtc_block(mybot_json_t *root, mybot_device_conversation_t *resp
         return -1;
     }
 
-    /* agent_uid is returned beside the nested rtc block by the device service.
-     * It is optional for RTC audio compatibility, but must never be truncated
-     * because it is later used as an RTM peer account. */
+    /* agent_uid is returned beside the nested rtc block by the device service
+     * and is required for RTM peer correlation. */
     if (copy_json_account(root, "agent_uid", resp->rtc_agent_uid, sizeof(resp->rtc_agent_uid),
-                          false) < 0) {
+                          true) < 0) {
         return -1;
     }
 
     /* Channel and UID are required to join RTC — without them the response is
      * unusable. Token may legitimately be absent (no-auth channel). */
-    if (resp->rtc_channel[0] == '\0' || resp->rtc_uid[0] == '\0') {
+    if (resp->rtc_channel[0] == '\0' || resp->rtc_uid[0] == '\0' || resp->rtc_app_id[0] == '\0' ||
+        resp->rtc_agent_uid[0] == '\0') {
         return -1;
     }
 
@@ -405,10 +428,15 @@ int mybot_device_client_get_binding_status(const char *base_url, const char *dev
         return -1;
     }
 
-    copy_json_string(data, "status", resp->status, sizeof(resp->status));
-    copy_json_string(data, "device_token", resp->device_token, sizeof(resp->device_token));
-    copy_json_string(data, "agent_id", resp->agent_id, sizeof(resp->agent_id));
-    copy_json_string(data, "agent_name", resp->agent_name, sizeof(resp->agent_name));
+    if (copy_json_string(data, "status", resp->status, sizeof(resp->status)) < 0 ||
+        copy_json_string(data, "device_token", resp->device_token, sizeof(resp->device_token)) <
+            0 ||
+        copy_json_string(data, "agent_id", resp->agent_id, sizeof(resp->agent_id)) < 0 ||
+        copy_json_string(data, "agent_name", resp->agent_name, sizeof(resp->agent_name)) < 0) {
+        mybot_json_delete(root);
+        mybot_http_client_response_free(&raw);
+        return -1;
+    }
     copy_json_integer(data, "poll_after_seconds", &resp->poll_after_seconds);
 
     AOSL_LOG_DBG("binding: status=%s agent=%s has_token=%d poll=%ds", resp->status,
@@ -451,7 +479,7 @@ int mybot_device_client_start_conversation(const char *base_url, const char *dev
         return -1;
     }
 
-    AOSL_LOG_NTC("POST %s request body=%s", url, body);
+    AOSL_LOG_NTC("POST %s request body length=%zu", url, strlen(body));
 
     mybot_http_client_response_t raw;
     memset(&raw, 0, sizeof(raw));
@@ -463,8 +491,8 @@ int mybot_device_client_start_conversation(const char *base_url, const char *dev
     }
     mybot_json_free_string(generated_body);
 
-    AOSL_LOG_NTC("POST %s -> status=%d response body=%s", url, raw.status_code,
-                 raw.body ? raw.body : "(empty)");
+    AOSL_LOG_NTC("POST %s -> status=%d response body length=%zu", url, raw.status_code,
+                 raw.body_len);
 
     if (!http_response_ok(&raw)) {
         int status = raw.status_code;
@@ -601,7 +629,7 @@ int mybot_device_client_stop_conversation(const char *base_url, const char *devi
         return -1;
     }
 
-    AOSL_LOG_NTC("POST %s request body=%s", url, body);
+    AOSL_LOG_NTC("POST %s request body length=%zu", url, strlen(body));
 
     mybot_http_client_response_t raw;
     memset(&raw, 0, sizeof(raw));
@@ -610,8 +638,8 @@ int mybot_device_client_stop_conversation(const char *base_url, const char *devi
     mybot_json_free_string(body);
 
     if (ret == 0) {
-        AOSL_LOG_NTC("POST %s -> status=%d response body=%s", url, raw.status_code,
-                     raw.body ? raw.body : "(empty)");
+        AOSL_LOG_NTC("POST %s -> status=%d response body length=%zu", url, raw.status_code,
+                     raw.body_len);
         if (!http_response_ok(&raw)) {
             AOSL_LOG_ERR("POST %s -> HTTP error %d", url, raw.status_code);
             ret = raw.status_code > 0 ? raw.status_code : -1;

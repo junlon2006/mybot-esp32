@@ -22,7 +22,7 @@ typedef struct {
     char rtc_channel[128];
     char rtc_uid[64];       /* string UID assigned by server */
     char rtc_agent_uid[64]; /* string RTM peer UID assigned by server */
-    char rtc_token[MYBOT_DEVICE_CLIENT_MAX_TOKEN];
+    char rtc_token[MYBOT_DEVICE_CLIENT_MAX_RTC_TOKEN];
 } mybot_conversation_params_t;
 
 /* Callbacks invoked by the state machine onto the app layer */
@@ -73,6 +73,11 @@ typedef struct {
     char rtc_agent_uid[64];
     bool conversation_requested;
     aosl_atomic_t stop_request;
+    /* Device-service stop is retried for transient transport/5xx failures
+     * before local teardown proceeds.  These fields are owned by the control
+     * tick thread and therefore need no additional synchronization. */
+    unsigned stop_retry_attempts;
+    unsigned stop_retry_ticks_remaining;
     aosl_atomic_t rtc_token_renewal_requested;
     bool rtc_token_renewal_pending;
     int rtc_token_retry_delay_ticks;
