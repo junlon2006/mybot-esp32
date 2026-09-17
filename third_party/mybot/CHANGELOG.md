@@ -4,27 +4,31 @@ This project follows Semantic Versioning.
 
 ## [Unreleased]
 
-### Fixed
+Changes since the last release will be recorded here.
 
-- Keep the playback ring buffer strictly SPSC by feeding announcements directly into the playback
-  worker's pending frame; non-frame-aligned prompt tails are zero-padded and never joined to RTC
-  audio.
-- Flush capture, playback, and AEC reference buffers at conversation boundaries through their
-  owning consumer workers, reject uplink sends after the pipeline stops, and retain resources when
-  an MPQ shutdown wait fails.
-- Commit AEC reference PCM only after the playback device accepts the corresponding samples,
-  including short writes; announcement PCM is never used as an AEC reference.
-- Expose online `unprovisioned`, `pairing`, and `awaiting_claim` device phases as the public
-  `MYBOT_STATE_PAIRING` state so `MYBOT_STATE_READY` is reserved for authenticated runtime devices.
-- Restart pairing after an `unbound` response instead of leaving the device without a pending
-  pair-code request.
-- Reject oversized or non-string service response fields instead of silently truncating them, and
-  reserve space for the full 512-byte RTC token plus its terminating NUL without changing the
-  persisted device-auth layout.
-- Validate RTSA downlink callbacks before handing audio to the PCM pipeline, and require the
-  selected `MYBOT_AUDIO_PTIME_MS` to match the bundled or externally supplied RTSA timer cadence.
-- Clear the voiceprint LCD overlay synchronously when a conversation stops so a stale indicator
-  cannot survive the transition back to `READY`.
+## [1.2.0] - 2026-09-15
+
+### Added
+
+- Forward RTM `state.listening`, `state.thinking`, and `state.speaking` events to the active
+  conversation LCD as mutually exclusive server-state indicators alongside voice-print status.
+- Add optional multimodal video uplink. Platforms provide complete JPEG, H.264, or H.265 access units;
+  the SDK forwards them to the cloud agent without encoding, decoding, buffering, or receiving video.
+- Add the `mybot_video_ops_t` platform contract, including RTSA target-bitrate and optional key-frame
+  callbacks so an encoder can adapt to the available video bitrate.
+
+### Changed
+
+- Make the platform video ops table own the initial `min_bps` and `max_bps` video bitrate range.
+  The SDK validates the platform values, configures RTSA's BWE range, and starts at their midpoint;
+  only `MYBOT_VIDEO_MAX_FRAME_BYTES` remains a build-time SDK safety limit.
+- Disable remote video subscription because MyBot only sends device video upstream.
+
+### Compatibility
+
+- Add the optional `video` member to `mybot_platform_descriptor_t` and the `mybot_video_ops_t`
+  contract, including platform-owned `min_bps`/`max_bps` limits. Video-enabled builds require a
+  platform encoder and an RTSA package with video APIs; video-disabled builds retain prior behavior.
 
 ## [1.1.0] - 2026-09-12
 
@@ -57,6 +61,28 @@ This project follows Semantic Versioning.
   with G.722, RTM channel support, string UIDs, audio jitter buffering, and a fixed 60 ms minimal
   timer interval. Adapt the wrapper to the new RTM message-type callback and canonical
   `agora_rtm_*` P2P APIs; jitter-buffer output duration is now determined by the library build.
+
+### Fixed
+
+- Keep the playback ring buffer strictly SPSC by feeding announcements directly into the playback
+  worker's pending frame; non-frame-aligned prompt tails are zero-padded and never joined to RTC
+  audio.
+- Flush capture, playback, and AEC reference buffers at conversation boundaries through their
+  owning consumer workers, reject uplink sends after the pipeline stops, and retain resources when
+  an MPQ shutdown wait fails.
+- Commit AEC reference PCM only after the playback device accepts the corresponding samples,
+  including short writes; announcement PCM is never used as an AEC reference.
+- Expose online `unprovisioned`, `pairing`, and `awaiting_claim` device phases as the public
+  `MYBOT_STATE_PAIRING` state so `MYBOT_STATE_READY` is reserved for authenticated runtime devices.
+- Restart pairing after an `unbound` response instead of leaving the device without a pending
+  pair-code request.
+- Reject oversized or non-string service response fields instead of silently truncating them, and
+  reserve space for the full 512-byte RTC token plus its terminating NUL without changing the
+  persisted device-auth layout.
+- Validate RTSA downlink callbacks before handing audio to the PCM pipeline, and require the
+  selected `MYBOT_AUDIO_PTIME_MS` to match the bundled or externally supplied RTSA timer cadence.
+- Clear the voiceprint LCD overlay synchronously when a conversation stops so a stale indicator
+  cannot survive the transition back to `READY`.
 
 ### Compatibility
 

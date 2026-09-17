@@ -45,6 +45,8 @@ Versioning and Conventional Commits.
   voice-print status.
 - Sync the vendored mybot SDK to v1.1.0 + Unreleased commit `e515f07`, including the serialized RTC
   MPQ implementation, pairing-state projection, media-session cleanup, and bounded service parsing.
+- Sync the vendored mybot SDK to v1.2.0 (`674dcbf`), adding optional multimodal video uplink and
+  mutually exclusive server-state LCD indicators while keeping video disabled on ESP32-S3 boards.
 - Enforce the bundled ESP32-S3 RTSA package's fixed 60 ms cadence at component configuration time;
   non-60 ms packet durations now require a matching RTSA package.
 - Update the AOSL baseline while retaining the ESP32-S3 FreeRTOS, PSRAM, and board-specific
