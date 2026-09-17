@@ -14,6 +14,9 @@
 #include "esp_timer.h"
 #include "nvs_flash.h"
 #include "mybot_board.h"
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+#include "resource_monitor.h"
+#endif
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -122,6 +125,9 @@ void app_main(void) {
         ESP_LOGE(TAG, "PSRAM is required but was not initialized");
         return;
     }
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+    (void)mybot_resource_monitor_start();
+#endif
     if (mybot_board_register() < 0) {
         return;
     }

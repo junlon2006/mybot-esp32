@@ -152,6 +152,24 @@ https://mybot.sh2.agoralab.co/api
 Use `idf.py -B <build-dir> menuconfig` and the `mybot` menu to select the language, endpoint, audio
 packet duration, Cloud AEC, and AI QoS.
 
+For CPU and heap diagnostics, enable `mybot → Enable debug CPU and memory monitor`
+(`CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR=y`) in menuconfig and rebuild. It is disabled by default.
+The low-priority monitor logs each core's estimated busy percentage from interval idle-runtime
+deltas, plus internal RAM and PSRAM used/free/minimum-free/largest-free bytes. The default interval
+is 5000 ms, configurable with `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS`. CPU values are
+scheduler-based estimates, not separate ISR measurements; runtime-clock rollover skips a sample.
+Heap minima cover the boot lifetime. Accounting and serial output add overhead, so disable the
+monitor after troubleshooting. High CPU load alone does not establish the cause of audio noise.
+
+On CoreS3 the same switch also enables interval `mybot_stats` reports: `playback_stats` counts I2S
+writes, requested/written frames, timeouts, errors, short writes and zero-progress writes, plus
+average/maximum write duration. `playback_gaps` measures maximum start-to-start and return-to-next-start
+intervals. `ui_stats` separates framebuffer rendering from SPI flushing and reports the longest total
+update. Durations use microseconds; `*_at_ms` identifies the peak operation's start time since boot.
+Counters and maxima reset after each report. Writes spanning reports count on completion; interrupted
+shutdown writes also count. Speech pauses can produce long gaps, so gaps alone do not prove underruns.
+The public SDK API does not expose queue underruns (`sdk_queue_underruns=unavailable`).
+
 ## Hardware Notes
 
 ### Zhengchen 1.54 TFT ML307 and Wi-Fi
@@ -245,6 +263,13 @@ TCA9554 integration.
 
 GPIO0 is audio MCLK on CoreS3 and is not used as a button. CoreS3 has no dedicated volume keys;
 the firmware restores its persisted device volume at startup.
+
+CoreS3 pre-renders eight fixed workflow pages and eight conversation/voiceprint combinations during
+the first LCD initialization. These 16 native RGB565 frames use 2,457,600 bytes of PSRAM (about
+2.34 MiB), in addition to the dynamic pairing-code framebuffer. Subsequent updates flush cached
+pixels without repeating font and shape rendering. Initialization yields between pages; allocation
+failure releases partial caches and falls back to dynamic rendering. Cache references survive SDK
+stop/start and are freed with the final LCD owner. SPI still refreshes the entire screen.
 
 ### M5Stack StickS3
 

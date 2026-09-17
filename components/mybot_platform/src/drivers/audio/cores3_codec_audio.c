@@ -2,6 +2,10 @@
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
 #include "cores3_hardware.h"
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+#include "mybot_debug_stats.h"
+#include "esp_timer.h"
+#endif
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl_atomic.h>
@@ -42,6 +46,10 @@ typedef struct {
     audio_direction_t direction;
     aosl_atomic_t started;
     int16_t *scratch;
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+    int64_t previous_write_begin;
+    int64_t previous_write_end;
+#endif
 } audio_stream_context_t;
 
 typedef struct {
@@ -547,6 +555,10 @@ static int playback_start(void *opaque) {
     }
 
     s_audio.playback_started = true;
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+    context->previous_write_begin = 0;
+    context->previous_write_end = 0;
+#endif
     aosl_atomic_set(&context->started, true);
     result = 0;
 done:
@@ -593,10 +605,23 @@ static int playback_write(void *opaque, const void *buffer, int frames) {
     }
 
     size_t bytes_written = 0;
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+    const int64_t write_begin = esp_timer_get_time();
+#endif
     esp_err_t err =
         i2s_channel_write(s_audio.tx_channel, context->scratch,
                           (size_t)frames * AUDIO_TX_DMA_CHANNELS * sizeof(context->scratch[0]),
                           &bytes_written, AUDIO_IO_TIMEOUT_MS);
+#if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
+    const int64_t write_end = esp_timer_get_time();
+    mybot_debug_record_playback(
+        (uint32_t)frames,
+        (uint32_t)(bytes_written / (AUDIO_TX_DMA_CHANNELS * sizeof(context->scratch[0]))),
+        err == ESP_ERR_TIMEOUT, err != ESP_OK && err != ESP_ERR_TIMEOUT, write_begin, write_end,
+        context->previous_write_begin, context->previous_write_end);
+    context->previous_write_begin = write_begin;
+    context->previous_write_end = write_end;
+#endif
     if (err != ESP_OK && err != ESP_ERR_TIMEOUT) {
         return aosl_atomic_read(&context->started) ? -1 : 0;
     }

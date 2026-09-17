@@ -25,6 +25,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif CMake utilities 0.5.0 | Apache-2.0 | `components/cmake_utilities` |
 | M5Stack M5PM1 1.0.7 | MIT | `components/m5pm1` |
 | Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets`, `components/mybot_platform/src/common/ogg_opus_decoder.c` |
+| Liberation Sans UI glyphs (OFL-1.1) | SIL Open Font License 1.1 | `components/mybot_platform/src/drivers/display/ili9342_lcd_font.inc`, `components/mybot_platform/src/drivers/display/OFL-1.1.txt` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |

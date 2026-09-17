@@ -144,6 +144,22 @@ https://mybot.sh2.agoralab.co/api
 使用 `idf.py -B <build-dir> menuconfig` 的 `mybot` 菜单配置语言、服务地址、音频包长、
 Cloud AEC 与 AI QoS。
 
+CPU 和内存诊断可在 menuconfig 的 `mybot → Enable debug CPU and memory monitor` 中启用
+`CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR=y` 后重新编译，默认关闭。低优先级监控任务根据采样
+周期内 Idle 运行时间增量估算每个核心的忙碌百分比，同时打印内部 RAM 和 PSRAM 的已用、
+空闲、历史最低空闲及最大连续空闲块，内存单位为字节。默认每 5000 ms 打印一次，可通过
+`CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS` 调整。CPU 数值是基于调度统计的估算，
+不单独测量中断耗时；运行时间时钟回绕时跳过该次 CPU 采样。内存最低值覆盖本次启动以来的
+历史。统计与串口输出有额外开销，调试完成后应关闭；CPU 负载高本身不能证明音频杂音的原因。
+
+CoreS3 在同一开关下还会输出 `mybot_stats` 周期统计：`playback_stats` 包含 I2S 写入次数、
+请求/实际帧数、超时、错误、短写、零进展次数与平均/最大写入耗时；`playback_gaps` 包含
+两次 I2S 写入起点的最大间隔，以及上次返回到下次开始的最大间隔。`ui_stats` 分别统计
+framebuffer 绘制和 SPI 刷新的平均/最大耗时及总耗时峰值。耗时单位为微秒，`*_at_ms` 是
+峰值操作起点的启动后毫秒数，可与串口日志时间对照。计数和峰值在每次汇总后清零；跨周期
+写入归入完成时所在周期。停止时被打断的写入也包含在统计内。语音停顿会产生长间隔，不能据此
+直接判断欠载；SDK 公开接口未提供队列欠载计数，因此显示 `sdk_queue_underruns=unavailable`。
+
 ## 硬件说明
 
 ### 征辰 1.54 TFT ML307 与 Wi-Fi
@@ -230,6 +246,12 @@ SDK 暴露主麦 slot，播放将单声道复制到两个输出 slot。第二麦
 
 GPIO0 是 CoreS3 的音频 MCLK，不作为按键使用。CoreS3 没有独立音量键，固件启动时恢复
 持久化的设备音量。
+
+CoreS3 在首次 LCD 初始化时预渲染 8 张固定状态页和 8 张对话/声纹状态组合，共缓存 16 张
+原生 RGB565 画面，额外使用 2,457,600 字节 PSRAM（约 2.34 MiB）。配对码仍使用动态
+framebuffer。后续状态更新直接刷新缓存像素，不再重复计算字体和图形。初始化逐张让出 CPU；
+分配失败时释放已建缓存并回退到动态绘制。缓存跨 SDK 启停复用，在最后一个 LCD 使用者退出
+时释放。SPI 仍采用全屏刷新。
 
 ### M5Stack StickS3
 

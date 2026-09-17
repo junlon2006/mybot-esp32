@@ -58,4 +58,20 @@ menu "mybot"
         range 1 5
         default 3
 
+    config MYBOT_DEBUG_RESOURCE_MONITOR
+        bool "Enable debug CPU and memory monitor"
+        default n
+        depends on !FREERTOS_SMP
+        select FREERTOS_GENERATE_RUN_TIME_STATS
+        help
+            Log per-core busy time estimated from idle runtime deltas and heap
+            statistics using a low-priority task. Adds scheduler accounting and
+            serial logging overhead; intended for diagnostics only.
+
+    config MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS
+        int "Resource monitor interval (ms)"
+        depends on MYBOT_DEBUG_RESOURCE_MONITOR
+        range 1000 60000
+        default 5000
+
 endmenu
