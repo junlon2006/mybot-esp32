@@ -25,6 +25,7 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/cmake_utilities` | ESP Component Registry `espressif/cmake_utilities` | 0.5.0 |
 | `components/m5pm1` | ESP Component Registry `m5stack/m5pm1` | 1.0.7, content hash `731f79d0629e245787440f5419aac5d7a82befeb25f97689d6a2d0331a24a72d` |
 | `components/mybot_platform/assets` | `github.com/junlon2006/mybot-bk7258` | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
+| `components/mybot_platform/src/drivers/display/ili9342_lcd_font.inc`, `components/mybot_platform/src/drivers/display/OFL-1.1.txt` | `github.com/junlon2006/mybot-bk7259` vendored SDK fonts | OFL-1.1 Liberation Sans glyphs |
 
 External implementation references and hardware-mapping verification baselines used for
 project-maintained board ports are pinned separately; their application layer and dependency set

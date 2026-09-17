@@ -32,6 +32,10 @@ Versioning and Conventional Commits.
 - RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
 - AOSL socket DSCP support required by the RTSA 1.10.1 network implementation.
 - Voice-print registration-in-progress status shown immediately on the conversation screen.
+- M5Stack CoreS3 vector UI matching the BK7259 style: anti-aliased state ring and icons,
+  server-state and voiceprint badges, and large pairing-code digits.
+- Optional CPU and heap monitoring with CoreS3 playback timing and UI rendering statistics,
+  disabled by default.
 - ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3 Board profile, including shared I2S audio,
   AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
 - SenseCAP Watcher Board profile with ES8311/ES7243E audio, SPD2010 status display, rotary input,
@@ -40,6 +44,8 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Pre-render CoreS3 workflow and conversation screens into PSRAM during LCD initialization to
+  avoid repeated runtime rasterization, with dynamic fallback if cache allocation fails.
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
 - Sync the vendored mybot SDK to Unreleased commit `27324e7`, adding RTM channel subscription for
   voice-print status.

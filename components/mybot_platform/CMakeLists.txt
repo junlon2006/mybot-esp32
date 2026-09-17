@@ -46,6 +46,11 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     endif()
 endif()
 
+set(mybot_debug_sources "")
+if(CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR)
+    list(APPEND mybot_debug_sources "src/common/debug_stats.c")
+endif()
+
 idf_component_register(
     SRCS
         "src/core/platform.c"
@@ -56,6 +61,7 @@ idf_component_register(
         "src/common/embedded_ogg_prompt.c"
         "src/common/ogg_opus_decoder.c"
         ${MYBOT_BOARD_SOURCES}
+        ${mybot_debug_sources}
     INCLUDE_DIRS "include"
     PRIV_INCLUDE_DIRS
         "src/internal"
