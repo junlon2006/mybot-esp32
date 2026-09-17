@@ -13,10 +13,10 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
 endif()
 
 set(MYBOT_VERSION_MAJOR 1)
-set(MYBOT_VERSION_MINOR 1)
+set(MYBOT_VERSION_MINOR 2)
 set(MYBOT_VERSION_PATCH 0)
 set(MYBOT_VERSION_PRERELEASE "")
-set(MYBOT_VERSION_STRING "1.1.0")
+set(MYBOT_VERSION_STRING "1.2.0")
 
 set(MYBOT_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
@@ -36,6 +36,7 @@ set(MYBOT_SOURCES
     "${MYBOT_ROOT}/src/core/mybot_version.c"
     "${MYBOT_ROOT}/src/media/mybot_audio.c"
     "${MYBOT_ROOT}/src/media/mybot_media_pipeline.c"
+    "${MYBOT_ROOT}/src/media/mybot_video.c"
     "${MYBOT_ROOT}/src/media/mybot_wake_words.c"
     "${MYBOT_ROOT}/src/platform/mybot_announce.c"
     "${MYBOT_ROOT}/src/platform/mybot_key.c"
@@ -82,6 +83,8 @@ target_compile_definitions(${COMPONENT_LIB}
         MYBOT_AUDIO_PTIME_MS=${CONFIG_MYBOT_AUDIO_PTIME_MS}
         MYBOT_CLOUD_AEC=$<BOOL:${CONFIG_MYBOT_CLOUD_AEC}>
         MYBOT_WAKE_WORDS=0
+        MYBOT_ENABLE_VIDEO=0
+        MYBOT_VIDEO_MAX_FRAME_BYTES=524288
         MYBOT_AI_QOS=$<BOOL:${CONFIG_MYBOT_AI_QOS}>
         MYBOT_FAST_SEND_MULTIPLIER=${CONFIG_MYBOT_FAST_SEND_MULTIPLIER}
         MYBOT_ENABLE_HTTPS=1
