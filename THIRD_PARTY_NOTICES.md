@@ -11,6 +11,10 @@ It does not replace third-party terms. This file is informational and is not leg
 | esp-wifi-connect 3.2.2 | MIT | `components/esp-wifi-connect` |
 | Espressif audio codec 2.5.0 | Espressif Modified MIT and file-specific terms | `components/esp_audio_codec` |
 | Espressif codec device 1.5.11 | Apache-2.0 | `components/esp_codec_dev` |
+| Espressif video 2.3.0 (DVP subset) | Espressif MIT; Linux UAPI headers retain file-specific BSD/GPL-with-syscall-exception terms | `components/esp_video` |
+| Espressif camera sensor 2.3.0 (GC0308/DVP subset) | Apache-2.0 | `components/esp_cam_sensor` |
+| Espressif SCCB 0.0.8 (I2C subset) | Apache-2.0 | `components/esp_sccb_intf` |
+| Espressif JPEG 0.6.1 (ESP32-S3 binary) | Espressif MIT, use on Espressif products | `components/esp_new_jpeg` |
 | Espressif ILI9341 LCD driver 2.0.2 | Apache-2.0 | `components/esp_lcd_ili9341` |
 | Espressif SPD2010 LCD driver 2.0.0~1 | Apache-2.0 | `components/esp_lcd_spd2010` |
 | Espressif CO5300 LCD driver 2.1.0 | Apache-2.0 | `components/esp_lcd_co5300` |

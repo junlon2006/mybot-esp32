@@ -14,6 +14,7 @@ int mybot_cores3_hardware_init(void);
 i2c_master_bus_handle_t mybot_cores3_i2c_bus_handle(void);
 int mybot_cores3_reset_audio_codec(void);
 int mybot_cores3_reset_display(void);
+int mybot_cores3_reset_camera(void);
 int mybot_cores3_set_display_backlight(unsigned int percent);
 
 #ifdef __cplusplus

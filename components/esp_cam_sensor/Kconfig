@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+# Local GC0308 DVP configuration; static detection avoids linker-generated tables.
+rsource "sensors/gc0308/Kconfig.gc0308"
+
+config CAMERA_SENSOR_MOTOR_DETECT_METHOD_STATIC_STORE
+    bool
+    default y
+
+config CAMERA_XCLK_USE_LEDC
+    bool
+    default y
+
+config CAM_CTRL_DVP_ENABLE
+    bool
+    default y if MYBOT_ENABLE_VIDEO
+
+config CAM_CTRL_DVP_DMA_BUFFER_SIZE
+    int
+    # A 320x240 YUYV frame is 153600 bytes. The DVP driver reduces this
+    # value to a frame-divisible half-buffer and allocates two halves from
+    # internal DMA-capable RAM. Keep the video path small enough for boards
+    # that have only a limited contiguous internal heap at runtime.
+    default 8192 if MYBOT_ENABLE_VIDEO
+    default 32768
+
+config CAM_CTRL_DVP_TASK_STACK_SIZE
+    int
+    default 3072

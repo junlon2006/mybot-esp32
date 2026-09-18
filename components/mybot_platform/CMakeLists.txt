@@ -25,6 +25,9 @@ set(MYBOT_EMBEDDED_AUDIO_ASSETS
 )
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+    if(CONFIG_MYBOT_ENABLE_VIDEO AND NOT MYBOT_BOARD STREQUAL "m5stack-core-s3")
+        message(FATAL_ERROR "MYBOT_ENABLE_VIDEO currently requires MYBOT_BOARD=m5stack-core-s3")
+    endif()
     foreach(required_config IN LISTS MYBOT_BOARD_REQUIRED_CONFIGS)
         if(NOT ${required_config})
             message(FATAL_ERROR

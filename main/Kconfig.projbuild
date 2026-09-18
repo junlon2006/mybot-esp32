@@ -68,6 +68,16 @@ menu "mybot"
             statistics using a low-priority task. Adds scheduler accounting and
             serial logging overhead; intended for diagnostics only.
 
+    config MYBOT_ENABLE_VIDEO
+        bool "Enable CoreS3 camera JPEG uplink (1 fps)"
+        default n
+        select CAMERA_GC0308
+        select CAMERA_GC0308_DVP_YUV422_YUYV_320X240_20FPS
+        help
+            Requires the m5stack-core-s3 board and a video-capable RTSA package.
+            Uploads 320x240 JPEG images at most once per second while RTC is connected.
+            Capture and software encoding consume additional RAM and CPU.
+
     config MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS
         int "Resource monitor interval (ms)"
         depends on MYBOT_DEBUG_RESOURCE_MONITOR

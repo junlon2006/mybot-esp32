@@ -271,6 +271,11 @@ pixels without repeating font and shape rendering. Initialization yields between
 failure releases partial caches and falls back to dynamic rendering. Cache references survive SDK
 stop/start and are freed with the final LCD owner. SPI still refreshes the entire screen.
 
+CoreS3 also provides optional GC0308 camera uplink: 320 x 240 software JPEG, at most 1 fps while
+RTC is connected. It is disabled by default; see [CoreS3 video](docs/CORES3_VIDEO.md) for building,
+diagnostic logs, and hardware acceptance checks. The camera path has build coverage but still
+requires real-device validation.
+
 ### M5Stack StickS3
 
 | Capability | Pins/configuration |
@@ -347,7 +352,8 @@ Known limitations:
 - Waveshare AMOLED 1.75 and 1.75C do not yet expose the playback reference channel, local AEC,
   battery reporting, or low-power operation. RTC, IMU, TF card, and TCA9554 are not supported on
   the 1.75C profile.
-- CoreS3 camera, battery reporting, and automatic sleep are not wired up.
+- CoreS3 camera uplink requires explicit enablement and real-device validation. Camera preview,
+  video downlink, battery reporting, and automatic sleep are not wired up.
 - StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power
   operation are not wired up.
 - ReSpeaker Flex support is limited to Circular-4 and requires separately flashed XVF3800 16 kHz

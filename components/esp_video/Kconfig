@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+# Local DVP-only configuration; other upstream transports are not vendored.
+config ESP_VIDEO_ENABLE_DVP_VIDEO_DEVICE
+    bool
+    default y if MYBOT_ENABLE_VIDEO
+
+config ESP_VIDEO_CHECK_PARAMETERS
+    bool
+    default y

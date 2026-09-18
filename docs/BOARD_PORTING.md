@@ -25,6 +25,12 @@ Board network. KV storage, key input, capture, and playback are required by the 
 volume, HTTPS, LCD, announcements, and wake words are optional unless the active product
 configuration requires them.
 
+Encoded video is opt-in through `CONFIG_MYBOT_ENABLE_VIDEO`. CoreS3 implements the public
+`mybot_video_ops_t` interface with GC0308 capture and JPEG encoding, limited to 1 fps. Source
+initialization must not start capture; start schedules the encoder task, and stop joins that task
+and all in-flight frame callbacks before returning success. Bitrate callbacks only update desired
+state; encoding and frame submission occur on the source worker. See [CoreS3 video](CORES3_VIDEO.md).
+
 ## Build profile
 
 The root `MYBOT_BOARD` CMake cache variable selects a profile before `project()` configures ESP-IDF.

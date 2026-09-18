@@ -253,6 +253,10 @@ framebuffer。后续状态更新直接刷新缓存像素，不再重复计算字
 分配失败时释放已建缓存并回退到动态绘制。缓存跨 SDK 启停复用，在最后一个 LCD 使用者退出
 时释放。SPI 仍采用全屏刷新。
 
+CoreS3 另提供可选的 GC0308 视频上行：320 x 240 软件 JPEG，仅在 RTC 连接期间以最多
+1 fps 发送，默认关闭。构建、诊断日志与验收步骤见 [CoreS3 视频](docs/CORES3_VIDEO.zh-CN.md)。
+摄像头路径已有构建覆盖，尚需真机验证。
+
 ### M5Stack StickS3
 
 | 能力 | 引脚/配置 |
@@ -322,7 +326,8 @@ CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音�
   音频、关机与低功耗；PCB V1.0 还有固件无法修复的已知硬件供电稳定性问题。
 - Waveshare AMOLED 1.75 与 1.75C 尚未接入播放参考通道、本地 AEC、电池状态与低功耗；
   1.75C profile 不支持 RTC、IMU、TF 卡与 TCA9554。
-- CoreS3 摄像头、电池状态与自动休眠尚未接入。
+- CoreS3 摄像头上行需要显式开启并完成真机验证；摄像头预览、视频下行、电池状态与自动休眠
+  尚未接入。
 - StickS3 GPIO12、IMU、红外、电池状态、关机手势与低功耗尚未接入。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未
   支持 Linear-4、XVF3800 固件升级、LED 环状态显示与 LCD 输出。
