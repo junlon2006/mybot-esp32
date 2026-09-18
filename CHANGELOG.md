@@ -7,6 +7,9 @@ Versioning and Conventional Commits.
 
 ### Added
 
+- Optional CoreS3 GC0308 camera uplink: 320x240 software JPEG, capped at one frame per second,
+  with bandwidth feedback, bounded capture waits, and shared-I2C-safe camera reset.
+
 - ESP-IDF v5.5.2 project for the Zhengchen 1.54 TFT ESP32-S3 board.
 - Zhengchen 1.54 TFT Wi-Fi Board profile with shared I2S, ST7789, Boot, volume-button, and
   power-hold support while leaving the ML307 UART pins unused.

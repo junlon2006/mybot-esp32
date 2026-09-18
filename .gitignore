@@ -22,6 +22,7 @@ compile_commands.json
 *.exe
 *.out
 !components/agora_rtc/lib/xtensa/libagora-rtc-sdk.a
+!components/esp_new_jpeg/lib/esp32s3/libesp_new_jpeg.a
 
 # Logs
 *.log

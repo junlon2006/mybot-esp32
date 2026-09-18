@@ -11,6 +11,10 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/esp-wifi-connect` | `github.com/78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |
 | `components/esp_audio_codec` | ESP Component Registry `espressif/esp_audio_codec` | 2.5.0, commit `3bb83597d07b604e1ab5b78dd4370a28d6fa802d` |
 | `components/esp_codec_dev` | `github.com/espressif/esp-adf` | 1.5.11, commit `73befa9ebffdd6e5065b7145329f115910e13ab5` |
+| `components/esp_video` | `github.com/espressif/esp-video-components`, `esp_video` | 2.3.0, commit `58d4c6eea08f0f78a2beff27aa4e0155efd74b55` |
+| `components/esp_cam_sensor` | `github.com/espressif/esp-video-components`, `esp_cam_sensor` | 2.3.0, commit `58d4c6eea08f0f78a2beff27aa4e0155efd74b55` |
+| `components/esp_sccb_intf` | `github.com/espressif/esp-video-components`, `esp_sccb_intf` | 0.0.8, commit `3384d3510c5880edeb0f4c14d9e0196760280637` |
+| `components/esp_new_jpeg` | `github.com/espressif/esp-adf-libs`, `esp_new_jpeg` | 0.6.1, commit `35c37e1656db36dbf13b9aee8064d1b59f482f6c`; ESP32-S3 library SHA-256 `4205b1258ce0ef9fd9946abfc7cd5f105b08316ea567e1136cec60b3e6330896` |
 | `components/esp_lcd_ili9341` | `github.com/espressif/esp-bsp` | 2.0.2, commit `fc8bd325efcdef6d5802554659debba303058af6` |
 | `components/esp_lcd_spd2010` | ESP Component Registry `espressif/esp_lcd_spd2010` | 2.0.0~1, commit `12f6ca1182ec48889b17ec570fadaaf267cb336e` |
 | `components/esp_lcd_co5300` | ESP Component Registry `espressif/esp_lcd_co5300` | 2.1.0, commit `56f3c5620464c061e968d3358bc897c528e097ee`, content hash `21f84c5c825509ebacbddb379555b49092ae165b3e19f0edfbf6f8eff8aa036d` |
@@ -42,6 +46,12 @@ are not vendored into this repository.
 | `components/mybot_platform/boards/esp-vocat/board_config.h` (hardware mapping verification only) | `github.com/espressif/esp-brookesia` | commit `b22c488f50bafe53342c8e171081bd736396ef58` |
 
 Firmware integration differences are limited to the active ESP32-S3 build:
+
+- The video components include only the GC0308 DVP path, native I2C SCCB, and the ESP32-S3 JPEG
+  library. Local CMake/Kconfig replace registry metadata and pin component versions; sensor
+  detection uses the static table, the default format is QVGA YUYV, and SCCB timeout is 100 ms.
+  Unused transports, sensors, examples, and registry caches are omitted. Video sources and the
+  JPEG binary are linked only with `CONFIG_MYBOT_ENABLE_VIDEO=y`.
 
 - The AOSL ESP32-S3 HAL uses FreeRTOS delays, byte-sized task stacks, PSRAM allocation, and IPv4
   DSCP/TOS support required by the bundled RTSA package.

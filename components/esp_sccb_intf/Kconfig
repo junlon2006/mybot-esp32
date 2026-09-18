@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
+config ESP_SCCB_TRANS_TIMEOUT_DEFAULT
+    int
+    default 100

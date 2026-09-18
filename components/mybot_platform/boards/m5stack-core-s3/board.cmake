@@ -37,4 +37,12 @@ set(MYBOT_BOARD_REQUIRES
     esp_lcd
     esp_timer
     nvs_flash
+    esp_video
+    esp_new_jpeg
 )
+
+if(CONFIG_MYBOT_ENABLE_VIDEO)
+    list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/video/cores3_camera_video.c")
+    list(APPEND MYBOT_BOARD_REQUIRED_CONFIGS
+        CONFIG_CAMERA_GC0308_DVP_DEFAULT_FMT_YUV422_YUYV_320X240_20FPS)
+endif()

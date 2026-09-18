@@ -28,6 +28,9 @@ git diff --check
 - [ ] Format, SPDX, whitespace, and commit-message checks pass.
 - [ ] On each release board, test provisioning, reconnect, pairing, HTTPS, bidirectional audio,
       voice-print status, hangup, repeated start/stop, and reboot persistence.
+- [ ] For CoreS3 video, validate GC0308 colors/orientation, server JPEG reception, at most 1 fps,
+      bandwidth adaptation, internal DMA memory, concurrent audio/UI, repeated conversations,
+      provisioning while streaming, and no callback after successful stop. See CORES3_VIDEO.md.
 - [ ] Negative-test invalid CA, hostname mismatch, TLS timeout, missing NVS values, and Wi-Fi loss.
 - [ ] Confirm logs and release archives contain no credentials.
 - [ ] Confirm release configurations enable the intended NVS/Flash encryption and Secure Boot policy.

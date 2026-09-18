@@ -7,6 +7,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -22,6 +23,8 @@ typedef struct {
 } cores3_hardware_t;
 
 static cores3_hardware_t s_hardware;
+static StaticSemaphore_t s_expander_lock_storage;
+static SemaphoreHandle_t s_expander_lock;
 
 static esp_err_t add_device(uint16_t address, i2c_master_dev_handle_t *out_device) {
     const i2c_device_config_t config = {
@@ -82,36 +85,49 @@ static esp_err_t initialize_aw9523(void) {
     return ESP_OK;
 }
 
+static int reset_expander_pin(uint8_t reg, uint8_t mask, unsigned int low_ms,
+                              unsigned int settle_ms) {
+    if (!s_hardware.aw9523 || !s_expander_lock ||
+        xSemaphoreTake(s_expander_lock, portMAX_DELAY) != pdTRUE) {
+        return -1;
+    }
+    uint8_t value;
+    esp_err_t result = read_register(s_hardware.aw9523, reg, &value);
+    if (result == ESP_OK) {
+        result = write_register(s_hardware.aw9523, reg, value & (uint8_t)~mask);
+    }
+    if (result == ESP_OK) {
+        vTaskDelay(pdMS_TO_TICKS(low_ms));
+        result = write_register(s_hardware.aw9523, reg, value | mask);
+    }
+    if (result == ESP_OK) {
+        vTaskDelay(pdMS_TO_TICKS(settle_ms));
+    }
+    xSemaphoreGive(s_expander_lock);
+    return result == ESP_OK ? 0 : -1;
+}
+
 int mybot_cores3_reset_audio_codec(void) {
-    if (!s_hardware.aw9523) {
+    if (reset_expander_pin(0x02, 1U << 2, 10, 50) < 0) {
         return -1;
     }
-    if (write_register(s_hardware.aw9523, 0x02, 0x03) != ESP_OK) {
-        return -1;
-    }
-    vTaskDelay(pdMS_TO_TICKS(10));
-    if (write_register(s_hardware.aw9523, 0x02, 0x07) != ESP_OK) {
-        return -1;
-    }
-    vTaskDelay(pdMS_TO_TICKS(50));
     ESP_LOGI(TAG, "event=hardware component=aw88298 action=reset result=ok");
     return 0;
 }
 
 int mybot_cores3_reset_display(void) {
-    if (!s_hardware.aw9523) {
+    if (reset_expander_pin(0x03, 1U << 1, 20, 10) < 0) {
         return -1;
     }
-    if (write_register(s_hardware.aw9523, 0x03, 0x81) != ESP_OK) {
-        return -1;
-    }
-    vTaskDelay(pdMS_TO_TICKS(20));
-    if (write_register(s_hardware.aw9523, 0x03, 0x83) != ESP_OK) {
-        return -1;
-    }
-    vTaskDelay(pdMS_TO_TICKS(10));
     ESP_LOGI(TAG, "event=hardware component=ili9342 action=reset result=ok");
     return 0;
+}
+
+int mybot_cores3_reset_camera(void) {
+    const int result = reset_expander_pin(0x03, 1U << 0, 20, 50);
+    ESP_LOGI(TAG, "event=hardware component=gc0308 action=reset result=%s",
+             result == 0 ? "ok" : "error");
+    return result;
 }
 
 int mybot_cores3_set_display_backlight(unsigned int percent) {
@@ -138,6 +154,9 @@ static void release_failed_initialization(void) {
 int mybot_cores3_hardware_init(void) {
     if (s_hardware.initialized) {
         return 0;
+    }
+    if (!s_expander_lock) {
+        s_expander_lock = xSemaphoreCreateMutexStatic(&s_expander_lock_storage);
     }
 
     const i2c_master_bus_config_t bus_config = {

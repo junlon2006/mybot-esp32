@@ -24,6 +24,9 @@ const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_cores3_lcd_ops(void);
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
+#if CONFIG_MYBOT_ENABLE_VIDEO
+const mybot_video_ops_t *mybot_cores3_video_ops(void);
+#endif
 int mybot_cores3_touch_start(void);
 
 static const mybot_lcd_ops_t *s_lcd_ops;
@@ -117,6 +120,9 @@ static int board_register_platform(void) {
         .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
         .lcd = mybot_cores3_lcd_ops(),
+#if CONFIG_MYBOT_ENABLE_VIDEO
+        .video = mybot_cores3_video_ops(),
+#endif
     };
     return mybot_platform_register(&descriptor);
 }

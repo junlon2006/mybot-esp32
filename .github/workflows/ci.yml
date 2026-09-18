@@ -62,7 +62,7 @@ jobs:
           done
 
   idf-build:
-    name: idf-5.5.2-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}
+    name: idf-5.5.2-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}
     runs-on: ubuntu-24.04
     container:
       image: espressif/idf:v5.5.2
@@ -121,6 +121,16 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: m5stack-core-s3
+            language: zh-CN
+            ptime: 60
+            video: jpeg-1fps
+            defaults: ci/ptime60.defaults;ci/video.defaults
+          - board: m5stack-core-s3
+            language: en-US
+            ptime: 60
+            video: jpeg-1fps
+            defaults: ci/ptime60.defaults;ci/en-us.defaults;ci/video.defaults
           - board: m5stack-stick-s3
             language: zh-CN
             ptime: 60
@@ -166,7 +176,7 @@ jobs:
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: mybot-esp32-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-${{ github.sha }}
+          name: mybot-esp32-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}-${{ github.sha }}
           path: |
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/mybot_esp32.bin
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin

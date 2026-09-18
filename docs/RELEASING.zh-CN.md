@@ -27,6 +27,8 @@ git diff --check
 - [ ] 格式、SPDX、空白与提交信息检查通过。
 - [ ] 在每个发布板卡上验证配网、重连、配对、HTTPS、双向音频、声纹状态、挂断、重复启停
       与重启持久化。
+- [ ] 对 CoreS3 视频，验证 GC0308 颜色/方向、服务端 JPEG 接收、最多 1 fps、带宽适配、
+      内部 DMA 内存、音频/UI 并行、重复对话、推流中配网及停止成功后无回调，见 CORES3_VIDEO.zh-CN.md。
 - [ ] 负向测试无效 CA、hostname 不匹配、TLS 超时、NVS 值缺失与 Wi-Fi 丢失。
 - [ ] 确认日志与发布归档不包含任何凭据。
 - [ ] 确认发布配置采用预期的 NVS/Flash encryption 与 Secure Boot 策略。

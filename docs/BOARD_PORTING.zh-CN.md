@@ -24,6 +24,11 @@ components/mybot_platform/
 KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD、提示音与唤醒词在当前产品
 配置要求时才是必需能力。
 
+编码视频通过 `CONFIG_MYBOT_ENABLE_VIDEO` 显式开启。CoreS3 使用公开的 `mybot_video_ops_t`
+接入 GC0308 采集和 JPEG 编码，最多 1 fps。初始化不得启动采集；start 调度编码任务；stop
+等待任务及全部在途帧回调结束后才返回成功。码率回调只更新目标状态，编码和提交帧均由视频
+任务执行，详见 [CoreS3 视频](CORES3_VIDEO.zh-CN.md)。
+
 ## 构建 Profile
 
 根目录 CMake cache 变量 `MYBOT_BOARD` 在 `project()` 配置 ESP-IDF 前选择 profile。Profile
