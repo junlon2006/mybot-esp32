@@ -78,6 +78,16 @@ menu "mybot"
             Uploads 320x240 JPEG images at most once per second while RTC is connected.
             Capture and software encoding consume additional RAM and CPU.
 
+    config MYBOT_AUDIO_PLAYBACK_TEST
+        bool "Run CoreS3 offline audio playback A/B test at boot"
+        default n
+        depends on !MYBOT_ENABLE_VIDEO
+        help
+            CoreS3 only. Replaces normal startup with three 60-second tests of
+            identical local PCM: timer-fed with capture, continuous with capture,
+            and continuous without capture. Uses the saved speaker volume.
+            Wi-Fi and mybot are not started. Disable and rebuild to resume normal use.
+
     config MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS
         int "Resource monitor interval (ms)"
         depends on MYBOT_DEBUG_RESOURCE_MONITOR

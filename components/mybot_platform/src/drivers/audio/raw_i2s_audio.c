@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "board_config.h"
+#include "pcm_playback_buffer.h"
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl_atomic.h>
@@ -7,14 +8,18 @@
 #include "driver/i2s_std.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "nvs.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define AUDIO_MAX_FRAMES 960
 #define AUDIO_IO_TIMEOUT_MS 50
+#define AUDIO_DMA_FRAMES (6 * 240)
 #define AUDIO_VOLUME_DEFAULT 70
 #define AUDIO_VOLUME_GAIN_Q16_ONE 65536
 #define AUDIO_VOLUME_NVS_KEY "output_volume"
@@ -25,6 +30,11 @@ typedef struct {
     i2s_chan_handle_t channel;
     aosl_atomic_t started;
     const char *direction;
+    mybot_pcm_playback_buffer_t *playback_buffer;
+    size_t dma_clear_frames;
+    bool playback;
+    bool enabled;
+    bool stop_pending;
     int32_t scratch[AUDIO_MAX_FRAMES];
 } audio_context_t;
 
@@ -39,6 +49,23 @@ typedef struct {
 static audio_volume_context_t s_volume_context;
 static aosl_atomic_t s_output_volume;
 static aosl_atomic_t s_output_gain_q16;
+static StaticSemaphore_t s_audio_mutex_storage;
+static SemaphoreHandle_t s_audio_mutex;
+static portMUX_TYPE s_audio_mutex_init_lock = portMUX_INITIALIZER_UNLOCKED;
+
+static bool audio_lock(void) {
+    portENTER_CRITICAL(&s_audio_mutex_init_lock);
+    if (!s_audio_mutex) {
+        s_audio_mutex = xSemaphoreCreateMutexStatic(&s_audio_mutex_storage);
+    }
+    SemaphoreHandle_t mutex = s_audio_mutex;
+    portEXIT_CRITICAL(&s_audio_mutex_init_lock);
+    return mutex && xSemaphoreTake(mutex, portMAX_DELAY) == pdTRUE;
+}
+
+static void audio_unlock(void) {
+    xSemaphoreGive(s_audio_mutex);
+}
 
 static int volume_to_gain_q16(int volume) {
     return (int)(((int64_t)volume * volume * AUDIO_VOLUME_GAIN_Q16_ONE) /
@@ -249,10 +276,17 @@ static int capture_init(void **out_ctx, int rate, int channels, int bits) {
 static int capture_start(void *opaque) {
     audio_context_t *ctx = opaque;
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=capture action=start");
-    if (!ctx || aosl_atomic_read(&ctx->started) || i2s_channel_enable(ctx->channel) != ESP_OK) {
+    if (!ctx || ctx->playback || !audio_lock()) {
         return -1;
     }
+    if (aosl_atomic_read(&ctx->started) || ctx->stop_pending ||
+        i2s_channel_enable(ctx->channel) != ESP_OK) {
+        audio_unlock();
+        return -1;
+    }
+    ctx->enabled = true;
     aosl_atomic_set(&ctx->started, true);
+    audio_unlock();
     return 0;
 }
 
@@ -288,38 +322,114 @@ static int capture_read(void *opaque, void *buffer, int frames) {
     return samples;
 }
 
-static int audio_stop(void *opaque) {
-    audio_context_t *ctx = opaque;
-    if (!ctx) {
-        return -1;
+static int clear_playback_dma_locked(audio_context_t *ctx) {
+    memset(ctx->scratch, 0, sizeof(ctx->scratch));
+    while (ctx->dma_clear_frames < AUDIO_DMA_FRAMES) {
+        size_t frames = AUDIO_DMA_FRAMES - ctx->dma_clear_frames;
+        if (frames > AUDIO_MAX_FRAMES) {
+            frames = AUDIO_MAX_FRAMES;
+        }
+        size_t loaded = 0;
+        esp_err_t err = i2s_channel_preload_data(ctx->channel, ctx->scratch,
+                                                 frames * sizeof(ctx->scratch[0]), &loaded);
+        if (loaded > frames * sizeof(ctx->scratch[0]) || loaded % sizeof(ctx->scratch[0])) {
+            return -1;
+        }
+        ctx->dma_clear_frames += loaded / sizeof(ctx->scratch[0]);
+        if (err != ESP_OK || loaded != frames * sizeof(ctx->scratch[0])) {
+            ESP_LOGE(TAG,
+                     "event=audio_device direction=playback action=clear_dma result=error "
+                     "error=%s loaded=%u",
+                     esp_err_to_name(err), (unsigned)loaded);
+            return -1;
+        }
     }
-    if (!aosl_atomic_read(&ctx->started)) {
+    return 0;
+}
+
+static int audio_stop_locked(audio_context_t *ctx) {
+    if (!aosl_atomic_read(&ctx->started) && !ctx->stop_pending) {
         return 0;
     }
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=stop", ctx->direction);
-    esp_err_t err = i2s_channel_disable(ctx->channel);
-    if (err != ESP_OK) {
+    aosl_atomic_set(&ctx->started, false);
+    ctx->stop_pending = true;
+    if (ctx->playback_buffer && mybot_pcm_playback_buffer_stop(ctx->playback_buffer) < 0) {
         return -1;
     }
-    aosl_atomic_set(&ctx->started, false);
+    if (ctx->enabled) {
+        if (i2s_channel_disable(ctx->channel) != ESP_OK) {
+            return -1;
+        }
+        ctx->enabled = false;
+        ctx->dma_clear_frames = 0;
+    }
+    if (ctx->playback && clear_playback_dma_locked(ctx) < 0) {
+        return -1;
+    }
+    ctx->stop_pending = false;
     return 0;
+}
+
+static int audio_stop(void *opaque) {
+    audio_context_t *ctx = opaque;
+    if (!ctx || !audio_lock()) {
+        return -1;
+    }
+    int result = audio_stop_locked(ctx);
+    audio_unlock();
+    return result;
 }
 
 static void audio_destroy(void *opaque) {
     audio_context_t *ctx = opaque;
-    if (!ctx) {
+    if (!ctx || !audio_lock()) {
         return;
     }
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=destroy", ctx->direction);
-    if (aosl_atomic_read(&ctx->started) && i2s_channel_disable(ctx->channel) != ESP_OK) {
-        ESP_LOGW(TAG, "event=audio_device direction=%s action=disable result=error",
+    if (audio_stop_locked(ctx) < 0 ||
+        (ctx->playback_buffer && mybot_pcm_playback_buffer_destroy(ctx->playback_buffer) < 0)) {
+        ctx->stop_pending = true;
+        audio_unlock();
+        ESP_LOGE(TAG,
+                 "event=audio_device direction=%s action=destroy result=deferred "
+                 "resources=retained",
                  ctx->direction);
+        return;
     }
+    ctx->playback_buffer = NULL;
     if (i2s_del_channel(ctx->channel) != ESP_OK) {
-        ESP_LOGW(TAG, "event=audio_device direction=%s action=destroy result=error",
+        audio_unlock();
+        ESP_LOGE(TAG,
+                 "event=audio_device direction=%s action=destroy result=error "
+                 "resources=retained",
                  ctx->direction);
+        return;
     }
+    audio_unlock();
     free(ctx);
+}
+
+static esp_err_t playback_sink_write(void *opaque, const int16_t *pcm, size_t frames,
+                                     size_t *written_frames, uint32_t timeout_ms) {
+    audio_context_t *ctx = opaque;
+    *written_frames = 0;
+    if (frames > AUDIO_MAX_FRAMES) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    int32_t gain_q16 = (int32_t)aosl_atomic_read(&s_output_gain_q16);
+    for (size_t i = 0; i < frames; ++i) {
+        ctx->scratch[i] = (int32_t)((int64_t)pcm[i] * gain_q16);
+    }
+    size_t bytes_written = 0;
+    esp_err_t err = i2s_channel_write(ctx->channel, ctx->scratch, frames * sizeof(ctx->scratch[0]),
+                                      &bytes_written, timeout_ms);
+    if (bytes_written > frames * sizeof(ctx->scratch[0]) ||
+        bytes_written % sizeof(ctx->scratch[0])) {
+        return ESP_FAIL;
+    }
+    *written_frames = bytes_written / sizeof(ctx->scratch[0]);
+    return err;
 }
 
 static int playback_init(void **out_ctx, int rate, int channels, int bits) {
@@ -333,6 +443,7 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
     if (!ctx) {
         return -1;
     }
+    ctx->playback = true;
 
     i2s_chan_config_t channel_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     channel_config.dma_desc_num = 6;
@@ -351,6 +462,11 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
         free(ctx);
         return -1;
     }
+    ctx->playback_buffer = mybot_pcm_playback_buffer_create(playback_sink_write, ctx);
+    if (!ctx->playback_buffer) {
+        audio_destroy(ctx);
+        return -1;
+    }
 
     apply_output_volume(MYBOT_AUDIO_VOLUME_MAX);
     *out_ctx = ctx;
@@ -360,37 +476,44 @@ static int playback_init(void **out_ctx, int rate, int channels, int bits) {
 static int playback_start(void *opaque) {
     audio_context_t *ctx = opaque;
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=playback action=start");
-    if (!ctx || aosl_atomic_read(&ctx->started) || i2s_channel_enable(ctx->channel) != ESP_OK) {
+    if (!ctx || !ctx->playback_buffer || !audio_lock()) {
+        return -1;
+    }
+    if (aosl_atomic_read(&ctx->started) || ctx->stop_pending ||
+        i2s_channel_enable(ctx->channel) != ESP_OK) {
+        audio_unlock();
+        return -1;
+    }
+    ctx->enabled = true;
+    if (mybot_pcm_playback_buffer_start(ctx->playback_buffer) < 0) {
+        ctx->stop_pending = true;
+        (void)audio_stop_locked(ctx);
+        audio_unlock();
         return -1;
     }
     aosl_atomic_set(&ctx->started, true);
+    audio_unlock();
     return 0;
 }
 
 static int playback_write(void *opaque, const void *buffer, int frames) {
     audio_context_t *ctx = opaque;
-    if (!ctx || !aosl_atomic_read(&ctx->started) || !buffer || frames <= 0 ||
-        frames > AUDIO_MAX_FRAMES) {
+    if (!ctx || !ctx->playback_buffer || !aosl_atomic_read(&ctx->started) || !buffer ||
+        frames <= 0 || frames > AUDIO_MAX_FRAMES) {
         return -1;
     }
 
-    const int16_t *input = buffer;
-    int32_t gain_q16 = (int32_t)aosl_atomic_read(&s_output_gain_q16);
-    for (int i = 0; i < frames; ++i) {
-        ctx->scratch[i] = (int32_t)((int64_t)input[i] * gain_q16);
-    }
+    return mybot_pcm_playback_buffer_write(ctx->playback_buffer, buffer, frames);
+}
 
-    size_t bytes_written = 0;
-    esp_err_t err =
-        i2s_channel_write(ctx->channel, ctx->scratch, (size_t)frames * sizeof(ctx->scratch[0]),
-                          &bytes_written, AUDIO_IO_TIMEOUT_MS);
-    if (err == ESP_ERR_TIMEOUT) {
-        return 0;
-    }
-    if (err != ESP_OK) {
+int mybot_audio_playback_drain(void *opaque, uint32_t timeout_ms) {
+    audio_context_t *ctx = opaque;
+    if (!ctx || !ctx->playback_buffer || !audio_lock()) {
         return -1;
     }
-    return (int)(bytes_written / sizeof(ctx->scratch[0]));
+    int result = mybot_pcm_playback_buffer_drain(ctx->playback_buffer, timeout_ms);
+    audio_unlock();
+    return result;
 }
 
 static const mybot_audio_capture_ops_t s_capture_ops = {

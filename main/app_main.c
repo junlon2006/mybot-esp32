@@ -14,6 +14,9 @@
 #include "esp_timer.h"
 #include "nvs_flash.h"
 #include "mybot_board.h"
+#if CONFIG_MYBOT_AUDIO_PLAYBACK_TEST
+#include "mybot_audio_playback_test.h"
+#endif
 #if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
 #include "resource_monitor.h"
 #endif
@@ -131,6 +134,10 @@ void app_main(void) {
     if (mybot_board_register() < 0) {
         return;
     }
+#if CONFIG_MYBOT_AUDIO_PLAYBACK_TEST
+    (void)mybot_audio_playback_test_run();
+    return;
+#endif
     const mybot_board_t *board = mybot_board_get();
 
     uint8_t mac[6];
