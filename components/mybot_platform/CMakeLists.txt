@@ -25,6 +25,9 @@ set(MYBOT_EMBEDDED_AUDIO_ASSETS
 )
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+    if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST AND NOT MYBOT_BOARD STREQUAL "m5stack-core-s3")
+        message(FATAL_ERROR "MYBOT_AUDIO_PLAYBACK_TEST requires MYBOT_BOARD=m5stack-core-s3")
+    endif()
     if(CONFIG_MYBOT_ENABLE_VIDEO AND NOT MYBOT_BOARD STREQUAL "m5stack-core-s3")
         message(FATAL_ERROR "MYBOT_ENABLE_VIDEO currently requires MYBOT_BOARD=m5stack-core-s3")
     endif()
@@ -53,6 +56,9 @@ set(mybot_debug_sources "")
 if(CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR)
     list(APPEND mybot_debug_sources "src/common/debug_stats.c")
 endif()
+if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST)
+    list(APPEND mybot_debug_sources "src/drivers/audio/cores3_playback_test.c")
+endif()
 
 idf_component_register(
     SRCS
@@ -63,6 +69,7 @@ idf_component_register(
         "src/common/embedded_ogg_announce.c"
         "src/common/embedded_ogg_prompt.c"
         "src/common/ogg_opus_decoder.c"
+        "src/common/pcm_playback_buffer.c"
         ${MYBOT_BOARD_SOURCES}
         ${mybot_debug_sources}
     INCLUDE_DIRS "include"
@@ -79,6 +86,7 @@ idf_component_register(
         nvs_flash
         freertos
         esp_audio_codec
+        esp_timer
         ${MYBOT_BOARD_REQUIRES}
     EMBED_FILES ${MYBOT_EMBEDDED_AUDIO_ASSETS}
     REQUIRED_IDF_TARGETS esp32s3

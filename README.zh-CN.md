@@ -26,6 +26,7 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
 - 16 kHz 单声道 signed-16 PCM；随附 RTSA 软件包固定使用 60 ms 音频包长。其他包长需要
   集成者提供匹配的 RTSA 构建。
 - Agora RTSA 全双工音频、Cloud AEC、AI QoS、RTM 频道订阅与声纹状态显示。
+- 所有 Board profile 共用有界 PCM 播放缓冲和独立 I2S 播放任务。
 - 中英文配对码与 Wi-Fi 配网本地提示音。
 - 编译期 Board profile，隔离 Flash、PSRAM、分区、驱动和引脚配置。
 
@@ -152,13 +153,14 @@ CPU 和内存诊断可在 menuconfig 的 `mybot → Enable debug CPU and memory 
 不单独测量中断耗时；运行时间时钟回绕时跳过该次 CPU 采样。内存最低值覆盖本次启动以来的
 历史。统计与串口输出有额外开销，调试完成后应关闭；CPU 负载高本身不能证明音频杂音的原因。
 
-CoreS3 在同一开关下还会输出 `mybot_stats` 周期统计：`playback_stats` 包含 I2S 写入次数、
+所有板型在同一开关下还会输出 `mybot_stats` 播放周期统计：`playback_stats` 包含 I2S 写入次数、
 请求/实际帧数、超时、错误、短写、零进展次数与平均/最大写入耗时；`playback_gaps` 包含
-两次 I2S 写入起点的最大间隔，以及上次返回到下次开始的最大间隔。`ui_stats` 分别统计
+两次 I2S 写入起点的最大间隔，以及上次返回到下次开始的最大间隔。CoreS3 的 `ui_stats` 另外统计
 framebuffer 绘制和 SPI 刷新的平均/最大耗时及总耗时峰值。耗时单位为微秒，`*_at_ms` 是
 峰值操作起点的启动后毫秒数，可与串口日志时间对照。计数和峰值在每次汇总后清零；跨周期
 写入归入完成时所在周期。停止时被打断的写入也包含在统计内。语音停顿会产生长间隔，不能据此
 直接判断欠载；SDK 公开接口未提供队列欠载计数，因此显示 `sdk_queue_underruns=unavailable`。
+各板型的输出格式、停止行为及验证要求见[音频播放缓冲](docs/AUDIO_PLAYBACK.zh-CN.md)。
 
 ## 硬件说明
 
@@ -246,6 +248,10 @@ SDK 暴露主麦 slot，播放将单声道复制到两个输出 slot。第二麦
 
 GPIO0 是 CoreS3 的音频 MCLK，不作为按键使用。CoreS3 没有独立音量键，固件启动时恢复
 持久化的设备音量。
+
+CoreS3 播放使用有界 PCM FIFO 和独立 I2S 播放任务，缓冲供数调度的波动。可选的
+[离线音频对照测试](docs/CORES3_AUDIO_TEST.zh-CN.md) 对比定时/连续供数及采集开启/关闭；
+普通固件使用相同的缓冲播放路径。
 
 CoreS3 在首次 LCD 初始化时预渲染 8 张固定状态页和 8 张对话/声纹状态组合，共缓存 16 张
 原生 RGB565 画面，额外使用 2,457,600 字节 PSRAM（约 2.34 MiB）。配对码仍使用动态
@@ -338,6 +344,8 @@ CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音�
 ## 文档
 
 - [板级移植](docs/BOARD_PORTING.zh-CN.md)
+- [音频播放缓冲](docs/AUDIO_PLAYBACK.zh-CN.md)
+- [CoreS3 音频播放对照测试](docs/CORES3_AUDIO_TEST.zh-CN.md)
 - [参与贡献](CONTRIBUTING.zh-CN.md)
 - [支持](SUPPORT.zh-CN.md)
 - [发布检查清单](docs/RELEASING.zh-CN.md)

@@ -27,6 +27,7 @@ SenseCAP Watcher.
 - HTTPS through `esp-tls` with the system CA bundle, SNI, and hostname verification.
 - 16 kHz mono signed-16 PCM capture/playback with 60 ms packets for the bundled RTSA package.
   Other packet durations require a matching RTSA build supplied by the integrator.
+- Shared bounded PCM playback buffering and an independent I2S writer on all board profiles.
 - Agora RTSA full-duplex audio, Cloud AEC, AI QoS, RTM channel subscription, and voice-print status.
 - Chinese and English local pairing-code and Wi-Fi provisioning prompts.
 - Compile-time board profiles with isolated Flash, PSRAM, partition, driver, and pin configuration.
@@ -161,14 +162,15 @@ scheduler-based estimates, not separate ISR measurements; runtime-clock rollover
 Heap minima cover the boot lifetime. Accounting and serial output add overhead, so disable the
 monitor after troubleshooting. High CPU load alone does not establish the cause of audio noise.
 
-On CoreS3 the same switch also enables interval `mybot_stats` reports: `playback_stats` counts I2S
+On all boards the same switch also enables interval `mybot_stats` playback reports: `playback_stats` counts I2S
 writes, requested/written frames, timeouts, errors, short writes and zero-progress writes, plus
 average/maximum write duration. `playback_gaps` measures maximum start-to-start and return-to-next-start
-intervals. `ui_stats` separates framebuffer rendering from SPI flushing and reports the longest total
+intervals. On CoreS3, `ui_stats` also separates framebuffer rendering from SPI flushing and reports the longest total
 update. Durations use microseconds; `*_at_ms` identifies the peak operation's start time since boot.
 Counters and maxima reset after each report. Writes spanning reports count on completion; interrupted
 shutdown writes also count. Speech pauses can produce long gaps, so gaps alone do not prove underruns.
 The public SDK API does not expose queue underruns (`sdk_queue_underruns=unavailable`).
+See [buffered audio playback](docs/AUDIO_PLAYBACK.md) for board formats, stop behavior, and validation.
 
 ## Hardware Notes
 
@@ -263,6 +265,10 @@ TCA9554 integration.
 
 GPIO0 is audio MCLK on CoreS3 and is not used as a button. CoreS3 has no dedicated volume keys;
 the firmware restores its persisted device volume at startup.
+
+CoreS3 playback uses a bounded PCM FIFO and independent I2S writer to absorb producer scheduling
+variation. The optional [offline audio comparison](docs/CORES3_AUDIO_TEST.md) tests timed and
+continuous feeding with and without capture; normal firmware uses the same buffered path.
 
 CoreS3 pre-renders eight fixed workflow pages and eight conversation/voiceprint combinations during
 the first LCD initialization. These 16 native RGB565 frames use 2,457,600 bytes of PSRAM (about
@@ -366,6 +372,8 @@ Known limitations:
 ## Documentation
 
 - [Board porting](docs/BOARD_PORTING.md)
+- [Buffered audio playback](docs/AUDIO_PLAYBACK.md)
+- [CoreS3 audio playback comparison](docs/CORES3_AUDIO_TEST.md)
 - [Contributing](CONTRIBUTING.md)
 - [Support](SUPPORT.md)
 - [Release checklist](docs/RELEASING.md)

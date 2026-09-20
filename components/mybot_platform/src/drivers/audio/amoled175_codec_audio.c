@@ -2,6 +2,7 @@
 /* Copyright (c) 2025 Project Contributors */
 #include "amoled175_hardware.h"
 #include "board_config.h"
+#include "pcm_playback_buffer.h"
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl_atomic.h>
@@ -15,6 +16,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
 #include "nvs.h"
 
 #include <stdbool.h>
@@ -24,6 +26,7 @@
 #define AUDIO_CONTEXT_MAGIC 0x41313735U
 #define AUDIO_IO_TIMEOUT_MS 50
 #define AUDIO_MAX_FRAMES 960
+#define AUDIO_DMA_CLEAR_MS 120
 #define AUDIO_WIRE_CHANNELS 2
 #define AUDIO_CAPTURE_CHANNEL 0
 #define AUDIO_INPUT_GAIN_DB 30.0f
@@ -50,6 +53,8 @@ typedef struct {
     audio_direction_t direction;
     aosl_atomic_t started;
     int16_t *scratch;
+    mybot_pcm_playback_buffer_t *playback_buffer;
+    bool stop_pending;
 } audio_stream_context_t;
 
 typedef struct {
@@ -211,11 +216,11 @@ static int close_input_codec_locked(void) {
         return 0;
     }
     int result = esp_codec_dev_close(s_audio.input_device);
-    s_audio.input_open = false;
     if (result != ESP_CODEC_DEV_OK) {
         ESP_LOGW(TAG, "event=audio_device component=es7210 action=close result=error");
         return -1;
     }
+    s_audio.input_open = false;
     return 0;
 }
 
@@ -224,11 +229,11 @@ static int close_output_codec_locked(void) {
         return 0;
     }
     int result = esp_codec_dev_close(s_audio.output_device);
-    s_audio.output_open = false;
     if (result != ESP_CODEC_DEV_OK) {
         ESP_LOGW(TAG, "event=audio_device component=es8311 action=close result=error");
         return -1;
     }
+    s_audio.output_open = false;
     return 0;
 }
 
@@ -494,6 +499,32 @@ static int shared_acquire_locked(audio_direction_t direction) {
     return 0;
 }
 
+/* Only the playback worker owns this stream's conversion scratch buffer. */
+static esp_err_t playback_sink_write(void *opaque, const int16_t *pcm, size_t frames,
+                                     size_t *written_frames, uint32_t timeout_ms) {
+    audio_stream_context_t *context = opaque;
+    if (!written_frames) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    *written_frames = 0;
+    if (!context || !pcm || frames == 0 || frames > AUDIO_MAX_FRAMES) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    for (size_t frame = 0; frame < frames; ++frame) {
+        context->scratch[frame * AUDIO_WIRE_CHANNELS] = pcm[frame];
+        context->scratch[frame * AUDIO_WIRE_CHANNELS + 1] = pcm[frame];
+    }
+    const size_t frame_bytes = AUDIO_WIRE_CHANNELS * sizeof(context->scratch[0]);
+    size_t bytes_written = 0;
+    esp_err_t err = i2s_channel_write(s_audio.tx_channel, context->scratch, frames * frame_bytes,
+                                      &bytes_written, timeout_ms);
+    if (bytes_written > frames * frame_bytes || bytes_written % frame_bytes != 0) {
+        return ESP_FAIL;
+    }
+    *written_frames = bytes_written / frame_bytes;
+    return err;
+}
+
 static int stream_init(void **out_context, int rate, int channels, int bits,
                        audio_direction_t direction) {
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=initialize",
@@ -521,6 +552,16 @@ static int stream_init(void **out_context, int rate, int channels, int bits,
         return -1;
     }
     int result = shared_acquire_locked(direction);
+    if (result == 0 && direction == AUDIO_DIRECTION_PLAYBACK) {
+        context->playback_buffer = mybot_pcm_playback_buffer_create(playback_sink_write, context);
+        if (!context->playback_buffer) {
+            s_audio.playback_attached = false;
+            if (--s_audio.references == 0) {
+                (void)shared_release_locked();
+            }
+            result = -1;
+        }
+    }
     audio_unlock();
     if (result < 0) {
         free(context->scratch);
@@ -616,8 +657,8 @@ static int capture_start(void *opaque) {
     }
 
     int result = -1;
-    if (!s_audio.ready || !s_audio.capture_attached || s_audio.capture_started ||
-        enable_tx_locked() < 0) {
+    if (!s_audio.ready || context->stop_pending || !s_audio.capture_attached ||
+        s_audio.capture_started || enable_tx_locked() < 0) {
         goto done;
     }
 
@@ -658,8 +699,8 @@ static int playback_start(void *opaque) {
     }
 
     int result = -1;
-    if (!s_audio.ready || !s_audio.playback_attached || s_audio.playback_started ||
-        enable_tx_locked() < 0) {
+    if (!s_audio.ready || context->stop_pending || !s_audio.playback_attached ||
+        s_audio.playback_started || enable_tx_locked() < 0) {
         goto done;
     }
     if (open_output_codec_locked() < 0) {
@@ -668,7 +709,9 @@ static int playback_start(void *opaque) {
         }
         goto done;
     }
-    if (set_speaker_pa_locked(true) < 0) {
+    if (set_speaker_pa_locked(true) < 0 ||
+        mybot_pcm_playback_buffer_start(context->playback_buffer) < 0) {
+        (void)set_speaker_pa_locked(false);
         (void)close_output_codec_locked();
         if (!s_audio.capture_started) {
             (void)disable_channel(s_audio.tx_channel, &s_audio.tx_enabled, "playback");
@@ -716,65 +759,73 @@ static int playback_write(void *opaque, const void *buffer, int frames) {
         !buffer || frames <= 0 || frames > AUDIO_MAX_FRAMES) {
         return -1;
     }
+    return mybot_pcm_playback_buffer_write(context->playback_buffer, buffer, frames);
+}
 
-    const int16_t *input = buffer;
-    for (int frame = 0; frame < frames; ++frame) {
-        context->scratch[frame * AUDIO_WIRE_CHANNELS] = input[frame];
-        context->scratch[frame * AUDIO_WIRE_CHANNELS + 1] = input[frame];
+int mybot_audio_playback_drain(void *opaque, uint32_t timeout_ms) {
+    audio_stream_context_t *context = opaque;
+    if (!context || context->magic != AUDIO_CONTEXT_MAGIC ||
+        context->direction != AUDIO_DIRECTION_PLAYBACK || !audio_lock()) {
+        return -1;
     }
-
-    size_t bytes_written = 0;
-    esp_err_t err =
-        i2s_channel_write(s_audio.tx_channel, context->scratch,
-                          (size_t)frames * AUDIO_WIRE_CHANNELS * sizeof(context->scratch[0]),
-                          &bytes_written, AUDIO_IO_TIMEOUT_MS);
-    if (err != ESP_OK && err != ESP_ERR_TIMEOUT) {
-        return aosl_atomic_read(&context->started) ? -1 : 0;
-    }
-    return (int)(bytes_written / (AUDIO_WIRE_CHANNELS * sizeof(context->scratch[0])));
+    int result = mybot_pcm_playback_buffer_drain(context->playback_buffer, timeout_ms);
+    audio_unlock();
+    return result;
 }
 
 static int stream_stop(void *opaque) {
     audio_stream_context_t *context = opaque;
-    if (!context || context->magic != AUDIO_CONTEXT_MAGIC) {
+    if (!context || context->magic != AUDIO_CONTEXT_MAGIC || !audio_lock()) {
         return -1;
     }
-    if (!aosl_atomic_xchg(&context->started, false)) {
+    if (!aosl_atomic_read(&context->started) && !context->stop_pending) {
+        audio_unlock();
         return 0;
     }
 
     const char *direction = direction_name(context->direction);
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=stop", direction);
-    if (!audio_lock()) {
-        return -1;
-    }
+    aosl_atomic_set(&context->started, false);
+    context->stop_pending = true;
 
     int result = 0;
     if (context->direction == AUDIO_DIRECTION_CAPTURE) {
-        s_audio.capture_started = false;
-        if (close_input_codec_locked() < 0) {
-            result = -1;
-        }
         if (disable_channel(s_audio.rx_channel, &s_audio.rx_enabled, "capture") < 0) {
+            audio_unlock();
+            return -1;
+        }
+        if (close_input_codec_locked() < 0) {
             result = -1;
         }
         if (!s_audio.playback_started &&
             disable_channel(s_audio.tx_channel, &s_audio.tx_enabled, "playback") < 0) {
             result = -1;
         }
-    } else {
-        if (set_speaker_pa_locked(false) < 0) {
-            result = -1;
+        if (result == 0) {
+            s_audio.capture_started = false;
         }
-        s_audio.playback_started = false;
-        if (close_output_codec_locked() < 0) {
-            result = -1;
+    } else {
+        if (mybot_pcm_playback_buffer_stop(context->playback_buffer) < 0) {
+            audio_unlock();
+            return -1;
+        }
+        if (set_speaker_pa_locked(false) < 0 || close_output_codec_locked() < 0) {
+            audio_unlock();
+            return -1;
+        }
+        /* Drain old DMA contents while muted. Keep TX clocking when capture still owns it. */
+        if (s_audio.tx_enabled) {
+            vTaskDelay(pdMS_TO_TICKS(AUDIO_DMA_CLEAR_MS));
         }
         if (!s_audio.capture_started &&
             disable_channel(s_audio.tx_channel, &s_audio.tx_enabled, "playback") < 0) {
             result = -1;
         }
+        if (result == 0) {
+            s_audio.playback_started = false;
+        }
     }
+    context->stop_pending = result < 0;
     audio_unlock();
     return result;
 }
@@ -785,11 +836,21 @@ static void stream_destroy(void *opaque) {
         return;
     }
 
-    (void)stream_stop(context);
+    if (stream_stop(context) < 0) {
+        ESP_LOGE(TAG, "event=audio_device action=destroy result=deferred reason=stop_failed");
+        return;
+    }
     ESP_LOGI(TAG, "event=sdk_adapter adapter=audio direction=%s action=destroy",
              direction_name(context->direction));
 
     if (audio_lock()) {
+        if (context->playback_buffer &&
+            mybot_pcm_playback_buffer_destroy(context->playback_buffer) < 0) {
+            context->stop_pending = true;
+            audio_unlock();
+            ESP_LOGE(TAG, "event=audio_device action=destroy result=deferred reason=worker_busy");
+            return;
+        }
         bool *attached = context->direction == AUDIO_DIRECTION_CAPTURE ? &s_audio.capture_attached
                                                                        : &s_audio.playback_attached;
         if (*attached) {
@@ -806,6 +867,8 @@ static void stream_destroy(void *opaque) {
             }
         }
         audio_unlock();
+    } else {
+        return;
     }
 
     context->magic = 0;

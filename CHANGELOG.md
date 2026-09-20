@@ -7,6 +7,9 @@ Versioning and Conventional Commits.
 
 ### Added
 
+- Optional CoreS3 offline audio playback comparison: identical local PCM through 60 ms
+  timer-fed and continuous writes, with and without microphone capture.
+
 - Optional CoreS3 GC0308 camera uplink: 320x240 software JPEG, capped at one frame per second,
   with bandwidth feedback, bounded capture waits, and shared-I2C-safe camera reset.
 
@@ -99,6 +102,10 @@ Versioning and Conventional Commits.
   low-power behavior are not yet complete.
 
 ### Fixed
+
+- Buffer PCM playback on all supported boards and feed I2S from a dedicated worker to
+  decouple SDK timer callbacks from DMA refill timing. Preserve each board's native slot
+  format and gain, bound startup buffering, drain finite prompts, and clear old PCM on stop.
 
 - Correct the CoreS3-derived file licenses, add the missing esp-wifi-connect MIT text, and remove
   stale Component Registry cache checksums from locally adapted components.

@@ -2,10 +2,9 @@
 #include "embedded_ogg_prompt.h"
 
 #include "ogg_opus_decoder.h"
+#include "pcm_playback_buffer.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,7 +13,7 @@
 #define TAG "mybot_prompt"
 #define PROMPT_FRAMES_PER_WRITE 320
 #define PROMPT_MAX_CONSECUTIVE_TIMEOUTS 100
-#define PROMPT_DRAIN_MS 200
+#define PROMPT_DRAIN_TIMEOUT_MS 1000
 #define PROMPT_RATE_HZ 16000
 #define PROMPT_CHANNELS 1
 #define PROMPT_BITS 16
@@ -105,20 +104,27 @@ int mybot_embedded_ogg_play_wifi_provisioning(const mybot_audio_playback_ops_t *
         offset += written;
     }
 
-    vTaskDelay(pdMS_TO_TICKS(PROMPT_DRAIN_MS));
+    if (mybot_audio_playback_drain(playback_ctx, PROMPT_DRAIN_TIMEOUT_MS) < 0) {
+        ESP_LOGE(TAG, "event=prompt type=wifi_provisioning action=play result=error reason=drain");
+        goto cleanup;
+    }
     result = 0;
-    ESP_LOGI(TAG, "event=prompt type=wifi_provisioning trigger=%s action=play frames=%d result=ok",
-             trigger, decoded.frames);
 
 cleanup:
-    if (playback_started) {
-        (void)playback_ops->stop(playback_ctx);
+    if (playback_started && playback_ops->stop(playback_ctx) < 0) {
+        result = -1;
+        ESP_LOGE(TAG, "event=prompt type=wifi_provisioning action=play result=error reason=stop");
     }
     if (playback_ctx) {
         playback_ops->destroy(playback_ctx);
     }
     if (volume_active) {
         volume_ops->destroy(volume_ctx);
+    }
+    if (result == 0) {
+        ESP_LOGI(TAG,
+                 "event=prompt type=wifi_provisioning trigger=%s action=play frames=%d result=ok",
+                 trigger, decoded.frames);
     }
     mybot_ogg_pcm_free(&decoded);
     return result;
