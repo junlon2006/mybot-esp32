@@ -47,6 +47,9 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Refresh the mybot SDK to commit `5b7a6c1` (1.2.0 plus post-release fixes): reduce routine
+  RTM logging and preserve the AOSL log level across RTSA initialization.
+
 - Pre-render CoreS3 workflow and conversation screens into PSRAM during LCD initialization to
   avoid repeated runtime rasterization, with dynamic fallback if cache allocation fails.
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.

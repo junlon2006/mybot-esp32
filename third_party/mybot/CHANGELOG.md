@@ -4,7 +4,12 @@ This project follows Semantic Versioning.
 
 ## [Unreleased]
 
-Changes since the last release will be recorded here.
+### Changed
+
+- Move routine RTM events, message previews, and forwarding logs to debug level while
+  retaining warning/error diagnostics for failures and invalid callbacks.
+- Set RTSA logging to `RTC_LOG_ERROR` and restore the previous AOSL log level after
+  RTSA initialization, including when initialization fails.
 
 ## [1.2.0] - 2026-09-15
 
