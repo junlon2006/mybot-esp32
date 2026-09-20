@@ -1,2 +1,2 @@
 # SPDX-License-Identifier: Apache-2.0
-CONFIG_MYBOT_CORES3_LVGL_UI=y
+CONFIG_MYBOT_LVGL_UI=y

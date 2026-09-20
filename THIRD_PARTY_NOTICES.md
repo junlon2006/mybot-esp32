@@ -35,6 +35,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | Source Han Sans UI glyph subset | SIL Open Font License 1.1 | `components/mybot_platform/src/drivers/display/cores3_lvgl_font.c`, `components/mybot_platform/src/drivers/display/CORES3_FONT_LICENSE.txt` |
 | Noto Color Emoji rasterized glyphs | SIL Open Font License 1.1 | `components/mybot_platform/assets/ui/noto_emoji`, `components/mybot_platform/src/drivers/display/cores3_ui_assets.c` |
 | CoreS3 LVGL view (`1d5eeb2` reference) | MIT | `components/mybot_platform/src/drivers/display/cores3_lvgl_view.cc`, `components/mybot_platform/src/internal/cores3_lvgl_view.h` |
+| Project-maintained shared LVGL panel adapters | Apache-2.0 unless file SPDX says otherwise | `components/mybot_platform/src/drivers/display/lvgl_st7789_lcd.cc`, `components/mybot_platform/src/drivers/display/dynamic_lvgl_lcd.cc`, `components/mybot_platform/src/drivers/display/vocat_lvgl_panel.c` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |

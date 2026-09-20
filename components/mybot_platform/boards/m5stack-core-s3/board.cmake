@@ -42,7 +42,7 @@ set(MYBOT_BOARD_REQUIRES
     esp_lvgl_port
 )
 
-if(CONFIG_MYBOT_CORES3_LVGL_UI)
+if(CONFIG_MYBOT_LVGL_UI)
     list(APPEND MYBOT_BOARD_SOURCES
         "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_lcd.cc"
         "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"

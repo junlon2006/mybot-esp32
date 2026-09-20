@@ -15,14 +15,6 @@
 #include "esp_heap_caps.h"
 #include "lvgl.h"
 #include "esp_lvgl_port_disp.h"
-#include "esp_lvgl_port_touch.h"
-#include "esp_lvgl_port_knob.h"
-#include "esp_lvgl_port_button.h"
-#include "esp_lvgl_port_usbhid.h"
-
-#if LVGL_VERSION_MAJOR == 8
-#include "esp_lvgl_port_compatibility.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

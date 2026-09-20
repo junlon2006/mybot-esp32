@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-/* Local configuration for the optional CoreS3 UI; upstream src is unchanged. */
+/* Local configuration for the optional platform LVGL UI; upstream src is unchanged. */
 #ifndef LV_CONF_H
 #define LV_CONF_H
 
@@ -41,6 +41,8 @@
 #define LV_USE_ASSERT_OBJ 0
 
 #define LV_FONT_MONTSERRAT_14 1
+#define LV_FONT_MONTSERRAT_12 1
+#define LV_FONT_MONTSERRAT_10 1
 #define LV_FONT_MONTSERRAT_32 1
 #define LV_FONT_DEFAULT &lv_font_montserrat_14
 #define LV_USE_FONT_COMPRESSED 0

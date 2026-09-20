@@ -188,6 +188,76 @@ jobs:
             video: jpeg-1fps
             ui: lvgl-static
             defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults
+          - board: zhengchen-1.54tft-ml307
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: zhengchen-1.54tft-ml307
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: zhengchen-1.54tft-wifi
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: zhengchen-1.54tft-wifi
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: m5stack-stick-s3
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: m5stack-stick-s3
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: esp-vocat
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: esp-vocat
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: esp32-s3-touch-amoled-1.75
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: esp32-s3-touch-amoled-1.75
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: esp32-s3-touch-amoled-1.75c
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: esp32-s3-touch-amoled-1.75c
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: sensecap-watcher
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: sensecap-watcher
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain
@@ -197,21 +267,21 @@ jobs:
       - name: Build ESP32-S3 firmware
         run: |
           source /opt/esp/idf/export.sh >/dev/null
-          idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} \
+          idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }} \
             -DMYBOT_BOARD=${{ matrix.board }} \
-            -DSDKCONFIG=build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/sdkconfig \
+            -DSDKCONFIG=build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }}/sdkconfig \
             -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;${{ matrix.defaults }}" \
             build
       - name: Report size
         run: |
           source /opt/esp/idf/export.sh >/dev/null
-          idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }} size
+          idf.py -B build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }} size
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: mybot-esp32-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}-ui-${{ matrix.ui || 'default' }}-${{ github.sha }}
           path: |
-            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/mybot_esp32.bin
-            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin
-            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/partition_table/partition-table.bin
-            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/ota_data_initial.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }}/mybot_esp32.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }}/bootloader/bootloader.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }}/partition_table/partition-table.bin
+            build-${{ matrix.board }}-ptime-${{ matrix.ptime }}-ui-${{ matrix.ui || 'default' }}-lang-${{ matrix.language }}-video-${{ matrix.video || 'off' }}/ota_data_initial.bin

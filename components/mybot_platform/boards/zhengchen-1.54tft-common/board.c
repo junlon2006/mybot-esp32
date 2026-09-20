@@ -21,6 +21,9 @@ const mybot_key_ops_t *mybot_esp32s3_button_ops(void);
 const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_esp32s3_lcd_ops(void);
+#if CONFIG_MYBOT_LVGL_UI
+const mybot_lcd_ops_t *MYBOT_LVGL_OPS_NAME(void);
+#endif
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 int mybot_esp32s3_buttons_start(void);
 
@@ -62,7 +65,11 @@ static void board_on_button_provisioning(void) {
 }
 
 static int board_prepare(void) {
+#if CONFIG_MYBOT_LVGL_UI
+    s_lcd_ops = MYBOT_LVGL_OPS_NAME();
+#else
     s_lcd_ops = mybot_esp32s3_lcd_ops();
+#endif
     if (!s_lcd_ops || s_lcd_ops->init(&s_lcd_ctx) < 0) {
         ESP_LOGE(TAG, "event=board_prepare component=display result=error");
         return -1;
@@ -114,7 +121,12 @@ static int board_register_platform(void) {
         .audio_volume = mybot_esp32s3_audio_volume_ops(),
         .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
-        .lcd = mybot_esp32s3_lcd_ops(),
+        .lcd =
+#if CONFIG_MYBOT_LVGL_UI
+            MYBOT_LVGL_OPS_NAME(),
+#else
+            mybot_esp32s3_lcd_ops(),
+#endif
     };
 
     return mybot_platform_register(&descriptor);

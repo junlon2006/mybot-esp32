@@ -31,6 +31,7 @@ SenseCAP Watcher.
 - Agora RTSA full-duplex audio, Cloud AEC, AI QoS, RTM channel subscription, and voice-print status.
 - Chinese and English local pairing-code and Wi-Fi provisioning prompts.
 - Compile-time board profiles with isolated Flash, PSRAM, partition, driver, and pin configuration.
+- Optional shared LVGL workflow UI adapters for panel boards; the existing renderer remains the default.
 
 ## Supported Boards
 
@@ -278,13 +279,16 @@ pixels without repeating font and shape rendering. Initialization yields between
 failure releases partial caches and falls back to dynamic rendering. Cache references survive SDK
 stop/start and are freed with the final LCD owner. SPI still refreshes the entire screen.
 
-An optional [CoreS3 LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing
+An optional [LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing
 codes, persistent voiceprint status, local state emoji, and listening/thinking/speaking indicators. Enable
-`CONFIG_MYBOT_CORES3_LVGL_UI` to select it instead of the cached renderer; the option defaults to
+`CONFIG_MYBOT_LVGL_UI` to select it instead of the cached renderer; the option defaults to
 off. It uses partial redraws and a 10 KiB DMA buffer without the 16-page cache. The initial status
 UI has passed real-device testing; light/dark themes, brief event notifications, and optional
 10-fps activity animations require hardware regression testing. Theme and animation choices are
 set in menuconfig; touch gestures remain unchanged.
+
+All supported panel boards use the shared LVGL backend with `CONFIG_MYBOT_LVGL_UI`. See
+[platform UI](docs/PLATFORM_UI.md) for panel sizes, adapter coverage, build variants, and validation limits.
 
 CoreS3 also provides optional GC0308 camera uplink: 320 x 240 software JPEG, at most 1 fps while
 RTC is connected. It is disabled by default; see [CoreS3 video](docs/CORES3_VIDEO.md) for building,
@@ -350,9 +354,10 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds all board profiles, both languages, and the bundled RTSA 60 ms cadence. Six additional
-CoreS3 configurations cover the LVGL UI language/video combinations, light theme, and disabled
-activity animations. M5Stack CoreS3
+CI builds all board profiles, both languages, and the bundled RTSA 60 ms cadence. Six CoreS3
+configurations cover the LVGL UI language/video combinations, light theme, and disabled activity
+animations; additional LVGL variants cover the other panel adapters listed in
+[Platform LVGL UI](docs/PLATFORM_UI.md). M5Stack CoreS3
 provisioning and bidirectional voice interaction have been validated on
 real hardware. The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
 StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
@@ -385,6 +390,7 @@ Known limitations:
 - [Board porting](docs/BOARD_PORTING.md)
 - [Buffered audio playback](docs/AUDIO_PLAYBACK.md)
 - [CoreS3 LVGL UI](docs/CORES3_UI.md)
+- [Platform LVGL UI](docs/PLATFORM_UI.md)
 - [CoreS3 audio playback comparison](docs/CORES3_AUDIO_TEST.md)
 - [Contributing](CONTRIBUTING.md)
 - [Support](SUPPORT.md)

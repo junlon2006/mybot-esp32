@@ -6,7 +6,7 @@ The display/runtime subset is based on esp_lvgl_port 2.8.0~1, upstream
 `license.txt` are retained.
 
 Only the LVGL 9 runtime, display adapter, and their headers are included.
-Local CMake selects sources through `CONFIG_MYBOT_CORES3_LVGL_UI`, while
+Local CMake selects sources through `CONFIG_MYBOT_LVGL_UI`, while
 always declaring dependencies for ESP-IDF component discovery. The component
 does not invoke the component manager or fetch dependencies. Optional touch,
 button, encoder, USB, PPA, and assembly extensions are not linked.

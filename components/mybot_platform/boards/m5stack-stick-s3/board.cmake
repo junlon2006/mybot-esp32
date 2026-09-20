@@ -24,8 +24,16 @@ set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/sticks3_hardware.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/sticks3_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/sticks3_es8311_audio.c"
-    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/sticks3_st7789_lcd.c"
 )
+if(CONFIG_MYBOT_LVGL_UI)
+    list(APPEND MYBOT_BOARD_SOURCES
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/lvgl_st7789_lcd.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+else()
+    list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/display/sticks3_st7789_lcd.c")
+endif()
 set(MYBOT_BOARD_REQUIRES
     button
     esp_codec_dev
@@ -35,6 +43,7 @@ set(MYBOT_BOARD_REQUIRES
     esp_driver_ledc
     esp_driver_spi
     esp_lcd
+    esp_lvgl_port
     m5pm1
     nvs_flash
 )

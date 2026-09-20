@@ -42,5 +42,15 @@ set(MYBOT_BOARD_REQUIRES
     esp_lcd
     esp_lcd_spd2010
     esp_timer
+    esp_lvgl_port
+    lvgl
     knob
 )
+
+if(CONFIG_MYBOT_LVGL_UI)
+    list(APPEND MYBOT_BOARD_SOURCES
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/dynamic_lvgl_lcd.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+endif()

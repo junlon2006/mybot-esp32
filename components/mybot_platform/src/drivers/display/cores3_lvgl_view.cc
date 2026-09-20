@@ -10,11 +10,11 @@
 #include <cstring>
 
 LV_FONT_DECLARE(mybot_cores3_font_20);
+LV_FONT_DECLARE(lv_font_montserrat_14);
+LV_FONT_DECLARE(lv_font_montserrat_10);
 
 namespace {
 
-constexpr int kWidth = 320;
-constexpr int kHeight = 240;
 constexpr uint32_t kTimerPeriodMs = 100;
 constexpr uint32_t kNotificationMs = 2000;
 
@@ -30,7 +30,7 @@ struct Theme {
     uint32_t red;
 };
 
-#if CONFIG_MYBOT_CORES3_UI_LIGHT_THEME
+#if CONFIG_MYBOT_LVGL_UI_LIGHT_THEME
 constexpr Theme kTheme{0xeff3f8, 0xffffff, 0xdce4ee, 0x172637, 0x566477,
                        0x1766ae, 0x177849, 0x8b5000, 0xbc3542};
 #else
@@ -131,9 +131,12 @@ struct View {
     uint32_t notice_color;
     Activity activity_mode;
     unsigned animation_frame;
+    int width;
+    int height;
 };
 
 View s_view{};
+int view_width();
 
 lv_obj_t *make_panel(lv_obj_t *parent, int x, int y, int width, int height, uint32_t color) {
     lv_obj_t *panel = lv_obj_create(parent);
@@ -208,6 +211,11 @@ void clear_notification() {
 
 void show_notification(Notification kind, const char *text, uint32_t color) {
     set_text(s_view.notification, text);
+#if !CONFIG_MYBOT_LANGUAGE_ZH_CN
+    if (view_width() < 240) {
+        lv_obj_set_style_text_font(s_view.notification, &lv_font_montserrat_10, 0);
+    }
+#endif
     lv_obj_set_style_text_color(s_view.notification, lv_color_hex(color), 0);
     s_view.notification_visible = true;
     s_view.notification_kind = kind;
@@ -247,7 +255,7 @@ void draw_activity_frame() {
 }
 
 bool animation_running() {
-#if CONFIG_MYBOT_CORES3_UI_ANIMATIONS
+#if CONFIG_MYBOT_LVGL_UI_ANIMATIONS
     return s_view.activity_mode != Activity::None;
 #else
     return false;
@@ -313,21 +321,34 @@ void update_notifications(const mybot_lcd_content_t &content) {
     }
 }
 
+int view_width() {
+    return s_view.width;
+}
 } // namespace
 
-int mybot_cores3_lvgl_view_create(lv_display_t *display) {
-    if (!display || s_view.root || lv_display_get_horizontal_resolution(display) != kWidth ||
-        lv_display_get_vertical_resolution(display) != kHeight) {
+int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int height) {
+    if (!display || s_view.root || width <= 0 || height <= 0 ||
+        lv_display_get_horizontal_resolution(display) != width ||
+        lv_display_get_vertical_resolution(display) != height) {
         return -1;
     }
+    s_view.width = width;
+    s_view.height = height;
+    const int margin = width >= 240 ? 12 : 4;
+    const int card_width = width - margin * 2;
+    const int card_x = margin;
+    const int card_y = 46;
+    const int card_height = height >= 220 ? 138 : (height - 102);
+    const int center_x = (card_width - 64) / 2;
+    const int footer_y = height - 44;
     s_view.root =
-        make_panel(lv_display_get_screen_active(display), 0, 0, kWidth, kHeight, kTheme.background);
+        make_panel(lv_display_get_screen_active(display), 0, 0, width, height, kTheme.background);
     if (!s_view.root) {
         return -1;
     }
-    lv_obj_t *header = make_panel(s_view.root, 0, 0, kWidth, 38, kTheme.background);
-    lv_obj_t *footer = make_panel(s_view.root, 12, 196, 296, 34, kTheme.surface);
-    s_view.card = make_panel(s_view.root, 12, 46, 296, 138, kTheme.surface);
+    lv_obj_t *header = make_panel(s_view.root, 0, 0, width, 38, kTheme.background);
+    lv_obj_t *footer = make_panel(s_view.root, margin, footer_y, card_width, 34, kTheme.surface);
+    s_view.card = make_panel(s_view.root, card_x, card_y, card_width, card_height, kTheme.surface);
     if (!header || !footer || !s_view.card) {
         mybot_cores3_lvgl_view_destroy();
         return -1;
@@ -336,8 +357,8 @@ int mybot_cores3_lvgl_view_create(lv_display_t *display) {
     lv_obj_set_style_border_color(s_view.card, lv_color_hex(kTheme.border), 0);
     lv_obj_set_style_border_width(s_view.card, 1, 0);
     lv_obj_set_style_radius(footer, 12, 0);
-    s_view.badge = make_panel(s_view.card, 116, 8, 64, 64, kTheme.surface);
-    s_view.activity = make_panel(s_view.card, 116, 112, 64, 16, kTheme.surface);
+    s_view.badge = make_panel(s_view.card, center_x, 8, 64, 64, kTheme.surface);
+    s_view.activity = make_panel(s_view.card, center_x, card_height - 26, 64, 16, kTheme.surface);
     if (!s_view.badge || !s_view.activity) {
         mybot_cores3_lvgl_view_destroy();
         return -1;
@@ -346,22 +367,36 @@ int mybot_cores3_lvgl_view_create(lv_display_t *display) {
     lv_obj_set_style_border_width(s_view.badge, 2, 0);
     lv_obj_set_style_bg_opa(s_view.activity, LV_OPA_TRANSP, 0);
 
-    s_view.brand = make_label(header, 16, 4, 100, 30);
-    s_view.status = make_label(header, 122, 4, 182, 30);
-    s_view.notification = make_label(header, 16, 4, 288, 30);
+    const int brand_width = width < 240 ? width / 2 : width / 3;
+    s_view.brand = make_label(header, 8, 4, brand_width, 30);
+    s_view.status = make_label(header, brand_width, 4, width - brand_width - 8, 30);
+    s_view.notification = make_label(header, 4, 4, width - 8, 30);
     s_view.icon = make_label(s_view.badge, 0, 0, 60, 40);
     s_view.emoji = lv_image_create(s_view.card);
-    s_view.title = make_label(s_view.card, 12, 81, 272, 30);
-    s_view.code = make_label(s_view.card, 2, 63, 292, 45);
-    s_view.notice = make_label(footer, 4, 3, 288, 28);
+    s_view.title = make_label(s_view.card, 4, 81, card_width - 8, 30);
+    s_view.code = make_label(s_view.card, 2, 63, card_width - 4, 45);
+    s_view.notice = make_label(footer, 2, 3, card_width - 4, 28);
     if (!s_view.brand || !s_view.status || !s_view.notification || !s_view.icon || !s_view.emoji ||
         !s_view.title || !s_view.code || !s_view.notice) {
         mybot_cores3_lvgl_view_destroy();
         return -1;
     }
-    lv_obj_set_pos(s_view.emoji, 116, 8);
+    lv_obj_set_pos(s_view.emoji, center_x, 8);
     lv_obj_set_size(s_view.emoji, 64, 64);
     lv_obj_set_style_text_align(s_view.brand, LV_TEXT_ALIGN_LEFT, 0);
+    if (width < 240) {
+        lv_obj_set_style_text_font(s_view.brand, &lv_font_montserrat_14, 0);
+        lv_obj_set_style_text_font(s_view.status, &lv_font_montserrat_10, 0);
+#if CONFIG_MYBOT_LANGUAGE_ZH_CN
+        lv_obj_set_style_text_font(s_view.notification, &mybot_cores3_font_20, 0);
+        lv_obj_set_style_text_font(s_view.title, &mybot_cores3_font_20, 0);
+        lv_obj_set_style_text_font(s_view.notice, &mybot_cores3_font_20, 0);
+#else
+        lv_obj_set_style_text_font(s_view.notification, &lv_font_montserrat_10, 0);
+        lv_obj_set_style_text_font(s_view.title, &lv_font_montserrat_10, 0);
+        lv_obj_set_style_text_font(s_view.notice, &lv_font_montserrat_10, 0);
+#endif
+    }
     lv_label_set_text_static(s_view.brand, "mybot");
     lv_obj_set_style_text_align(s_view.status, LV_TEXT_ALIGN_RIGHT, 0);
     lv_obj_set_style_text_color(s_view.status, lv_color_hex(kTheme.muted), 0);
@@ -389,6 +424,15 @@ int mybot_cores3_lvgl_view_create(lv_display_t *display) {
     const mybot_lcd_content_t initial = {MYBOT_LCD_SCREEN_STARTING, {}, 0};
     mybot_cores3_lvgl_view_update(&initial);
     return 0;
+}
+
+int mybot_cores3_lvgl_view_create(lv_display_t *display) {
+    if (!display) {
+        return -1;
+    }
+    return mybot_cores3_lvgl_view_create_sized(display,
+                                               lv_display_get_horizontal_resolution(display),
+                                               lv_display_get_vertical_resolution(display));
 }
 
 void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content) {
@@ -480,8 +524,20 @@ void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content) {
         lv_point_t extent{};
         lv_text_get_size(&extent, normalized.pair_code, &lv_font_montserrat_32, 0, 0, LV_COORD_MAX,
                          LV_TEXT_FLAG_NONE);
-        lv_obj_set_style_text_font(
-            s_view.code, extent.x <= 292 ? &lv_font_montserrat_32 : &mybot_cores3_font_20, 0);
+        const int available = view_width() - (view_width() >= 240 ? 28 : 12);
+        const lv_font_t *font = &lv_font_montserrat_32;
+        if (extent.x > available) {
+            lv_text_get_size(&extent, normalized.pair_code, &mybot_cores3_font_20, 0, 0,
+                             LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+            if (extent.x <= available) {
+                font = &mybot_cores3_font_20;
+            } else {
+                font = &lv_font_montserrat_10;
+            }
+        }
+        lv_obj_set_style_text_font(s_view.code, font, 0);
+        lv_obj_set_style_text_letter_space(
+            s_view.code, font == &lv_font_montserrat_10 && view_width() < 240 ? -4 : 0, 0);
         set_text(s_view.code, normalized.pair_code);
     }
     if (!s_view.has_content || s_view.activity_mode != activity) {

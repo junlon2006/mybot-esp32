@@ -1,8 +1,9 @@
-# CoreS3 LVGL UI
+# CoreS3 LVGL UI（共享界面参考）
 
 [English](CORES3_UI.md) | [简体中文](CORES3_UI.zh-CN.md)
 
-`CONFIG_MYBOT_CORES3_LVGL_UI` 为 `m5stack-core-s3` 选择可选的 LVGL 显示后端，默认关闭。
+`CONFIG_MYBOT_LVGL_UI` 为 `m5stack-core-s3` 选择可选的 LVGL 显示后端，默认关闭。
+其他 LCD 板型复用同一语义界面，详见[平台 UI](PLATFORM_UI.zh-CN.md)。
 普通固件保留现有缓存渲染器；LVGL 构建不编入该渲染器，也不分配原有 16 页、约 2.34 MiB
 的 PSRAM 画面缓存。
 
@@ -30,8 +31,8 @@ UI 接收现有 SDK 公共 LCD 内容及板级配网状态，不增加聊天正�
 
 | 配置 | 默认值 | 作用 |
 | --- | --- | --- |
-| `CONFIG_MYBOT_CORES3_UI_LIGHT_THEME` | `n` | 默认深色主题，设为 `y` 使用浅色主题 |
-| `CONFIG_MYBOT_CORES3_UI_ANIMATIONS` | `y` | 开启状态活动动画，设为 `n` 保持静态指示 |
+| `CONFIG_MYBOT_LVGL_UI_LIGHT_THEME` | `n` | 默认深色主题，设为 `y` 使用浅色主题 |
+| `CONFIG_MYBOT_LVGL_UI_ANIMATIONS` | `y` | 开启状态活动动画，设为 `n` 保持静态指示 |
 
 两项均在编译时确定，不增加切换主题或动画的新触摸手势。关闭状态动画仍保留状态切换、
 本地表情和事件通知。
@@ -60,7 +61,7 @@ idf.py -B build/cores3-lvgl-ui -p <PORT> flash monitor
 | 中文、静态指示、视频开启 | `build/cores3-lvgl-ui-static-video` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults` |
 
 将命令中的 `-B`、`-DSDKCONFIG` 同时改为选定目录，并使用对应的 defaults 列表。
-此选项仅支持 CoreS3。对比原有 UI 时，在另一目录编译且不加入 `ci/lvgl-ui.defaults`；
+所有带屏板型统一使用 `CONFIG_MYBOT_LVGL_UI`。对比原有 UI 时，在另一目录编译且不加入 `ci/lvgl-ui.defaults`；
 修改 defaults 不会覆盖已生成的 sdkconfig，也可通过对应构建的 `menuconfig` 关闭该选项。
 浅色/静态 defaults 文件仅修改对应选项，必须与 `ci/lvgl-ui.defaults` 一起使用。
 
@@ -87,7 +88,7 @@ LVGL 自身需要任务、对象、字体和渲染开销，移除旧页面缓存
 
 ## 真机验收
 
-基础 LVGL 状态界面已通过真机测试，后续新增的主题、表情、通知及状态动画仍需真机回归。
+CoreS3 基础 LVGL 状态界面已通过真机测试，后续新增的主题、表情、通知及状态动画仍需真机回归。
 CI 保留已有全部配置，覆盖四种中英文/视频组合及浅色主题、静态指示变体；编译和主机检查
 不能证明真实设备上的听音或显示效果。
 

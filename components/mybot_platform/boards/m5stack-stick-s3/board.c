@@ -23,6 +23,9 @@ const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_key_ops_t *mybot_sticks3_input_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_sticks3_lcd_ops(void);
+#if CONFIG_MYBOT_LVGL_UI
+const mybot_lcd_ops_t *MYBOT_LVGL_OPS_NAME(void);
+#endif
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 int mybot_sticks3_input_start(void);
 
@@ -75,7 +78,11 @@ static int board_prepare(void) {
         return -1;
     }
 
+#if CONFIG_MYBOT_LVGL_UI
+    s_lcd_ops = MYBOT_LVGL_OPS_NAME();
+#else
     s_lcd_ops = mybot_sticks3_lcd_ops();
+#endif
     if (!s_lcd_ops || s_lcd_ops->init(&s_lcd_context) < 0) {
         board_rollback_prepare();
         ESP_LOGE(TAG, "event=board_prepare component=display result=error");
@@ -128,7 +135,12 @@ static int board_register_platform(void) {
         .audio_volume = mybot_sticks3_audio_volume_ops(),
         .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
-        .lcd = mybot_sticks3_lcd_ops(),
+        .lcd =
+#if CONFIG_MYBOT_LVGL_UI
+            MYBOT_LVGL_OPS_NAME(),
+#else
+            mybot_sticks3_lcd_ops(),
+#endif
     };
     return mybot_platform_register(&descriptor);
 }

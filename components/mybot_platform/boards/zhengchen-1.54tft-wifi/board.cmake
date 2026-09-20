@@ -17,9 +17,17 @@ get_filename_component(MYBOT_PLATFORM_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABS
 set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/../zhengchen-1.54tft-common/board.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/raw_i2s_audio.c"
-    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/st7789_lcd.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/input/gpio_buttons.c"
 )
+if(CONFIG_MYBOT_LVGL_UI)
+    list(APPEND MYBOT_BOARD_SOURCES
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/lvgl_st7789_lcd.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+else()
+    list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/display/st7789_lcd.c")
+endif()
 set(MYBOT_BOARD_REQUIRES
     button
     esp_driver_gpio
@@ -27,4 +35,5 @@ set(MYBOT_BOARD_REQUIRES
     esp_driver_spi
     esp_lcd
     esp_timer
+    esp_lvgl_port
 )
