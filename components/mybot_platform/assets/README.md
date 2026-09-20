@@ -21,7 +21,7 @@ third-party notice.
 original 64x61 PNG files are retained as reproducible inputs. The
 [asset generator](../../../scripts/generate-cores3-ui-assets.py) pads them to 64x64 and produces
 constant ARGB8888 arrays in `src/drivers/display/cores3_ui_assets.c`. Firmware builds use those
-arrays only when `CONFIG_MYBOT_CORES3_LVGL_UI` is enabled; no runtime PNG decoder is needed.
+arrays only when an LVGL UI option is enabled; no runtime PNG decoder is needed.
 
 These rasterized Noto Color Emoji font glyphs retain the font's
 [SIL Open Font License 1.1](ui/noto_emoji/LICENSE.txt), separately from the audio's MIT terms.

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # The UI's supported features are fixed in lv_conf.h; expose only the alignment
 # symbol consumed by esp_lvgl_port, rather than unsupported upstream options.
-if MYBOT_CORES3_LVGL_UI
+if MYBOT_LVGL_UI
 config LV_DRAW_BUF_ALIGN
     int
     default 4

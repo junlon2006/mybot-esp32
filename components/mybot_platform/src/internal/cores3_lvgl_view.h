@@ -14,6 +14,7 @@ extern "C" {
  * is owned by the view and removed before any widgets on destroy. Update borrows
  * content only for the duration of the call; no FreeRTOS tasks are created here. */
 int mybot_cores3_lvgl_view_create(lv_display_t *display);
+int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int height);
 void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content);
 void mybot_cores3_lvgl_view_destroy(void);
 

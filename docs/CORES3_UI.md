@@ -1,9 +1,10 @@
-# CoreS3 LVGL UI
+# CoreS3 LVGL UI (shared view reference)
 
 [English](CORES3_UI.md) | [简体中文](CORES3_UI.zh-CN.md)
 
-`CONFIG_MYBOT_CORES3_LVGL_UI` selects the optional LVGL display backend for `m5stack-core-s3`.
-It defaults to off. The default firmware keeps the existing cached renderer; an LVGL build
+`CONFIG_MYBOT_LVGL_UI` selects the optional LVGL display backend for `m5stack-core-s3`.
+It defaults to off. The same semantic view is reused by all supported panel adapters; see
+[Platform LVGL UI](PLATFORM_UI.md). The default firmware keeps the existing cached renderer; an LVGL build
 excludes that renderer and its 16-page, approximately 2.34 MiB PSRAM cache.
 
 ## Displayed information
@@ -35,8 +36,8 @@ These options appear under `mybot` in menuconfig when the LVGL backend is enable
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| `CONFIG_MYBOT_CORES3_UI_LIGHT_THEME` | `n` | Dark theme by default; `y` selects the light theme |
-| `CONFIG_MYBOT_CORES3_UI_ANIMATIONS` | `y` | Enables state activity animation; `n` keeps the indicators static |
+| `CONFIG_MYBOT_LVGL_UI_LIGHT_THEME` | `n` | Dark theme by default; `y` selects the light theme |
+| `CONFIG_MYBOT_LVGL_UI_ANIMATIONS` | `y` | Enables state activity animation; `n` keeps the indicators static |
 
 Both choices are fixed at build time. No new touch gesture changes themes or animation settings.
 Disabling activity animation preserves state changes, local emoji, and event notifications.
@@ -66,8 +67,8 @@ directories when comparing these variants:
 | Chinese, static indicators, video on | `build/cores3-lvgl-ui-static-video` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults` |
 
 Change both `-B` and `-DSDKCONFIG` to the chosen directory and use the matching defaults list.
-The option is supported only on CoreS3; other board builds reject it. To compare with the original UI, build in another
-directory without `ci/lvgl-ui.defaults`; changing defaults does not overwrite an existing
+The same option enables this UI on every supported panel board. To compare with the original UI,
+build in another directory without `ci/lvgl-ui.defaults`; changing defaults does not overwrite an existing
 generated sdkconfig. You can also disable the option through that build's `menuconfig`.
 The light/static defaults files change only their respective option and must be combined with
 `ci/lvgl-ui.defaults`.
@@ -96,7 +97,7 @@ lifecycle logs, and visual checks to assess the LVGL path.
 
 ## Hardware validation
 
-The initial LVGL status UI has passed real-device testing. The subsequent theme, emoji,
+The initial CoreS3 LVGL status UI has passed real-device testing. The subsequent theme, emoji,
 notification, and activity-animation changes still need hardware regression testing. CI retains
 all earlier configurations and covers the four language/video combinations plus light-theme
 and static-indicator variants. Successful builds and host checks do not establish the audible

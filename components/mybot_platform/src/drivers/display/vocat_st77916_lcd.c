@@ -2,6 +2,7 @@
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
 #include "vocat_hardware.h"
+#include "vocat_st77916_lcd.h"
 
 #include <mybot/platform/mybot_lcd.h>
 
@@ -739,4 +740,12 @@ static const mybot_lcd_ops_t s_ops = {
 
 const mybot_lcd_ops_t *mybot_vocat_lcd_ops(void) {
     return &s_ops;
+}
+
+esp_lcd_panel_io_handle_t mybot_vocat_lcd_panel_io(void *context) {
+    return context == &s_context ? s_context.io : NULL;
+}
+
+esp_lcd_panel_handle_t mybot_vocat_lcd_panel(void *context) {
+    return context == &s_context ? s_context.panel : NULL;
 }

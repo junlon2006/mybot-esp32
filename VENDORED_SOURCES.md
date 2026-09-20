@@ -42,6 +42,8 @@ are not vendored into this repository.
 | Paths | Source | Pinned revision |
 | --- | --- | --- |
 | `components/mybot_platform/src/drivers/display/cores3_lvgl_view.cc`, `components/mybot_platform/src/internal/cores3_lvgl_view.h` | `github.com/junlon2006/xiaozhi-esp32`, `main/display/lcd_display.cc` and LVGL theme layout | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
+| `components/mybot_platform/src/drivers/display/vocat_lvgl_panel.c`, `components/mybot_platform/src/internal/vocat_st77916_lcd.h` | Project-maintained LVGL panel adapter over the existing VoCat ST77916 driver | Uses the pinned local `esp_lcd_st77916` component; no new upstream source |
+| `components/mybot_platform/src/drivers/display/dynamic_lvgl_lcd.cc`, `components/mybot_platform/src/internal/dynamic_lcd_panel.h` | Project-maintained shared adapter for CO5300 and SPD2010 panels | Uses the existing board panel drivers; no new upstream source |
 | `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao`, `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`, `partitions/v2/8m.csv` | `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` | commit `b06024382eb104c998aead4841e1df647193065b` |
 | `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/spd2010_lcd.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`, `components/mybot_platform/src/drivers/display/sticks3_st7789_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
@@ -52,10 +54,10 @@ are not vendored into this repository.
 
 Firmware integration differences are limited to the active ESP32-S3 build:
 
-- LVGL and its ESP-IDF port are local, pinned dependencies used only by the optional CoreS3 LVGL
-  backend. The build omits examples, tests, and registry download metadata. The UI uses a static
-  bilingual font subset and existing public LCD state; no upstream application services, asset
-  download protocol, or SDK internals are imported.
+- LVGL and its ESP-IDF port are local, pinned dependencies used only by the optional LVGL backend
+  for display boards. The build omits examples, tests, and registry download metadata. The UI uses
+  a static bilingual font subset and existing public LCD state; no upstream application services,
+  asset download protocol, or SDK internals are imported.
   `scripts/generate-cores3-lvgl-font.py` generates the font using Pillow 10.2.0 and FreeType 2.13.2;
   the checked-in glyph data is sufficient for firmware builds without the generator or source OTF.
   LVGL's local allocator keeps its heap in PSRAM; local component configuration selects the

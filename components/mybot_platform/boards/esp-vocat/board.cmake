@@ -32,6 +32,14 @@ set(MYBOT_BOARD_SOURCES
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/vocat_codec_audio.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/display/vocat_st77916_lcd.c"
 )
+if(CONFIG_MYBOT_LVGL_UI)
+    list(APPEND MYBOT_BOARD_SOURCES
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/dynamic_lvgl_lcd.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/vocat_lvgl_panel.c"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+endif()
 set(MYBOT_BOARD_REQUIRES
     button
     esp_codec_dev
@@ -43,5 +51,12 @@ set(MYBOT_BOARD_REQUIRES
     esp_lcd_st77916
     esp_lcd_touch
     esp_lcd_touch_cst816s
+    esp_lvgl_port
+    lvgl
     nvs_flash
 )
+if(CONFIG_MYBOT_LVGL_UI)
+    set_property(SOURCE
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/dynamic_lvgl_lcd.cc"
+        APPEND PROPERTY COMPILE_DEFINITIONS MYBOT_LVGL_PANEL_VOCAT)
+endif()

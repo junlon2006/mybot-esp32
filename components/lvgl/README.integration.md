@@ -15,7 +15,7 @@ the upstream library notices.
 
 Local files:
 
-- `CMakeLists.txt` registers sources only for `CONFIG_MYBOT_CORES3_LVGL_UI`.
+- `CMakeLists.txt` registers sources only for `CONFIG_MYBOT_LVGL_UI`.
   Dependencies remain declared during ESP-IDF's early component discovery.
 - `Kconfig` supplies the draw-buffer alignment required by the display port.
 - `lv_conf.h` selects RGB565, a single software draw unit, basic widgets,

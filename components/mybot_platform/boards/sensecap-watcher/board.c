@@ -23,6 +23,9 @@ const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_key_ops_t *mybot_sensecap_input_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_sensecap_lcd_ops(void);
+#if CONFIG_MYBOT_LVGL_UI
+const mybot_lcd_ops_t *mybot_dynamic_lvgl_ops(void);
+#endif
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 int mybot_sensecap_input_start(void);
 
@@ -65,7 +68,11 @@ static int board_prepare(void) {
         return -1;
     }
 
+#if CONFIG_MYBOT_LVGL_UI
+    s_lcd_ops = mybot_dynamic_lvgl_ops();
+#else
     s_lcd_ops = mybot_sensecap_lcd_ops();
+#endif
     if (!s_lcd_ops || s_lcd_ops->init(&s_lcd_context) < 0) {
         ESP_LOGE(TAG, "event=board_prepare component=display result=error");
         (void)mybot_sensecap_set_codec_power(false);
@@ -113,6 +120,11 @@ static void board_shutdown_network(void) {
 }
 
 static int board_register_platform(void) {
+#if CONFIG_MYBOT_LVGL_UI
+    const mybot_lcd_ops_t *lcd_ops = mybot_dynamic_lvgl_ops();
+#else
+    const mybot_lcd_ops_t *lcd_ops = mybot_sensecap_lcd_ops();
+#endif
     const mybot_platform_descriptor_t descriptor = {
         .wifi = mybot_esp32s3_wifi_ops(),
         .kv_store = mybot_esp32s3_kv_store_ops(),
@@ -122,7 +134,7 @@ static int board_register_platform(void) {
         .audio_volume = mybot_sensecap_audio_volume_ops(),
         .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
-        .lcd = mybot_sensecap_lcd_ops(),
+        .lcd = lcd_ops,
     };
     return mybot_platform_register(&descriptor);
 }

@@ -27,6 +27,7 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
   集成者提供匹配的 RTSA 构建。
 - Agora RTSA 全双工音频、Cloud AEC、AI QoS、RTM 频道订阅与声纹状态显示。
 - 所有 Board profile 共用有界 PCM 播放缓冲和独立 I2S 播放任务。
+- LCD 板型可选共享 LVGL 流程界面，默认继续使用原有渲染器。
 - 中英文配对码与 Wi-Fi 配网本地提示音。
 - 编译期 Board profile，隔离 Flash、PSRAM、分区、驱动和引脚配置。
 
@@ -259,11 +260,14 @@ framebuffer。后续状态更新直接刷新缓存像素，不再重复计算字
 分配失败时释放已建缓存并回退到动态绘制。缓存跨 SDK 启停复用，在最后一个 LCD 使用者退出
 时释放。SPI 仍采用全屏刷新。
 
-可选的 [CoreS3 LVGL UI](docs/CORES3_UI.zh-CN.md) 提供中英文流程页面、配对码、常驻声纹状态、
-本地状态表情及聆听/思考/说话指示。开启 `CONFIG_MYBOT_CORES3_LVGL_UI` 后替换缓存渲染器，此选项
+可选的 [LVGL UI](docs/CORES3_UI.zh-CN.md) 提供中英文流程页面、配对码、常驻声纹状态、
+本地状态表情及聆听/思考/说话指示。开启 `CONFIG_MYBOT_LVGL_UI` 后替换缓存渲染器，此选项
 默认关闭。新界面采用局部刷新和 10 KiB DMA 缓冲，不分配 16 页缓存。
 基础状态界面已通过真机验证；新增明暗主题、短时事件通知和可选的 10 fps 状态动画仍需真机
 回归。主题及动画通过 menuconfig 选择，触摸手势保持不变。
+
+所有支持的 LCD 板型均通过 `CONFIG_MYBOT_LVGL_UI` 使用共享 LVGL 后端，面板尺寸、适配范围、
+构建变体和验证边界见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。
 
 CoreS3 另提供可选的 GC0308 视频上行：320 x 240 软件 JPEG，仅在 RTC 连接期间以最多
 1 fps 发送，默认关闭。构建、诊断日志与验收步骤见 [CoreS3 视频](docs/CORES3_VIDEO.zh-CN.md)。
@@ -324,8 +328,9 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；额外六项 CoreS3
-配置覆盖 LVGL UI 的中英文/视频组合、浅色主题及关闭状态动画的情况。M5Stack CoreS3
+CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；六项 CoreS3
+配置覆盖 LVGL UI 的中英文/视频组合、浅色主题及关闭状态动画，其他面板适配器也有额外
+LVGL 变体，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。M5Stack CoreS3
 已完成真机配网与双向语音交互验证。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
 硬件版本、M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。
@@ -353,6 +358,7 @@ CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音�
 - [板级移植](docs/BOARD_PORTING.zh-CN.md)
 - [音频播放缓冲](docs/AUDIO_PLAYBACK.zh-CN.md)
 - [CoreS3 LVGL UI](docs/CORES3_UI.zh-CN.md)
+- [平台 LVGL UI](docs/PLATFORM_UI.zh-CN.md)
 - [CoreS3 音频播放对照测试](docs/CORES3_AUDIO_TEST.zh-CN.md)
 - [参与贡献](CONTRIBUTING.zh-CN.md)
 - [支持](SUPPORT.zh-CN.md)

@@ -25,8 +25,8 @@ set(MYBOT_EMBEDDED_AUDIO_ASSETS
 )
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-    if(CONFIG_MYBOT_CORES3_LVGL_UI AND NOT MYBOT_BOARD STREQUAL "m5stack-core-s3")
-        message(FATAL_ERROR "MYBOT_CORES3_LVGL_UI requires MYBOT_BOARD=m5stack-core-s3")
+    if(CONFIG_MYBOT_LVGL_UI AND MYBOT_BOARD STREQUAL "respeaker-flex-xvf3800-circular4-xiao")
+        message(FATAL_ERROR "MYBOT_LVGL_UI requires a board with a display panel")
     endif()
     if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST AND NOT MYBOT_BOARD STREQUAL "m5stack-core-s3")
         message(FATAL_ERROR "MYBOT_AUDIO_PLAYBACK_TEST requires MYBOT_BOARD=m5stack-core-s3")
@@ -59,6 +59,7 @@ set(mybot_debug_sources "")
 if(CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR)
     list(APPEND mybot_debug_sources "src/common/debug_stats.c")
 endif()
+
 if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST)
     list(APPEND mybot_debug_sources "src/drivers/audio/cores3_playback_test.c")
 endif()
@@ -90,6 +91,8 @@ idf_component_register(
         freertos
         esp_audio_codec
         esp_timer
+        lvgl
+        esp_lvgl_port
         ${MYBOT_BOARD_REQUIRES}
     EMBED_FILES ${MYBOT_EMBEDDED_AUDIO_ASSETS}
     REQUIRED_IDF_TARGETS esp32s3
