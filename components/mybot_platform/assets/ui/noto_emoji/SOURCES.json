@@ -1,0 +1,60 @@
+{
+  "name": "CoreS3 local emoji glyphs",
+  "upstream_font": "Noto Color Emoji",
+  "copyright": "Copyright 2021 Google Inc. All Rights Reserved.",
+  "license": "OFL-1.1",
+  "license_url": "https://github.com/google/fonts/blob/main/ofl/notocoloremoji/OFL.txt",
+  "raster_source": {
+    "repository": "https://github.com/78/noto-fonts",
+    "revision": "d45dbc64052d57048f20ab1770074172ce9eb53b",
+    "version": "2.0.0",
+    "directory": "png/noto-color-emoji_64",
+    "pipeline": "scripts/build.py::build_color_emoji extracts SVG glyphs from NotoColorEmoji-Regular.ttf and renders them with rsvg-convert --keep-aspect-ratio"
+  },
+  "output": {
+    "width": 64,
+    "height": 64,
+    "format": "LV_COLOR_FORMAT_ARGB8888",
+    "byte_order": "BGRA",
+    "alpha": "straight",
+    "transform": "center the original 64x61 pixels on a transparent 64x64 canvas; no scaling",
+    "bytes_per_image": 16384,
+    "total_pixel_bytes": 65536,
+    "generator": "scripts/generate-cores3-ui-assets.py",
+    "validated_pillow_version": "10.2.0"
+  },
+  "images": [
+    {
+      "name": "neutral",
+      "unicode": "U+1F636",
+      "file": "neutral.png",
+      "width": 64,
+      "height": 61,
+      "sha256": "96a0d0f28089c3f58a932214db0e7ff351796fbb899a7d68bca459adc63a6e8a"
+    },
+    {
+      "name": "happy",
+      "unicode": "U+1F642",
+      "file": "happy.png",
+      "width": 64,
+      "height": 61,
+      "sha256": "d3fc4ef51b363f725a4293a23c20242c203e38a0552f7d92ff5ed9e48f7cdc05"
+    },
+    {
+      "name": "relaxed",
+      "unicode": "U+1F60C",
+      "file": "relaxed.png",
+      "width": 64,
+      "height": 61,
+      "sha256": "3267b0be48dc7f079f5c47385ab8be7b9a699c24f5cf861074f38dd19ea0f551"
+    },
+    {
+      "name": "thinking",
+      "unicode": "U+1F914",
+      "file": "thinking.png",
+      "width": 64,
+      "height": 61,
+      "sha256": "8a9b8aae06b01083e8a51f65b6f80c4349b1a3b9f00dc42d0acf61fdb443f63f"
+    }
+  ]
+}

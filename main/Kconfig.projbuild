@@ -88,6 +88,31 @@ menu "mybot"
             and continuous without capture. Uses the saved speaker volume.
             Wi-Fi and mybot are not started. Disable and rebuild to resume normal use.
 
+    config MYBOT_CORES3_LVGL_UI
+        bool "Enable CoreS3 LVGL UI"
+        default n
+        help
+            CoreS3 only. Use a localized LVGL status UI with partial screen updates.
+            Disabling this option retains the existing cached framebuffer UI.
+            The LVGL task runs on CPU1; UI objects are allocated in PSRAM.
+
+    config MYBOT_CORES3_UI_LIGHT_THEME
+        bool "Use the light CoreS3 UI theme"
+        depends on MYBOT_CORES3_LVGL_UI
+        default n
+        help
+            Select the light palette at build time. The default is the dark palette.
+            Screen touch gestures continue to control conversation and provisioning.
+
+    config MYBOT_CORES3_UI_ANIMATIONS
+        bool "Animate CoreS3 conversation status"
+        depends on MYBOT_CORES3_LVGL_UI
+        default y
+        help
+            Animate small state indicators at up to 10 frames per second while
+            listening, thinking or speaking. These are state animations, not an
+            audio waveform. Static screens do not animate.
+
     config MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS
         int "Resource monitor interval (ms)"
         depends on MYBOT_DEBUG_RESOURCE_MONITOR
