@@ -5,7 +5,7 @@ It does not replace third-party terms. This file is informational and is not leg
 
 | Component | Terms | Location |
 | --- | --- | --- |
-| mybot SDK 1.2.0 (`674dcbf`) | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
+| mybot SDK 1.2.0 + post-release fixes (`5b7a6c1`) | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
 | AOSL (`84e0860`) | Bundled license: Apache-2.0 text plus additional deployment restrictions | `components/aosl` |
 | Agora RTSA Lite for ESP32-S3 1.10.1 (build 1270872) | Separate Agora distribution terms | `components/agora_rtc` |
 | esp-wifi-connect 3.2.2 | MIT | `components/esp-wifi-connect` |
