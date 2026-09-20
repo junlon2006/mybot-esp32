@@ -7,6 +7,13 @@ Versioning and Conventional Commits.
 
 ### Added
 
+- Optional CoreS3 LVGL status UI with Chinese/English text, pairing codes, voiceprint status,
+  and listening/thinking/speaking indicators; build coverage includes both languages with video
+  enabled and disabled. The existing cached UI remains the default.
+- CoreS3 LVGL light/dark themes, local state emoji, rounded status cards, persistent voiceprint
+  indicators, and brief pairing/voiceprint/network notifications. Optional activity animations
+  run at up to 10 fps; theme and animation choices are build settings.
+
 - Optional CoreS3 offline audio playback comparison: identical local PCM through 60 ms
   timer-fed and continuous writes, with and without microphone capture.
 
@@ -50,6 +57,9 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Count in-flight SPI callbacks across consecutive CoreS3 LVGL UI flushes so teardown waits
+  for all pending transfers.
+
 - Refresh the mybot SDK to commit `5b7a6c1` (1.2.0 plus post-release fixes): reduce routine
   RTM logging and preserve the AOSL log level across RTSA initialization.
 
@@ -82,6 +92,9 @@ Versioning and Conventional Commits.
 
 ### Known limitations
 
+- CoreS3 LVGL's initial status UI has passed real-device testing. The theme, local emoji,
+  notification, and activity-animation update still needs hardware regression testing. It does
+  not add conversation transcripts, cloud emotion messages, or GIF animation.
 - ML307/4G and wake words are not yet supported.
 - Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback
   validation, charge/battery inputs, temperature monitoring, and power management are not yet

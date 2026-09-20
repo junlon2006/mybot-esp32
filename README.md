@@ -165,8 +165,9 @@ monitor after troubleshooting. High CPU load alone does not establish the cause 
 On all boards the same switch also enables interval `mybot_stats` playback reports: `playback_stats` counts I2S
 writes, requested/written frames, timeouts, errors, short writes and zero-progress writes, plus
 average/maximum write duration. `playback_gaps` measures maximum start-to-start and return-to-next-start
-intervals. On CoreS3, `ui_stats` also separates framebuffer rendering from SPI flushing and reports the longest total
-update. Durations use microseconds; `*_at_ms` identifies the peak operation's start time since boot.
+intervals. For the default CoreS3 cached renderer, `ui_stats` separates framebuffer rendering from
+SPI flushing and reports the longest total update. Durations use microseconds; `*_at_ms` identifies
+the peak operation's start time since boot.
 Counters and maxima reset after each report. Writes spanning reports count on completion; interrupted
 shutdown writes also count. Speech pauses can produce long gaps, so gaps alone do not prove underruns.
 The public SDK API does not expose queue underruns (`sdk_queue_underruns=unavailable`).
@@ -270,12 +271,20 @@ CoreS3 playback uses a bounded PCM FIFO and independent I2S writer to absorb pro
 variation. The optional [offline audio comparison](docs/CORES3_AUDIO_TEST.md) tests timed and
 continuous feeding with and without capture; normal firmware uses the same buffered path.
 
-CoreS3 pre-renders eight fixed workflow pages and eight conversation/voiceprint combinations during
+The default CoreS3 renderer pre-renders eight fixed workflow pages and eight conversation/voiceprint combinations during
 the first LCD initialization. These 16 native RGB565 frames use 2,457,600 bytes of PSRAM (about
 2.34 MiB), in addition to the dynamic pairing-code framebuffer. Subsequent updates flush cached
 pixels without repeating font and shape rendering. Initialization yields between pages; allocation
 failure releases partial caches and falls back to dynamic rendering. Cache references survive SDK
 stop/start and are freed with the final LCD owner. SPI still refreshes the entire screen.
+
+An optional [CoreS3 LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing
+codes, persistent voiceprint status, local state emoji, and listening/thinking/speaking indicators. Enable
+`CONFIG_MYBOT_CORES3_LVGL_UI` to select it instead of the cached renderer; the option defaults to
+off. It uses partial redraws and a 10 KiB DMA buffer without the 16-page cache. The initial status
+UI has passed real-device testing; light/dark themes, brief event notifications, and optional
+10-fps activity animations require hardware regression testing. Theme and animation choices are
+set in menuconfig; touch gestures remain unchanged.
 
 CoreS3 also provides optional GC0308 camera uplink: 320 x 240 software JPEG, at most 1 fps while
 RTC is connected. It is disabled by default; see [CoreS3 video](docs/CORES3_VIDEO.md) for building,
@@ -341,7 +350,9 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds all board profiles, both languages, and the bundled RTSA 60 ms cadence. M5Stack CoreS3
+CI builds all board profiles, both languages, and the bundled RTSA 60 ms cadence. Six additional
+CoreS3 configurations cover the LVGL UI language/video combinations, light theme, and disabled
+activity animations. M5Stack CoreS3
 provisioning and bidirectional voice interaction have been validated on
 real hardware. The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
 StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
@@ -373,6 +384,7 @@ Known limitations:
 
 - [Board porting](docs/BOARD_PORTING.md)
 - [Buffered audio playback](docs/AUDIO_PLAYBACK.md)
+- [CoreS3 LVGL UI](docs/CORES3_UI.md)
 - [CoreS3 audio playback comparison](docs/CORES3_AUDIO_TEST.md)
 - [Contributing](CONTRIBUTING.md)
 - [Support](SUPPORT.md)

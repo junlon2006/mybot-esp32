@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# PPA and optional input adapters are outside this SPI-display integration.
+config LVGL_PORT_ENABLE_PPA
+    bool
+    default n

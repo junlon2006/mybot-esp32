@@ -5,6 +5,7 @@
 #include <mybot/platform/mybot_lcd.h>
 
 #include "cores3_hardware.h"
+#include "cores3_lcd_panel.h"
 #if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
 #include "mybot_debug_stats.h"
 #endif
@@ -27,7 +28,7 @@
 #include <string.h>
 
 #define TAG "cores3_lcd"
-#define LCD_TRANSFER_ROWS 16
+#define LCD_TRANSFER_ROWS CORES3_LCD_TRANSFER_ROWS
 #define LCD_TRANSFER_TIMEOUT_MS 1000
 
 #define LCD_LOGICAL_WIDTH MYBOT_DISPLAY_WIDTH
@@ -62,13 +63,11 @@
     (uint16_t)((((red) & 0xf8) << 8) | (((green) & 0xfc) << 3) | ((blue) >> 3))
 
 typedef struct {
-    esp_lcd_panel_io_handle_t io;
-    esp_lcd_panel_handle_t panel;
+    cores3_lcd_panel_t lcd;
     SemaphoreHandle_t transfer_done;
     uint16_t *frame;
     uint16_t *screen_cache[MYBOT_LCD_SCREEN_COUNT];
     uint16_t *conversation_cache[LCD_CONVERSATION_CACHE_COUNT];
-    bool spi_ready;
     bool initialized;
     bool transfer_failed;
     unsigned int users;
@@ -112,8 +111,8 @@ static int submit_bitmap(int x, int y, int width, int height) {
     }
     while (xSemaphoreTake(s_context.transfer_done, 0) == pdTRUE) {
     }
-    if (esp_lcd_panel_draw_bitmap(s_context.panel, x, y, x + width, y + height, s_draw_buffer) !=
-        ESP_OK) {
+    if (esp_lcd_panel_draw_bitmap(s_context.lcd.panel, x, y, x + width, y + height,
+                                  s_draw_buffer) != ESP_OK) {
         return -1;
     }
     if (xSemaphoreTake(s_context.transfer_done, pdMS_TO_TICKS(LCD_TRANSFER_TIMEOUT_MS)) != pdTRUE) {
@@ -691,18 +690,10 @@ static const uint16_t *cached_frame(const mybot_lcd_content_t *content) {
     return s_context.screen_cache[content->screen];
 }
 
-static void release_lcd(void) {
-    if (s_context.panel) {
-        esp_lcd_panel_del(s_context.panel);
-        s_context.panel = NULL;
-    }
-    if (s_context.io) {
-        esp_lcd_panel_io_del(s_context.io);
-        s_context.io = NULL;
-    }
-    if (s_context.spi_ready) {
-        spi_bus_free(SPI3_HOST);
-        s_context.spi_ready = false;
+static int release_lcd(void) {
+    if (mybot_cores3_lcd_panel_close(&s_context.lcd) < 0) {
+        ESP_LOGE(TAG, "event=lcd action=cleanup result=error resources=retained");
+        return -1;
     }
     if (s_context.transfer_done) {
         vSemaphoreDelete(s_context.transfer_done);
@@ -713,6 +704,7 @@ static void release_lcd(void) {
         s_context.frame = NULL;
     }
     release_cache();
+    return 0;
 }
 
 static int lcd_init(void **out_ctx) {
@@ -727,51 +719,16 @@ static int lcd_init(void **out_ctx) {
         return 0;
     }
 
+    if (release_lcd() < 0) {
+        return -1;
+    }
+    s_context = (lcd_context_t){0};
+
     s_context.transfer_done = xSemaphoreCreateBinary();
     if (!s_context.transfer_done) {
         return -1;
     }
-    const spi_bus_config_t bus_config = {
-        .mosi_io_num = MYBOT_DISPLAY_MOSI,
-        .miso_io_num = GPIO_NUM_NC,
-        .sclk_io_num = MYBOT_DISPLAY_SCLK,
-        .quadwp_io_num = GPIO_NUM_NC,
-        .quadhd_io_num = GPIO_NUM_NC,
-        .max_transfer_sz = sizeof(s_draw_buffer),
-    };
-    if (spi_bus_initialize(SPI3_HOST, &bus_config, SPI_DMA_CH_AUTO) != ESP_OK) {
-        release_lcd();
-        return -1;
-    }
-    s_context.spi_ready = true;
-
-    const esp_lcd_panel_io_spi_config_t io_config = {
-        .cs_gpio_num = MYBOT_DISPLAY_CS,
-        .dc_gpio_num = MYBOT_DISPLAY_DC,
-        .spi_mode = 2,
-        .pclk_hz = 40 * 1000 * 1000,
-        .trans_queue_depth = 1,
-        .on_color_trans_done = on_color_transfer_done,
-        .user_ctx = &s_context,
-        .lcd_cmd_bits = 8,
-        .lcd_param_bits = 8,
-    };
-    if (esp_lcd_new_panel_io_spi(SPI3_HOST, &io_config, &s_context.io) != ESP_OK) {
-        release_lcd();
-        return -1;
-    }
-
-    const esp_lcd_panel_dev_config_t panel_config = {
-        .reset_gpio_num = GPIO_NUM_NC,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
-        .bits_per_pixel = 16,
-    };
-    if (esp_lcd_new_panel_ili9341(s_context.io, &panel_config, &s_context.panel) != ESP_OK ||
-        esp_lcd_panel_reset(s_context.panel) != ESP_OK || mybot_cores3_reset_display() < 0 ||
-        esp_lcd_panel_init(s_context.panel) != ESP_OK ||
-        esp_lcd_panel_invert_color(s_context.panel, true) != ESP_OK ||
-        esp_lcd_panel_disp_on_off(s_context.panel, true) != ESP_OK ||
-        mybot_cores3_set_display_backlight(100) < 0) {
+    if (mybot_cores3_lcd_panel_open(&s_context.lcd, on_color_transfer_done, &s_context) < 0) {
         release_lcd();
         ESP_LOGE(TAG, "event=lcd action=initialize result=error");
         return -1;
@@ -830,8 +787,11 @@ static void lcd_destroy(void *opaque) {
         return;
     }
     (void)mybot_cores3_set_display_backlight(0);
-    (void)esp_lcd_panel_disp_on_off(ctx->panel, false);
-    release_lcd();
+    (void)esp_lcd_panel_disp_on_off(ctx->lcd.panel, false);
+    ctx->initialized = false;
+    if (release_lcd() < 0) {
+        return;
+    }
     *ctx = (lcd_context_t){0};
 }
 

@@ -24,7 +24,7 @@ set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/board.c"
     "${CMAKE_CURRENT_LIST_DIR}/cores3_hardware.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/cores3_codec_audio.c"
-    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/ili9342_lcd.c"
+    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lcd_panel.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/input/ft6336_touch.c"
 )
 set(MYBOT_BOARD_REQUIRES
@@ -39,7 +39,18 @@ set(MYBOT_BOARD_REQUIRES
     nvs_flash
     esp_video
     esp_new_jpeg
+    esp_lvgl_port
 )
+
+if(CONFIG_MYBOT_CORES3_LVGL_UI)
+    list(APPEND MYBOT_BOARD_SOURCES
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_lcd.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
+        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+else()
+    list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/display/ili9342_lcd.c")
+endif()
 
 if(CONFIG_MYBOT_ENABLE_VIDEO)
     list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/video/cores3_camera_video.c")

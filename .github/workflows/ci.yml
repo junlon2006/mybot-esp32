@@ -62,7 +62,7 @@ jobs:
           done
 
   idf-build:
-    name: idf-5.5.2-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}
+    name: idf-5.5.2-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}-ui-${{ matrix.ui || 'default' }}
     runs-on: ubuntu-24.04
     container:
       image: espressif/idf:v5.5.2
@@ -155,6 +155,39 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: m5stack-core-s3
+            language: zh-CN
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
+          - board: m5stack-core-s3
+            language: en-US
+            ptime: 60
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+          - board: m5stack-core-s3
+            language: zh-CN
+            ptime: 60
+            video: jpeg-1fps
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/video.defaults
+          - board: m5stack-core-s3
+            language: en-US
+            ptime: 60
+            video: jpeg-1fps
+            ui: lvgl
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults;ci/video.defaults
+          - board: m5stack-core-s3
+            language: en-US
+            ptime: 60
+            ui: lvgl-light
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults
+          - board: m5stack-core-s3
+            language: zh-CN
+            ptime: 60
+            video: jpeg-1fps
+            ui: lvgl-static
+            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain
@@ -176,7 +209,7 @@ jobs:
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: mybot-esp32-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}-${{ github.sha }}
+          name: mybot-esp32-${{ matrix.board }}-${{ matrix.language }}-ptime-${{ matrix.ptime }}-video-${{ matrix.video || 'off' }}-ui-${{ matrix.ui || 'default' }}-${{ github.sha }}
           path: |
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/mybot_esp32.bin
             build-${{ matrix.board }}-ptime-${{ matrix.ptime }}/bootloader/bootloader.bin
