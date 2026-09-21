@@ -28,6 +28,7 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
 - Agora RTSA 全双工音频、Cloud AEC、AI QoS、RTM 频道订阅与声纹状态显示。
 - 所有 Board profile 共用有界 PCM 播放缓冲和独立 I2S 播放任务。
 - 所有带屏板型自动启用共享 LVGL 流程界面。
+- 配网页面显示实际设备热点名称，超宽文字按需滚动。
 - 中英文配对码与 Wi-Fi 配网本地提示音。
 - 编译期 Board profile，隔离 Flash、PSRAM、分区、驱动和引脚配置。
 
@@ -101,6 +102,8 @@ idf.py -B build/sensecap-watcher \
 
 默认 profile 是 `zhengchen-1.54tft-ml307`，但建议始终显式选择 Board。Board defaults 会
 提供所需的 Flash、PSRAM 和分区配置。
+八种带屏 profile 自动使用 LVGL，ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
+主题和状态活动动画仍可通过 menuconfig 配置。
 
 烧录并查看日志：
 
@@ -120,7 +123,8 @@ python -m esptool --chip esp32s3 --baud 2000000 --before default_reset \
 
 ## 配网与控制
 
-NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
+NVS 中没有 Wi-Fi 凭据时，设备创建 `mybot-xxxx` 配置 AP，其中 `xxxx` 是 STA MAC 前两个
+字节的十六进制表示。连接后打开
 `http://192.168.4.1` 完成配网。STA 获取可用 IP 后才启动 mybot；带屏板型在配网页面中央
 显示实际设备热点名称（`mybot-xxxx`），底部显示中英文连接提示。文字仅在超出可用宽度时
 循环滚动，退出配网后停止滚动。
@@ -158,8 +162,8 @@ CPU 和内存诊断可在 menuconfig 的 `mybot → Enable debug CPU and memory 
 所有板型在同一开关下还会输出 `mybot_stats` 播放周期统计：`playback_stats` 包含 I2S 写入次数、
 请求/实际帧数、超时、错误、短写、零进展次数与平均/最大写入耗时；`playback_gaps` 包含
 两次 I2S 写入起点的最大间隔，以及上次返回到下次开始的最大间隔。可通过 CPU/堆统计及
-显示生命周期日志评估 UI。播放耗时单位为微秒，`*_at_ms` 是
-峰值操作起点的启动后毫秒数，可与串口日志时间对照。计数和峰值在每次汇总后清零；跨周期
+显示生命周期日志评估 UI。播放耗时单位为微秒，`*_at_ms` 是峰值操作起点的启动后毫秒数，
+可与串口日志时间对照。计数和峰值在每次汇总后清零；跨周期
 写入归入完成时所在周期。停止时被打断的写入也包含在统计内。语音停顿会产生长间隔，不能据此
 直接判断欠载；SDK 公开接口未提供队列欠载计数，因此显示 `sdk_queue_underruns=unavailable`。
 各板型的输出格式、停止行为及验证要求见[音频播放缓冲](docs/AUDIO_PLAYBACK.zh-CN.md)。
@@ -256,16 +260,16 @@ CoreS3 播放使用有界 PCM FIFO 和独立 I2S 播放任务，缓冲供数调�
 普通固件使用相同的缓冲播放路径。
 
 [LVGL UI](docs/CORES3_UI.zh-CN.md) 提供中英文流程页面、配对码、常驻声纹状态、
-本地状态表情及聆听/思考/说话指示，采用局部刷新和 10 KiB DMA 缓冲，原全屏缓存渲染器
-已删除。CoreS3 LVGL 已通过真机验证。明暗主题和可选的 10 fps 状态动画通过 menuconfig
-选择，触摸手势保持不变。
+本地状态表情及聆听/思考/说话指示，采用局部刷新和 10 KiB DMA 缓冲。
+明暗主题和可选的 10 fps 状态动画通过 menuconfig 选择；关闭状态活动动画后仍保留必要的
+配网文字滚动，触摸手势保持不变。
 
 所有支持的带屏板型自动使用 LVGL 作为唯一渲染后端，面板尺寸、适配范围、
 构建变体和验证边界见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。
 
 CoreS3 另提供可选的 GC0308 视频上行：320 x 240 软件 JPEG，仅在 RTC 连接期间以最多
 1 fps 发送，默认关闭。构建、诊断日志与验收步骤见 [CoreS3 视频](docs/CORES3_VIDEO.zh-CN.md)。
-摄像头路径已有构建覆盖，尚需真机验证。
+CoreS3 摄像头路径已完成真机调通，后续回归仍需同时开启音频和 UI 验证。
 
 ### M5Stack StickS3
 
@@ -312,11 +316,16 @@ USB Serial/JTAG。声学处理由 XVF3800 完成，因此该 profile 禁用 Clou
 ## 目录结构
 
 ```text
-components/mybot_stack/agora_rtc/        ESP32-S3 Agora RTSA 包
-components/mybot_stack/aosl/             AOSL 与 ESP32-S3 平台集成
-components/mybot_stack/mybot_sdk/        mybot SDK 的 ESP-IDF 构建包装
-components/mybot_platform/   公共服务、可复用驱动与 Board profile
-components/mybot_stack/mybot_sdk/mybot/           固定版本的 mybot 公共头和核心源码
+components/
+├── mybot_stack/              运行时依赖集合，保留三个独立 ESP-IDF 组件
+│   ├── agora_rtc/            ESP32-S3 Agora RTSA 包
+│   ├── aosl/                 AOSL 与 ESP32-S3 平台集成
+│   └── mybot_sdk/
+│       └── mybot/            固定版本的只读 SDK 头文件与源码
+└── mybot_platform/
+    ├── boards/              编译期 Board profile
+    ├── include/mybot_platform/
+    └── src/                 平台注册、服务、驱动及内部头文件
 main/                        固件入口与工程 Kconfig
 ```
 
@@ -324,8 +333,9 @@ main/                        固件入口与工程 Kconfig
 
 CI 共构建 22 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
 六项 CoreS3 配置覆盖中英文/视频组合、浅色主题及关闭状态动画。所有带屏板型构建均使用
-LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。M5Stack CoreS3
-已完成真机配网与双向语音交互验证。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
+LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。此前 CoreS3 固件已完成配网、双向音频、
+摄像头上行及 LVGL UI 真机测试，视频开启和关闭时的音频播放也已验证。
+共享 LVGL 清理及配网热点名称/滚动改动仍需本轮真机回归。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
 硬件版本、M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。
 
@@ -338,7 +348,7 @@ LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。M5Stack CoreS3
   音频、关机与低功耗；PCB V1.0 还有固件无法修复的已知硬件供电稳定性问题。
 - Waveshare AMOLED 1.75 与 1.75C 尚未接入播放参考通道、本地 AEC、电池状态与低功耗；
   1.75C profile 不支持 RTC、IMU、TF 卡与 TCA9554。
-- CoreS3 摄像头上行需要显式开启并完成真机验证；摄像头预览、视频下行、电池状态与自动休眠
+- CoreS3 摄像头上行需要显式开启；摄像头预览、视频下行、电池状态与自动休眠
   尚未接入。
 - StickS3 GPIO12、IMU、红外、电池状态、关机手势与低功耗尚未接入。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未
@@ -354,6 +364,7 @@ LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。M5Stack CoreS3
 - [CoreS3 LVGL UI](docs/CORES3_UI.zh-CN.md)
 - [平台 LVGL UI](docs/PLATFORM_UI.zh-CN.md)
 - [CoreS3 音频播放对照测试](docs/CORES3_AUDIO_TEST.zh-CN.md)
+- [CoreS3 摄像头上行](docs/CORES3_VIDEO.zh-CN.md)
 - [参与贡献](CONTRIBUTING.zh-CN.md)
 - [支持](SUPPORT.zh-CN.md)
 - [发布检查清单](docs/RELEASING.zh-CN.md)

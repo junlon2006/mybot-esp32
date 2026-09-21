@@ -6,10 +6,12 @@ The optional `m5stack-core-s3` camera adapter captures GC0308 QVGA YUYV frames a
 JPEG images for the mybot public video callback. Uplink is capped at one frame per second, including
 when RTC rejects a frame. Sensor capture runs at 20 fps; intermediate frames are discarded, and
 only selected frames are encoded. Slow sending does not create an unbounded queue or catch-up burst.
+The adapter is
+[`cores3_camera_video.c`](../components/mybot_platform/src/drivers/video/cores3_camera_video.c).
 
 ## Build and enable
 
-Use ESP-IDF v5.5.2 and an isolated configuration:
+Activate ESP-IDF v5.5.2, then run from the repository root with an isolated configuration:
 
 ```sh
 idf.py -B build/cores3-video \
@@ -22,6 +24,9 @@ idf.py -B build/cores3-video -p <PORT> flash monitor
 For an existing CoreS3 build, enable `mybot → Enable CoreS3 camera JPEG uplink (1 fps)` in
 menuconfig for that build directory. `CONFIG_MYBOT_ENABLE_VIDEO` defaults to `n`. Other boards
 reject the enabled configuration. CoreS3-SE has no GC0308 and is not a supported video target.
+Keep the audio packet duration at the supported 60 ms. A fresh build uses Chinese; append
+`;ci/en-us.defaults` to the defaults list in a new build directory for English. All CoreS3 builds
+use LVGL; no separate UI enable flag is needed.
 
 ## Hardware and memory
 
@@ -34,13 +39,18 @@ reject the enabled configuration. CoreS3-SE has no GC0308 and is not a supported
 | Reset | AW9523 P1_0; locked masked writes preserve LCD and audio reset lines |
 
 Two 153,600-byte capture buffers and one 131,072-byte JPEG buffer use about 428 KiB of PSRAM.
-The encoder also allocates workspace. The DVP driver reserves 32 KiB of internal DMA memory plus
-descriptors and a capture task; the encoding worker has a 6 KiB stack. Check internal free memory
+The encoder also allocates workspace. With video enabled, the current
+[`CAM_CTRL_DVP_DMA_BUFFER_SIZE`](../components/esp_cam_sensor/Kconfig) default is 8,192 bytes.
+For 320×240 YUYV, the DVP driver rounds this to two 3,840-byte halves, allocating 7.5 KiB of
+internal DMA memory, plus descriptors and a 3-KiB capture-task stack. These figures use the current
+defaults; check the generated DMA configuration when comparing older firmware. The encoding worker
+has a 6-KiB stack. Check internal free memory
 and the largest free block during a call, not only total PSRAM. LVGL objects use PSRAM and the UI
 has a separate 10 KiB internal DMA buffer; it does not allocate a full-screen page cache.
 
-The JPEG worker uses priority 3 and no additional encoder helper task. The DVP copy task retains
-the upstream driver's higher priority for timely DMA service. This path does not use the audio
+The JPEG worker uses priority 3 without fixed core affinity and no additional encoder helper task.
+The DVP copy task retains the upstream driver's higher priority for timely DMA service.
+This path does not use the audio
 I2S peripheral. The LCD continues to show workflow/status pages; no camera preview is rendered.
 
 ## Lifecycle and bandwidth
@@ -60,7 +70,13 @@ result in fewer than one delivered frame per second. SDK acceptance does not pro
 
 `cores3_video` emits lifecycle logs and `event=video_stats` every 10 seconds during streaming:
 `encoded`, `sent`, `rejected`, `dropped`, `capture_errors`, `last_bytes`, `quality`, `target_bps`,
-and `encode_max_us`. Counters reset each interval. `sent` means RTSA accepted the SDK callback.
+and `encode_max_us`. Counters and `encode_max_us` reset each interval; `last_bytes`, `quality`, and
+`target_bps` retain their latest values. Intentional skipping of intermediate sensor frames is
+not counted in `dropped`. `sent` means RTSA accepted the SDK callback.
+
+CoreS3 camera bring-up has already passed real-device testing. Normal audio was also verified with
+video enabled and disabled. These are the recorded hardware results; later LVGL-only and
+provisioning-UI changes still require hardware regression.
 
 Validate GC0308 detection, correct colors/orientation, server reception/inference, send spacing,
 JPEG quality, CPU/heap use, and audio continuity. Exercise repeated conversation start/stop,

@@ -7,13 +7,14 @@ Versioning and Conventional Commits.
 
 ### Added
 
-- Optional CoreS3 LVGL status UI with Chinese/English text, pairing codes, voiceprint status,
-  and listening/thinking/speaking indicators; build coverage includes both languages with video
-  enabled and disabled. The existing cached UI remains the default.
-- CoreS3 LVGL light/dark themes, local state emoji, rounded status cards, persistent voiceprint
+- Shared LVGL status UI for all eight display-board profiles, with Chinese/English text,
+  pairing codes, voiceprint status, and listening/thinking/speaking indicators.
+- LVGL light/dark themes, local state emoji, rounded status cards, persistent voiceprint
   indicators, and brief pairing/voiceprint/network notifications. Optional activity animations
   run at up to 10 fps; theme and animation choices are build settings.
-
+- Provisioning screens display the actual device hotspot name. Names and connection hints
+  scroll only when they exceed the available width, including with activity animations disabled;
+  leaving provisioning stops the text scrolling.
 - Optional CoreS3 offline audio playback comparison: identical local PCM through 60 ms
   timer-fed and continuous writes, with and without microphone capture.
 
@@ -31,8 +32,8 @@ Versioning and Conventional Commits.
   CST816S touch input, and ES7210/ES8311 full-duplex audio.
 - Pinned ST77916 2.0.2 and CST816S 1.1.1~1 production components.
 - Pinned CO5300 2.1.0, LCD touch 1.2.1, and CST9217 1.0.4 production components.
-- mybot 1.1.0, Agora RTSA 1.10.1 and reference-counted AOSL integration.
-- Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and ST7789 status UI.
+- mybot SDK 1.2.0 plus post-release fixes, Agora RTSA 1.10.1 and reference-counted AOSL integration.
+- Wi-Fi provisioning/reconnect, NVS, verified HTTPS, I2S audio, buttons and LVGL status UI.
 - Persistent 0-100 speaker volume using the Zhengchen board's software I2S gain path.
 - Embedded Chinese and English Ogg/Opus pairing-code announcements decoded to PSRAM at runtime.
 - Localized Wi-Fi provisioning prompts played after the configuration AP starts.
@@ -40,31 +41,33 @@ Versioning and Conventional Commits.
   ES7210/AW88298 audio support.
 - M5Stack StickS3 Board profile with M5PM1 power sequencing, ES8311 audio, ST7789P3 status display,
   and main-button input.
-- Real-device CoreS3 provisioning and bidirectional voice validation.
+- Real-device CoreS3 provisioning, bidirectional voice, 1 fps camera uplink, and LVGL UI validation.
 - Agora RTM login and voice-print registration status displayed during active conversations.
 - RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
 - AOSL socket DSCP support required by the RTSA 1.10.1 network implementation.
 - Voice-print registration-in-progress status shown immediately on the conversation screen.
-- M5Stack CoreS3 vector UI matching the BK7259 style: anti-aliased state ring and icons,
-  server-state and voiceprint badges, and large pairing-code digits.
-- Optional CPU and heap monitoring with CoreS3 playback timing and UI rendering statistics,
+- Optional per-core CPU and heap monitoring with playback timing and gap statistics,
   disabled by default.
 - ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3 Board profile, including shared I2S audio,
   AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
 - SenseCAP Watcher Board profile with ES8311/ES7243E audio, SPD2010 status display, rotary input,
   TCA9555 power sequencing, and a factory-data-preserving 32 MB partition layout.
-- Target firmware CI for all supported boards, both languages, and supported audio packet times.
+- Target firmware CI with 22 configurations: all nine board profiles in both languages,
+  CoreS3 video in both languages, and light-theme/static-indicator variants, using 60 ms audio.
 
 ### Changed
 
 - Count in-flight SPI callbacks across consecutive CoreS3 LVGL UI flushes so teardown waits
   for all pending transfers.
 
-- Refresh the mybot SDK to commit `5b7a6c1` (1.2.0 plus post-release fixes): reduce routine
-  RTM logging and preserve the AOSL log level across RTSA initialization.
-
-- Pre-render CoreS3 workflow and conversation screens into PSRAM during LCD initialization to
-  avoid repeated runtime rasterization, with dynamic fallback if cache allocation fails.
+- Refresh the mybot SDK to commit `4ae239c` (1.2.0 plus post-release fixes): set AOSL to NOTICE
+  at mybot startup, reduce routine RTM logging, and preserve the log level across RTSA initialization.
+- Group MyBot SDK, AOSL, and Agora RTSA under `components/mybot_stack`, retaining independent
+  ESP-IDF component names and registering them explicitly through `EXTRA_COMPONENT_DIRS`.
+- Organize the platform as board profiles, platform registration, services, drivers, internal
+  headers, and assets. Separate display panel lifecycle, LVGL adapters, and the shared view.
+- Make LVGL the sole renderer on display boards, selected automatically by the board profile.
+  ReSpeaker Flex remains headless; theme and activity-animation settings remain configurable.
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
 - Sync the vendored mybot SDK to Unreleased commit `27324e7`, adding RTM channel subscription for
   voice-print status.
@@ -90,11 +93,18 @@ Versioning and Conventional Commits.
 - Sync the vendored mybot SDK to the v1.0.0 release (`117a44d`), retaining the ESP32-S3 RTC and
   HTTPS-only compatibility patches.
 
+### Removed
+
+- Legacy display renderers, their full-screen PSRAM caches and font, and the renderer-selection
+  option. Panel initialization, power, and backlight handling remain in the hardware integration.
+- Legacy `ui_stats` render/flush diagnostics; CPU, heap, and playback statistics remain available.
+
 ### Known limitations
 
-- CoreS3 LVGL's initial status UI has passed real-device testing. The theme, local emoji,
-  notification, and activity-animation update still needs hardware regression testing. It does
-  not add conversation transcripts, cloud emotion messages, or GIF animation.
+- CoreS3 LVGL, including the theme/emoji stage, has passed real-device testing. The subsequent
+  rollout and renderer cleanup across display boards, and the latest provisioning SSID/scrolling
+  changes, still need hardware regression testing. Conversation transcripts, cloud emotion
+  messages, and GIF animation are not included.
 - ML307/4G and wake words are not yet supported.
 - Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback
   validation, charge/battery inputs, temperature monitoring, and power management are not yet
@@ -116,6 +126,10 @@ Versioning and Conventional Commits.
 
 ### Fixed
 
+- Register the nested runtime components so clean CI builds resolve `mybot_sdk`, AOSL, and RTSA.
+- Preserve board-controlled backlights, track ST7789 DMA completion correctly, and retain resources
+  for cleanup retries. Align CO5300 and SPD2010 partial refreshes to panel transfer requirements.
+- Use the Chinese font for narrow-screen Chinese status labels instead of missing glyph boxes.
 - Buffer PCM playback on all supported boards and feed I2S from a dedicated worker to
   decouple SDK timer callbacks from DMA refill timing. Preserve each board's native slot
   format and gain, bound startup buffering, drain finite prompts, and clear old PCM on stop.

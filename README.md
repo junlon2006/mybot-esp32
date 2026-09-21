@@ -32,6 +32,7 @@ SenseCAP Watcher.
 - Chinese and English local pairing-code and Wi-Fi provisioning prompts.
 - Compile-time board profiles with isolated Flash, PSRAM, partition, driver, and pin configuration.
 - Shared LVGL workflow UI for every display board, enabled automatically by the board profile.
+- Provisioning screens show the actual device hotspot name and scroll overflowing text.
 
 ## Supported Boards
 
@@ -104,6 +105,8 @@ idf.py -B build/sensecap-watcher \
 
 The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
 Board defaults supply the required Flash, PSRAM, and partition settings.
+All eight display profiles use LVGL automatically; ReSpeaker Flex remains headless. There is no
+renderer enable switch. Theme and activity-animation options remain in menuconfig.
 
 Flash and monitor the selected build:
 
@@ -124,8 +127,9 @@ service-recovery data.
 
 ## Provisioning and Controls
 
-When NVS contains no Wi-Fi credentials, the device creates a configuration AP whose SSID starts
-with `mybot-`. Connect to it and open `http://192.168.4.1`. mybot starts only after the station has
+When NVS contains no Wi-Fi credentials, the device creates a configuration AP named `mybot-xxxx`,
+where `xxxx` is the first two station-MAC bytes in hexadecimal. Connect to it and open
+`http://192.168.4.1`. mybot starts only after the station has
 a usable IP address. Display boards show the actual device AP name (`mybot-xxxx`) in the center
 and a Chinese/English connection hint below. Text scrolls only when it exceeds the available width;
 leaving provisioning stops the scrolling.
@@ -169,8 +173,7 @@ On all boards the same switch also enables interval `mybot_stats` playback repor
 writes, requested/written frames, timeouts, errors, short writes and zero-progress writes, plus
 average/maximum write duration. `playback_gaps` measures maximum start-to-start and return-to-next-start
 intervals. Use CPU/heap statistics and display lifecycle logs to assess the UI. Playback durations
-use microseconds; `*_at_ms` identifies
-the peak operation's start time since boot.
+use microseconds; `*_at_ms` identifies the peak operation's start time since boot.
 Counters and maxima reset after each report. Writes spanning reports count on completion; interrupted
 shutdown writes also count. Speech pauses can produce long gaps, so gaps alone do not prove underruns.
 The public SDK API does not expose queue underruns (`sdk_queue_underruns=unavailable`).
@@ -217,8 +220,8 @@ active-high LCD reset on GPIO47. If neither GPIO48 power state exposes the ES831
 preparation fails instead of selecting a potentially destructive fallback pin map.
 
 The 360 x 360 round display uses the panel-specific ST77916 initialization sequence and the shared
-LVGL UI with partial DMA updates. USB Serial/JTAG owns the
-console because the normal ESP32-S3 UART0 pins overlap the backlight and board LED.
+LVGL UI with partial DMA updates. USB Serial/JTAG owns the console because the normal ESP32-S3
+UART0 pins overlap the backlight and board LED.
 
 The physical audio link runs directly at mybot's 16 kHz boundary. Capture and playback share a
 two-slot standard-I2S clock domain; capture exposes only the primary microphone slot and playback
@@ -276,17 +279,17 @@ continuous feeding with and without capture; normal firmware uses the same buffe
 
 The [LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing codes,
 persistent voiceprint status, local state emoji, and listening/thinking/speaking indicators.
-It uses partial redraws and a 10 KiB DMA buffer; the previous full-screen cached renderer has
-been removed. CoreS3 LVGL has passed real-device testing. Light/dark themes and optional 10-fps
-activity animations are configured in menuconfig; touch gestures remain unchanged.
+It uses partial redraws and a 10 KiB DMA buffer. Light/dark themes and optional 10-fps activity
+animations are configured in menuconfig; necessary provisioning text scrolling remains enabled
+when activity animation is off. Touch gestures remain unchanged.
 
 All supported display boards automatically use LVGL as their only rendering backend. See
 [platform UI](docs/PLATFORM_UI.md) for panel sizes, adapter coverage, build variants, and validation limits.
 
 CoreS3 also provides optional GC0308 camera uplink: 320 x 240 software JPEG, at most 1 fps while
 RTC is connected. It is disabled by default; see [CoreS3 video](docs/CORES3_VIDEO.md) for building,
-diagnostic logs, and hardware acceptance checks. The camera path has build coverage but still
-requires real-device validation.
+diagnostic logs, and hardware acceptance checks. The CoreS3 camera path has been brought up on
+real hardware; regressions must still be checked with audio and UI running together.
 
 ### M5Stack StickS3
 
@@ -337,11 +340,16 @@ power-off gestures, and automatic sleep are not part of the initial port.
 ## Repository Layout
 
 ```text
-components/mybot_stack/agora_rtc/        ESP32-S3 Agora RTSA package
-components/mybot_stack/aosl/             AOSL with ESP32-S3 platform integration
-components/mybot_stack/mybot_sdk/        ESP-IDF build wrapper for the mybot SDK
-components/mybot_platform/   Common services, reusable drivers, and board profiles
-components/mybot_stack/mybot_sdk/mybot/           Pinned mybot public headers and core sources
+components/
+├── mybot_stack/              Runtime bundle; three independent ESP-IDF components
+│   ├── agora_rtc/            ESP32-S3 Agora RTSA package
+│   ├── aosl/                 AOSL with ESP32-S3 platform integration
+│   └── mybot_sdk/
+│       └── mybot/            Read-only pinned SDK headers and sources
+└── mybot_platform/
+    ├── boards/              Compile-time board profiles
+    ├── include/mybot_platform/
+    └── src/                 Platform registration, services, drivers, internal headers
 main/                        Firmware entry point and project Kconfig
 ```
 
@@ -350,9 +358,10 @@ main/                        Firmware entry point and project Kconfig
 CI builds 22 configurations covering all board profiles, both languages, and the bundled RTSA
 60 ms cadence. Six CoreS3 configurations cover the language/video combinations, light theme,
 and disabled activity animations. All display-board builds use LVGL, as described in
-[Platform LVGL UI](docs/PLATFORM_UI.md). M5Stack CoreS3
-provisioning and bidirectional voice interaction have been validated on
-real hardware. The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
+[Platform LVGL UI](docs/PLATFORM_UI.md). Earlier CoreS3 firmware has passed hardware tests for
+provisioning, bidirectional audio, camera uplink, and LVGL UI, including audio with video on and off.
+The shared LVGL cleanup and provisioning SSID/scrolling changes still need hardware regression.
+The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
 StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
 validation; a successful build is not a substitute for hardware validation on a release device.
 
@@ -367,7 +376,7 @@ Known limitations:
 - Waveshare AMOLED 1.75 and 1.75C do not yet expose the playback reference channel, local AEC,
   battery reporting, or low-power operation. RTC, IMU, TF card, and TCA9554 are not supported on
   the 1.75C profile.
-- CoreS3 camera uplink requires explicit enablement and real-device validation. Camera preview,
+- CoreS3 camera uplink requires explicit enablement. Camera preview,
   video downlink, battery reporting, and automatic sleep are not wired up.
 - StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power
   operation are not wired up.
@@ -385,6 +394,7 @@ Known limitations:
 - [CoreS3 LVGL UI](docs/CORES3_UI.md)
 - [Platform LVGL UI](docs/PLATFORM_UI.md)
 - [CoreS3 audio playback comparison](docs/CORES3_AUDIO_TEST.md)
+- [CoreS3 camera uplink](docs/CORES3_VIDEO.md)
 - [Contributing](CONTRIBUTING.md)
 - [Support](SUPPORT.md)
 - [Release checklist](docs/RELEASING.md)

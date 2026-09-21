@@ -2,28 +2,42 @@
 
 > [English](BOARD_PORTING.md) | [简体中文](BOARD_PORTING.zh-CN.md)
 
-mybot firmware selects exactly one Board at compile time. Runtime board detection is intentionally
-not supported because the IDF target, Flash size and mode, PSRAM mode, and partition table must be
-known before components are configured.
+mybot firmware selects exactly one board profile at compile time. It does not switch profiles at
+runtime: the IDF target, Flash size and mode, PSRAM mode, and partition table must be known before
+components are configured. A profile may detect compatible hardware revisions, as ESP-VoCat does.
 
 ## Layout
 
 ```text
+main/                                      App startup, network prerequisite, MyBot start/stop
+components/mybot_stack/
+  mybot_sdk/CMakeLists.txt                  ESP-IDF wrapper for the SDK snapshot
+  mybot_sdk/mybot/                          Read-only MyBot SDK snapshot
+  aosl/                                    AOSL component
+  agora_rtc/                               Agora RTSA headers and library
 components/mybot_platform/
-  include/mybot_platform/board.h       Board metadata and registration entry points
-  src/platform/               Board registration and provisioning event ownership
-  src/services/               Board-independent network, storage, prompts, audio, and diagnostics
-  src/drivers/                Reusable hardware-family drivers
-  boards/<board-id>/          Board descriptor, pins, sources, and sdkconfig defaults
+  include/mybot_platform/                   Public platform integration headers
+  src/platform/                            Board registration and provisioning event ownership
+  src/services/                            Network, storage, announcements, audio, diagnostics
+  src/drivers/                             Audio, display, input, and video drivers
+  src/internal/<module>/                    Private service and driver headers
+  boards/<board-id>/                        Board descriptor, pins, sources, sdkconfig defaults
 ```
+
+`mybot_sdk`, `aosl`, and `agora_rtc` remain independent ESP-IDF components. The root CMake file
+discovers them through `EXTRA_COMPONENT_DIRS`; the parent `mybot_stack` directory is not a component.
+Platform code includes only SDK public headers under `mybot_sdk/mybot/include/mybot/`, never SDK
+private headers or sources. Keep upstream revisions in [VENDORED_SOURCES.md](../VENDORED_SOURCES.md).
 
 The vendored mybot core remains board-independent. Every Board provides a process-lifetime
 `mybot_board_t`, owns the product network prerequisite and provisioning lifecycle, and registers one
 complete `mybot_platform_descriptor_t`. The mybot Wi-Fi adapter attaches to the already-connected
 network and monitors runtime link changes; it does not own initial provisioning or shut down the
-Board network. KV storage, key input, capture, and playback are required by the SDK; hardware
-volume, HTTPS, LCD, announcements, and wake words are optional unless the active product
-configuration requires them.
+Board network. `main/app_main.c` waits for usable networking before calling `mybot_start()`, and
+calls `mybot_stop()` before button-triggered provisioning. Board-owned display and input remain
+available while the SDK is stopped. Wi-Fi, KV storage, key input, capture, and playback are required
+by the SDK; hardware volume, HTTPS, LCD, announcements, and wake words are optional unless the active
+product configuration requires them.
 
 Encoded video is opt-in through `CONFIG_MYBOT_ENABLE_VIDEO`. CoreS3 implements the public
 `mybot_video_ops_t` interface with GC0308 capture and JPEG encoding, limited to 1 fps. Source
@@ -66,6 +80,12 @@ idf.py -B build/<board-id> \
 Board defaults own Flash, PSRAM, and partition settings. Product-wide settings remain in
 `sdkconfig.defaults`; target-wide settings remain in `sdkconfig.defaults.<target>`.
 
+The bundled RTSA package supports only 60 ms audio frames. Although menuconfig lists 20 ms and
+40 ms, the SDK component wrapper rejects them without a matching RTSA package. The
+[CI workflow](../.github/workflows/ci.yml) currently has 22 firmware builds: nine boards in both
+languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video
+build with conversation animations disabled. This is build coverage, not hardware certification.
+
 ## Adding a Board
 
 1. Add `boards/<board-id>/board.cmake`, `board.c`, `board_config.h`, and `sdkconfig.defaults`.
@@ -79,13 +99,24 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
    hardware-family driver; do not add ESP-IDF details to `components/mybot_stack/mybot_sdk/mybot`.
 6. Preserve the SDK audio boundary: 16 kHz, mono, signed 16-bit PCM, with frame counts rather than
    byte counts.
-7. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,
-   bidirectional audio, input, display, hangup, and repeated start/stop validation.
+7. Select the appropriate display capability in `components/mybot_platform/CMakeLists.txt`:
+   `Kconfig.display` for LVGL or `Kconfig.headless` for a board without a panel. The current headless
+   selection covers ReSpeaker Flex; update it when adding another headless board.
+8. Add isolated CI builds for both languages and size reports, then record real-device provisioning,
+   HTTPS, RTC, bidirectional audio, input, display, hangup, and repeated start/stop validation.
 
 All display boards use the shared LVGL view; there is no legacy renderer or selectable backend.
 Keep controller setup and teardown in `src/drivers/display/panels/`, and wire it through
 `display.cmake` and a reusable LVGL adapter. `CONFIG_MYBOT_LVGL_UI` is a hidden board-derived
 setting, disabled for headless boards. Theme and animation settings remain user-configurable.
+The shared panel contract lives in `src/internal/display/display_panel.h`; internal headers are
+not part of the SDK API. Board-specific power and backlight control must remain in the board layer.
+
+Provisioning displays the actual SoftAP SSID read from the network service through
+`mybot_wifi_get_provisioning_ssid()`. The service copies the name into a caller-owned buffer under
+its state lock; it does not expose a borrowed pointer or hold the network operation lock in that
+getter. Do not reuse the SDK's pairing-code field for network text. Overflowing provisioning text
+scrolls even when conversation animations are disabled. See [platform UI](PLATFORM_UI.md).
 
 LCD `indicators` are non-exclusive overlays on the semantic base screen. Render recognized bits
 without replacing the underlying workflow label and ignore unknown bits.
@@ -184,7 +215,8 @@ backup before first flashing. Standard `idf.py flash` does not write `nvsfactory
 The initial Watcher audio path configures ES8311 and ES7243E directly for 16 kHz, mono signed-16
 PCM. If real hardware cannot sustain that clock configuration, keep the physical link at 24 kHz and
 add stateful resampling in the Board driver without changing the SDK boundary. SPD2010 QSPI updates
-must align the X start and width to four pixels; full-width 412-pixel strips satisfy this constraint.
+must align the X start and width to four pixels. The shared adapter expands invalidated regions
+before LVGL renders them, preserving this constraint for partial updates on the 412-pixel panel.
 
 M5Stack StickS3 uses M5PM1 G2 as the shared process-lifetime power rail for its ST7789P3 display and
 ES8311 codec. G3 belongs to the playback lifecycle and must remain off until the codec is ready to
@@ -192,4 +224,5 @@ play. Its physical I2S link is stereo while the SDK boundary remains 16 kHz mono
 capture selects the microphone slot and playback duplicates mono samples into both slots. The
 135 x 240 display uses a (52, 40) panel offset, so every label and pairing code must be measured
 against the 135-pixel logical width. The GPIO11 input remains Board-owned so a long press can request
-provisioning while mybot is stopped.
+provisioning while mybot is stopped. Backlight uses the board-owned LEDC output at 60%; a display
+adapter must not reconfigure that pin as a plain GPIO.

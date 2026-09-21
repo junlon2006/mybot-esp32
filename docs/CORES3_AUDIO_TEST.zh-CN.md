@@ -4,13 +4,15 @@
 
 此离线听音测试用于排查 `m5stack-core-s3` 偶发的播放沙沙声。测试对比定时供数与连续供数，
 再关闭麦克风采集重复连续播放。三个阶段均经过同一套公共 PCM FIFO 和独立 I2S
-播放任务，预期三个阶段都无杂音，仍需真机试听确认。
+播放任务，预期三个阶段都无杂音，仍需真机试听确认。实现位于
+[`cores3_playback_test.c`](../components/mybot_platform/src/drivers/audio/cores3_playback_test.c)。
 
 ## 当前测试的播放路径
 
 CoreS3 将 PCM 接收到有界 FIFO，容量为 3,840 个采样点（7,680 字节）。独立播放任务
-预缓冲 1,920 个采样点，即 120 ms 音频后开始输出；短音频从首个采样到达起最多等待
-100 ms 也会启动。随后每次向 I2S 连续写入 240 个采样点，即 15 ms 音频，由驱动等待
+预缓冲 1,920 个采样点，即 120 ms 音频后开始输出；短音频达到 100 ms 预缓冲期限
+也会启动，实际唤醒时间仍受任务调度影响。随后每次向 I2S 连续写入最多 240 个采样点，
+即 15 ms 音频，由驱动等待
 控制输出节奏，避免供数任务的调度节奏直接影响硬件供数。
 
 普通 CoreS3 固件同样使用这条路径。`CONFIG_MYBOT_AUDIO_PLAYBACK_TEST` 只控制上电测试，
@@ -18,12 +20,12 @@ CoreS3 将 PCM 接收到有界 FIFO，容量为 3,840 个采样点（7,680 字�
 详见[音频播放缓冲](AUDIO_PLAYBACK.zh-CN.md)。SDK、16 kHz 采样率及 codec 配置保持不变。
 预缓冲会增加播放延迟：离线测试后还需验证普通对话、尾音、打断/挂断及 Cloud AEC。
 
-公共缓冲基于已通过视频开启、关闭两种情况下真机测试的 CoreS3 方案提取；提取后的实现
-及其他板型仍需真机回归。
+增加缓冲后的三个阶段已通过 CoreS3 真机听音测试，普通对话在视频开启、关闭两种情况下
+也已验证正常。后续公共缓冲抽取及平台/UI 变化仍需回归，也不能替代其他板型的真机验证。
 
 ## 构建与运行
 
-使用 ESP-IDF v5.5.2 和独立构建目录：
+激活 ESP-IDF v5.5.2 环境后，在仓库根目录使用独立构建目录：
 
 ```sh
 idf.py -B build/cores3-audio-test \
@@ -36,9 +38,13 @@ idf.py -B build/cores3-audio-test -p <PORT> flash monitor
 `CONFIG_MYBOT_AUDIO_PLAYBACK_TEST` 默认关闭，`ci/audio-test.defaults` 开启测试并关闭视频，
 测试选项与视频选项互斥。其他板型开启此选项会在配置时被拒绝。每次上电完成板级准备后、
 启动 Wi-Fi 和 `mybot_start` 之前执行测试；此固件不运行正常的配网、配对和语音交互流程。
+全新构建默认使用中文提示音。测试英文时，在新的构建目录中给 `SDKCONFIG_DEFAULTS`
+追加 `;ci/en-us.defaults`，或执行 `idf.py -B build/cores3-audio-test menuconfig`
+修改 `mybot → Product language`。
 
-源码更新后，可在同一构建目录重复上述构建和烧录命令复测。测试从 NVS 恢复已有音量，
-不修改保存值。整个对照过程保持同一设备、电源、音量和听音位置，
+源码更新后，可在同一构建目录重复上述构建和烧录命令复测。测试使用 NVS 保存的音量，
+没有有效记录时使用驱动默认值 70，不调用音量设置接口；常规驱动可能清理无效 NVS 记录。
+整个对照过程保持同一设备、电源、音量和听音位置，
 无需联网或服务端音频。
 
 ## 依次试听三个阶段
@@ -46,7 +52,8 @@ idf.py -B build/cores3-audio-test -p <PORT> flash monitor
 测试前将内置配对提示语和数字 0～9 一次性解码为 PCM，并在各片段边界加入 5 ms 淡入淡出
 和 250 ms 静音，避免直接拼接产生爆音。每阶段从头循环同一段音频，格式均为 16 kHz、
 单声道 signed-16 PCM，供数端每次写入 960 个采样点，即 60 ms 音频；部分写入时重试
-剩余采样。这里写入的是 FIFO，不是单次 I2S 事务。提示音语言跟随固件的提示音语言配置。
+剩余采样。这里写入的是 FIFO，不是单次 I2S 事务。60 ms 节奏与当前随附 RTSA 包一致；
+20/40 ms 固件配置需要另行提供匹配的库。提示音语言跟随固件的提示音语言配置。
 
 | 阶段 | 音频时长 | 播放方式 | 麦克风 |
 | --- | --- | --- | --- |
@@ -87,8 +94,10 @@ event=test action=complete
 单次最多等待 50 ms，因此 B/C 在正常背压下可能出现短写，测试会重试剩余采样。
 短写本身不代表音频丢失。
 
-开启资源/调试统计时，`event=playback_stats` 测量独立播放任务每次 240 个采样点的 I2S
-写入，不再对应供数端的 960 个采样点。停止播放时，`event=playback_buffer` 汇总如下：
+`CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR` 默认关闭，`ci/audio-test.defaults` 不会开启它；
+测试自身的 `event=progress` 日志不依赖此开关。开启后，`event=playback_stats` 测量独立
+播放任务每次最多 240 个采样点的 I2S 写入，不对应供数端的 960 个采样点。
+停止播放时，`event=playback_buffer` 汇总如下：
 
 ```text
 event=playback_buffer action=stop result=ok admitted_frames=... dma_written_frames=... rebuffer_events=... queue_high_water=... driver_errors=... driver_timeouts=... producer_timeouts=...
