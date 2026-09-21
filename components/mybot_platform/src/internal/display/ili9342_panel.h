@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#ifndef MYBOT_CORES3_LCD_PANEL_H_
-#define MYBOT_CORES3_LCD_PANEL_H_
+#ifndef MYBOT_ILI9342_PANEL_H_
+#define MYBOT_ILI9342_PANEL_H_
 
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
@@ -11,18 +11,18 @@
 extern "C" {
 #endif
 
-#define CORES3_LCD_TRANSFER_ROWS 16
+#define ILI9342_LCD_TRANSFER_ROWS 16
 
 typedef struct {
     esp_lcd_panel_io_handle_t io;
     esp_lcd_panel_handle_t panel;
     bool spi_ready;
-} cores3_lcd_panel_t;
+} ili9342_panel_t;
 
-int mybot_cores3_lcd_panel_open(cores3_lcd_panel_t *lcd,
-                                esp_lcd_panel_io_color_trans_done_cb_t done, void *user);
+int mybot_ili9342_panel_open(ili9342_panel_t *lcd, esp_lcd_panel_io_color_trans_done_cb_t done,
+                             void *user);
 /* Call after the renderer has stopped submitting transfers. Retains handles on failure. */
-int mybot_cores3_lcd_panel_close(cores3_lcd_panel_t *lcd);
+int mybot_ili9342_panel_close(ili9342_panel_t *lcd);
 
 #ifdef __cplusplus
 }

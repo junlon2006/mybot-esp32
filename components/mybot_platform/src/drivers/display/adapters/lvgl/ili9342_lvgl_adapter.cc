@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
-#include "dynamic_lcd_panel.h"
-#include "cores3_lvgl_view.h"
+#include "cores3_hardware.h"
+#include "display/ili9342_panel.h"
+#include "display/lvgl_view.h"
 
 #include <mybot/platform/mybot_lcd.h>
 
@@ -15,42 +16,14 @@
 
 #include <cstring>
 
-#define TAG "dynamic_lvgl"
+#define TAG "ili9342_lvgl"
 #define UI_LOCK_TIMEOUT_MS 1000
 #define UI_APPLY_PERIOD_MS 50
 #define UI_STACK_BYTES 7168
-#ifndef MYBOT_LVGL_TRANSFER_ROWS
-#define MYBOT_LVGL_TRANSFER_ROWS 16
-#endif
 
 namespace {
-#if defined(MYBOT_LVGL_PANEL_AMOLED175)
-int mybot_dynamic_panel_open(mybot_dynamic_lcd_panel_t *panel) {
-    return mybot_amoled175_lvgl_panel_open(panel, nullptr, nullptr);
-}
-int mybot_dynamic_panel_close(mybot_dynamic_lcd_panel_t *panel) {
-    return mybot_amoled175_lvgl_panel_close(panel);
-}
-#elif defined(MYBOT_LVGL_PANEL_SENSECAP)
-int mybot_dynamic_panel_open(mybot_dynamic_lcd_panel_t *panel) {
-    return mybot_sensecap_lvgl_panel_open(panel, nullptr, nullptr);
-}
-int mybot_dynamic_panel_close(mybot_dynamic_lcd_panel_t *panel) {
-    return mybot_sensecap_lvgl_panel_close(panel);
-}
-#elif defined(MYBOT_LVGL_PANEL_VOCAT)
-int mybot_dynamic_panel_open(mybot_dynamic_lcd_panel_t *panel) {
-    return mybot_vocat_lvgl_panel_open(panel, nullptr, nullptr);
-}
-int mybot_dynamic_panel_close(mybot_dynamic_lcd_panel_t *panel) {
-    return mybot_vocat_lvgl_panel_close(panel);
-}
-#else
-#error "Select one MYBOT_LVGL_PANEL_* backend"
-#endif
-
 struct Context {
-    mybot_dynamic_lcd_panel_t lcd{};
+    ili9342_panel_t lcd{};
     lv_display_t *display = nullptr;
     lv_timer_t *apply_timer = nullptr;
     mybot_lcd_content_t latest{};
@@ -122,7 +95,7 @@ void apply_snapshot(lv_timer_t *timer) {
     }
     portEXIT_CRITICAL(&snapshot_lock);
     if (update) {
-        mybot_cores3_lvgl_view_update(&snapshot);
+        mybot_lvgl_view_update(&snapshot);
     }
 }
 
@@ -155,10 +128,14 @@ int release_display() {
             }
             vTaskDelay(1);
         }
-        mybot_cores3_lvgl_view_destroy();
+        mybot_lvgl_view_destroy();
+        (void)mybot_cores3_set_display_backlight(0);
+        if (context.lcd.panel) {
+            (void)esp_lcd_panel_disp_on_off(context.lcd.panel, false);
+        }
         /* Delete IO before display: late transfer callbacks must never hold a
          * freed lv_display_t. remove_disp does not access the panel/IO handles. */
-        if (mybot_dynamic_panel_close(&context.lcd) < 0) {
+        if (mybot_ili9342_panel_close(&context.lcd) < 0) {
             lvgl_port_unlock();
             return -1;
         }
@@ -168,7 +145,7 @@ int release_display() {
         }
         context.display = nullptr;
         lvgl_port_unlock();
-    } else if (context.lcd.ready && mybot_dynamic_panel_close(&context.lcd) < 0) {
+    } else if (mybot_ili9342_panel_close(&context.lcd) < 0) {
         return -1;
     }
     if (context.port_started) {
@@ -209,7 +186,7 @@ int initialize(void **out_ctx) {
     port_config.timer_period_ms = 5;
     lvgl_port_display_cfg_t config{};
     esp_lcd_panel_io_callbacks_t callbacks{};
-    if (mybot_dynamic_panel_open(&context.lcd) < 0) {
+    if (mybot_ili9342_panel_open(&context.lcd, nullptr, nullptr) < 0) {
         goto done;
     }
     /* Track even a failed init: a timeout must be joined before reusing the port. */
@@ -222,7 +199,7 @@ int initialize(void **out_ctx) {
     }
     config.io_handle = context.lcd.io;
     config.panel_handle = context.lcd.panel;
-    config.buffer_size = MYBOT_DISPLAY_WIDTH * MYBOT_LVGL_TRANSFER_ROWS;
+    config.buffer_size = MYBOT_DISPLAY_WIDTH * ILI9342_LCD_TRANSFER_ROWS;
     config.hres = MYBOT_DISPLAY_WIDTH;
     config.vres = MYBOT_DISPLAY_HEIGHT;
     config.color_format = LV_COLOR_FORMAT_RGB565;
@@ -240,8 +217,7 @@ int initialize(void **out_ctx) {
         goto done;
     }
     lv_display_set_flush_cb(context.display, flush);
-    if (mybot_cores3_lvgl_view_create_sized(context.display, MYBOT_DISPLAY_WIDTH,
-                                            MYBOT_DISPLAY_HEIGHT) < 0) {
+    if (mybot_lvgl_view_create(context.display) < 0) {
         lvgl_port_unlock();
         goto done;
     }
@@ -264,7 +240,7 @@ int initialize(void **out_ctx) {
              "event=lcd action=initialize backend=lvgl result=ok width=%d height=%d "
              "dma_bytes=%u ui_core=1 ui_priority=1 objects=psram",
              MYBOT_DISPLAY_WIDTH, MYBOT_DISPLAY_HEIGHT,
-             (unsigned)(MYBOT_DISPLAY_WIDTH * MYBOT_LVGL_TRANSFER_ROWS * sizeof(uint16_t)));
+             (unsigned)(MYBOT_DISPLAY_WIDTH * ILI9342_LCD_TRANSFER_ROWS * sizeof(uint16_t)));
 done:
     if (result < 0) {
         ESP_LOGE(TAG, "event=lcd action=initialize backend=lvgl result=error");
@@ -338,6 +314,6 @@ void destroy(void *opaque) {
 const mybot_lcd_ops_t ops = {initialize, render, destroy};
 } // namespace
 
-extern "C" const mybot_lcd_ops_t *mybot_dynamic_lvgl_ops(void) {
+extern "C" const mybot_lcd_ops_t *mybot_cores3_lcd_ops(void) {
     return &ops;
 }

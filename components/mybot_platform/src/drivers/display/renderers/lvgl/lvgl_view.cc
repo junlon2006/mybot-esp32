@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2026 Project Contributors */
 /* Status/content/notification layout adapted from the MIT-licensed display
- * reference identified in CORES3_LVGL_VIEW_LICENSE.txt. */
-#include "cores3_lvgl_view.h"
-#include "cores3_ui_assets.h"
+ * reference identified in LVGL_VIEW_LICENSE.txt. */
+#include "display/lvgl_view.h"
+#include "display/lvgl_assets.h"
 
 #include "sdkconfig.h"
 
 #include <cstring>
 
-LV_FONT_DECLARE(mybot_cores3_font_20);
+LV_FONT_DECLARE(mybot_lvgl_font_20);
 LV_FONT_DECLARE(lv_font_montserrat_14);
 LV_FONT_DECLARE(lv_font_montserrat_10);
 
@@ -161,7 +161,7 @@ lv_obj_t *make_label(lv_obj_t *parent, int x, int y, int width, int height) {
     lv_obj_remove_style_all(label);
     lv_obj_set_pos(label, x, y);
     lv_obj_set_size(label, width, height);
-    lv_obj_set_style_text_font(label, &mybot_cores3_font_20, 0);
+    lv_obj_set_style_text_font(label, &mybot_lvgl_font_20, 0);
     lv_obj_set_style_text_color(label, lv_color_hex(kTheme.text), 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
@@ -326,7 +326,7 @@ int view_width() {
 }
 } // namespace
 
-int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int height) {
+int mybot_lvgl_view_create_sized(lv_display_t *display, int width, int height) {
     if (!display || s_view.root || width <= 0 || height <= 0 ||
         lv_display_get_horizontal_resolution(display) != width ||
         lv_display_get_vertical_resolution(display) != height) {
@@ -350,7 +350,7 @@ int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int he
     lv_obj_t *footer = make_panel(s_view.root, margin, footer_y, card_width, 34, kTheme.surface);
     s_view.card = make_panel(s_view.root, card_x, card_y, card_width, card_height, kTheme.surface);
     if (!header || !footer || !s_view.card) {
-        mybot_cores3_lvgl_view_destroy();
+        mybot_lvgl_view_destroy();
         return -1;
     }
     lv_obj_set_style_radius(s_view.card, 18, 0);
@@ -360,7 +360,7 @@ int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int he
     s_view.badge = make_panel(s_view.card, center_x, 8, 64, 64, kTheme.surface);
     s_view.activity = make_panel(s_view.card, center_x, card_height - 26, 64, 16, kTheme.surface);
     if (!s_view.badge || !s_view.activity) {
-        mybot_cores3_lvgl_view_destroy();
+        mybot_lvgl_view_destroy();
         return -1;
     }
     lv_obj_set_style_radius(s_view.badge, LV_RADIUS_CIRCLE, 0);
@@ -378,7 +378,7 @@ int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int he
     s_view.notice = make_label(footer, 2, 3, card_width - 4, 28);
     if (!s_view.brand || !s_view.status || !s_view.notification || !s_view.icon || !s_view.emoji ||
         !s_view.title || !s_view.code || !s_view.notice) {
-        mybot_cores3_lvgl_view_destroy();
+        mybot_lvgl_view_destroy();
         return -1;
     }
     lv_obj_set_pos(s_view.emoji, center_x, 8);
@@ -388,9 +388,9 @@ int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int he
         lv_obj_set_style_text_font(s_view.brand, &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_font(s_view.status, &lv_font_montserrat_10, 0);
 #if CONFIG_MYBOT_LANGUAGE_ZH_CN
-        lv_obj_set_style_text_font(s_view.notification, &mybot_cores3_font_20, 0);
-        lv_obj_set_style_text_font(s_view.title, &mybot_cores3_font_20, 0);
-        lv_obj_set_style_text_font(s_view.notice, &mybot_cores3_font_20, 0);
+        lv_obj_set_style_text_font(s_view.notification, &mybot_lvgl_font_20, 0);
+        lv_obj_set_style_text_font(s_view.title, &mybot_lvgl_font_20, 0);
+        lv_obj_set_style_text_font(s_view.notice, &mybot_lvgl_font_20, 0);
 #else
         lv_obj_set_style_text_font(s_view.notification, &lv_font_montserrat_10, 0);
         lv_obj_set_style_text_font(s_view.title, &lv_font_montserrat_10, 0);
@@ -409,33 +409,32 @@ int mybot_cores3_lvgl_view_create_sized(lv_display_t *display, int width, int he
         s_view.bars[i] =
             make_panel(s_view.activity, 7 + static_cast<int>(i) * 11, 4, 6, 8, kTheme.blue);
         if (!s_view.bars[i]) {
-            mybot_cores3_lvgl_view_destroy();
+            mybot_lvgl_view_destroy();
             return -1;
         }
         lv_obj_set_style_radius(s_view.bars[i], 3, 0);
     }
     s_view.timer = lv_timer_create(timer_callback, kTimerPeriodMs, nullptr);
     if (!s_view.timer) {
-        mybot_cores3_lvgl_view_destroy();
+        mybot_lvgl_view_destroy();
         return -1;
     }
     lv_timer_pause(s_view.timer);
 
     const mybot_lcd_content_t initial = {MYBOT_LCD_SCREEN_STARTING, {}, 0};
-    mybot_cores3_lvgl_view_update(&initial);
+    mybot_lvgl_view_update(&initial);
     return 0;
 }
 
-int mybot_cores3_lvgl_view_create(lv_display_t *display) {
+int mybot_lvgl_view_create(lv_display_t *display) {
     if (!display) {
         return -1;
     }
-    return mybot_cores3_lvgl_view_create_sized(display,
-                                               lv_display_get_horizontal_resolution(display),
-                                               lv_display_get_vertical_resolution(display));
+    return mybot_lvgl_view_create_sized(display, lv_display_get_horizontal_resolution(display),
+                                        lv_display_get_vertical_resolution(display));
 }
 
-void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content) {
+void mybot_lvgl_view_update(const mybot_lcd_content_t *content) {
     if (!s_view.root || !content || content->screen < MYBOT_LCD_SCREEN_STARTING ||
         content->screen >= MYBOT_LCD_SCREEN_COUNT) {
         return;
@@ -509,7 +508,7 @@ void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content) {
     set_hidden(s_view.code, !pairing_code);
     set_hidden(s_view.activity, activity == Activity::None);
     if (show_emoji) {
-        const lv_image_dsc_t *source = mybot_cores3_ui_emoji(emoji);
+        const lv_image_dsc_t *source = mybot_lvgl_ui_emoji(emoji);
         if (s_view.emoji_source != source) {
             lv_image_set_src(s_view.emoji, source);
             s_view.emoji_source = source;
@@ -527,10 +526,10 @@ void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content) {
         const int available = view_width() - (view_width() >= 240 ? 28 : 12);
         const lv_font_t *font = &lv_font_montserrat_32;
         if (extent.x > available) {
-            lv_text_get_size(&extent, normalized.pair_code, &mybot_cores3_font_20, 0, 0,
-                             LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+            lv_text_get_size(&extent, normalized.pair_code, &mybot_lvgl_font_20, 0, 0, LV_COORD_MAX,
+                             LV_TEXT_FLAG_NONE);
             if (extent.x <= available) {
-                font = &mybot_cores3_font_20;
+                font = &mybot_lvgl_font_20;
             } else {
                 font = &lv_font_montserrat_10;
             }
@@ -553,7 +552,7 @@ void mybot_cores3_lvgl_view_update(const mybot_lcd_content_t *content) {
     update_timer();
 }
 
-void mybot_cores3_lvgl_view_destroy(void) {
+void mybot_lvgl_view_destroy(void) {
     /* The same LVGL owner serializes timer callbacks and destruction. */
     if (s_view.timer) {
         lv_timer_delete(s_view.timer);

@@ -20,13 +20,14 @@ set(MYBOT_BOARD_FORBIDDEN_CONFIGS
 set(MYBOT_BOARD_PARTITION_TABLE "partitions/v2/16m.csv")
 
 get_filename_component(MYBOT_PLATFORM_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+include("${MYBOT_PLATFORM_ROOT}/src/drivers/display/display.cmake")
 set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/board.c"
     "${CMAKE_CURRENT_LIST_DIR}/cores3_hardware.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/cores3_codec_audio.c"
-    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lcd_panel.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/input/ft6336_touch.c"
 )
+mybot_display_add_panel(MYBOT_BOARD_SOURCES "ili9342/ili9342_panel.c")
 set(MYBOT_BOARD_REQUIRES
     esp_codec_dev
     esp_lcd_ili9341
@@ -43,13 +44,9 @@ set(MYBOT_BOARD_REQUIRES
 )
 
 if(CONFIG_MYBOT_LVGL_UI)
-    list(APPEND MYBOT_BOARD_SOURCES
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_lcd.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "ili9342_lvgl_adapter.cc")
 else()
-    list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/display/ili9342_lcd.c")
+    mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "core_s3_ili9342_renderer.c")
 endif()
 
 if(CONFIG_MYBOT_ENABLE_VIDEO)

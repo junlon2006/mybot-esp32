@@ -25,20 +25,17 @@ set(MYBOT_BOARD_FORBIDDEN_CONFIGS
 set(MYBOT_BOARD_PARTITION_TABLE "partitions/v2/16m.csv")
 
 get_filename_component(MYBOT_PLATFORM_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+include("${MYBOT_PLATFORM_ROOT}/src/drivers/display/display.cmake")
 set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/board.c"
     "${CMAKE_CURRENT_LIST_DIR}/vocat_hardware.c"
     "${CMAKE_CURRENT_LIST_DIR}/vocat_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/vocat_codec_audio.c"
-    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/vocat_st77916_lcd.c"
 )
+mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "vocat_renderer.c")
 if(CONFIG_MYBOT_LVGL_UI)
-    list(APPEND MYBOT_BOARD_SOURCES
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/dynamic_lvgl_lcd.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/vocat_lvgl_panel.c"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")
+    mybot_display_add_lvgl_bridge(MYBOT_BOARD_SOURCES "vocat_panel_provider.c")
 endif()
 set(MYBOT_BOARD_REQUIRES
     button
@@ -55,8 +52,3 @@ set(MYBOT_BOARD_REQUIRES
     lvgl
     nvs_flash
 )
-if(CONFIG_MYBOT_LVGL_UI)
-    set_property(SOURCE
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/dynamic_lvgl_lcd.cc"
-        APPEND PROPERTY COMPILE_DEFINITIONS MYBOT_LVGL_PANEL_VOCAT)
-endif()

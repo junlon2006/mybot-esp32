@@ -19,6 +19,7 @@ set(MYBOT_BOARD_FORBIDDEN_CONFIGS
 set(MYBOT_BOARD_PARTITION_TABLE "partitions/v2/8m.csv")
 
 get_filename_component(MYBOT_PLATFORM_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+include("${MYBOT_PLATFORM_ROOT}/src/drivers/display/display.cmake")
 set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/board.c"
     "${CMAKE_CURRENT_LIST_DIR}/sticks3_hardware.cpp"
@@ -26,13 +27,9 @@ set(MYBOT_BOARD_SOURCES
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/sticks3_es8311_audio.c"
 )
 if(CONFIG_MYBOT_LVGL_UI)
-    list(APPEND MYBOT_BOARD_SOURCES
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/lvgl_st7789_lcd.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "st7789_lvgl_adapter.cc")
 else()
-    list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/display/sticks3_st7789_lcd.c")
+    mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "sticks3_st7789_renderer.c")
 endif()
 set(MYBOT_BOARD_REQUIRES
     button

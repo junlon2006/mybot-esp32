@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Generic LVGL/ST7789 adapter for board profiles with a SPI RGB565 panel. */
 #include "board_config.h"
-#include "cores3_lvgl_view.h"
+#include "display/lvgl_view.h"
 
 #include <mybot/platform/mybot_lcd.h>
 
@@ -238,9 +238,8 @@ int initialize(void **out) {
     config.flags.buff_dma = true;
     config.flags.swap_bytes = false;
     s_context.display = lvgl_port_add_disp(&config);
-    if (!s_context.display ||
-        mybot_cores3_lvgl_view_create_sized(s_context.display, MYBOT_DISPLAY_WIDTH,
-                                            MYBOT_DISPLAY_HEIGHT) < 0) {
+    if (!s_context.display || mybot_lvgl_view_create_sized(s_context.display, MYBOT_DISPLAY_WIDTH,
+                                                           MYBOT_DISPLAY_HEIGHT) < 0) {
         if (s_context.display)
             (void)lvgl_port_remove_disp(s_context.display);
         s_context.display = nullptr;
@@ -268,7 +267,7 @@ int render(void *opaque, const mybot_lcd_content_t *content) {
         return -1;
     int result = -1;
     if (s_context.accepting && s_context.display && lvgl_port_lock(LOCK_TIMEOUT_MS)) {
-        mybot_cores3_lvgl_view_update(content);
+        mybot_lvgl_view_update(content);
         const esp_err_t wake_result = lvgl_port_task_wake(LVGL_PORT_EVENT_USER, nullptr);
         lvgl_port_unlock();
         result = wake_result == ESP_OK ? 0 : -1;
@@ -294,7 +293,7 @@ void destroy(void *opaque) {
             vTaskDelay(1);
         }
         if (!__atomic_load_n(&s_context.flushing, __ATOMIC_ACQUIRE)) {
-            mybot_cores3_lvgl_view_destroy();
+            mybot_lvgl_view_destroy();
             (void)lvgl_port_remove_disp(s_context.display);
             s_context.display = nullptr;
         }

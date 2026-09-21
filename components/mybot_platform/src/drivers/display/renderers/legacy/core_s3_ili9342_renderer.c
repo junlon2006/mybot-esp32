@@ -5,7 +5,7 @@
 #include <mybot/platform/mybot_lcd.h>
 
 #include "cores3_hardware.h"
-#include "cores3_lcd_panel.h"
+#include "display/ili9342_panel.h"
 #if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
 #include "mybot_debug_stats.h"
 #endif
@@ -28,7 +28,7 @@
 #include <string.h>
 
 #define TAG "cores3_lcd"
-#define LCD_TRANSFER_ROWS CORES3_LCD_TRANSFER_ROWS
+#define LCD_TRANSFER_ROWS ILI9342_LCD_TRANSFER_ROWS
 #define LCD_TRANSFER_TIMEOUT_MS 1000
 
 #define LCD_LOGICAL_WIDTH MYBOT_DISPLAY_WIDTH
@@ -63,7 +63,7 @@
     (uint16_t)((((red) & 0xf8) << 8) | (((green) & 0xfc) << 3) | ((blue) >> 3))
 
 typedef struct {
-    cores3_lcd_panel_t lcd;
+    ili9342_panel_t lcd;
     SemaphoreHandle_t transfer_done;
     uint16_t *frame;
     uint16_t *screen_cache[MYBOT_LCD_SCREEN_COUNT];
@@ -93,7 +93,7 @@ typedef struct {
     uint8_t tracking;
 } lcd_font_t;
 
-#include "ili9342_lcd_font.inc"
+#include "ili9342_font.inc"
 
 static bool on_color_transfer_done(esp_lcd_panel_io_handle_t panel_io,
                                    esp_lcd_panel_io_event_data_t *event_data, void *user_data) {
@@ -691,7 +691,7 @@ static const uint16_t *cached_frame(const mybot_lcd_content_t *content) {
 }
 
 static int release_lcd(void) {
-    if (mybot_cores3_lcd_panel_close(&s_context.lcd) < 0) {
+    if (mybot_ili9342_panel_close(&s_context.lcd) < 0) {
         ESP_LOGE(TAG, "event=lcd action=cleanup result=error resources=retained");
         return -1;
     }
@@ -728,7 +728,7 @@ static int lcd_init(void **out_ctx) {
     if (!s_context.transfer_done) {
         return -1;
     }
-    if (mybot_cores3_lcd_panel_open(&s_context.lcd, on_color_transfer_done, &s_context) < 0) {
+    if (mybot_ili9342_panel_open(&s_context.lcd, on_color_transfer_done, &s_context) < 0) {
         release_lcd();
         ESP_LOGE(TAG, "event=lcd action=initialize result=error");
         return -1;
