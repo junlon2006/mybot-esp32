@@ -2,10 +2,9 @@
 
 [English](CORES3_UI.md) | [简体中文](CORES3_UI.zh-CN.md)
 
-`CONFIG_MYBOT_LVGL_UI` 为 `m5stack-core-s3` 选择可选的 LVGL 显示后端，默认关闭。
-其他 LCD 板型复用同一语义界面，详见[平台 UI](PLATFORM_UI.zh-CN.md)。
-普通固件保留现有缓存渲染器；LVGL 构建不编入该渲染器，也不分配原有 16 页、约 2.34 MiB
-的 PSRAM 画面缓存。
+`m5stack-core-s3` 统一使用 LVGL 显示后端，其他 LCD 板型复用同一语义界面，详见
+[平台 UI](PLATFORM_UI.zh-CN.md)。板级配置自动设置隐藏的 `CONFIG_MYBOT_LVGL_UI`。
+原有缓存渲染器及其 16 页、约 2.34 MiB 的 PSRAM 画面缓存已删除。
 
 ## 显示内容
 
@@ -27,7 +26,7 @@ UI 接收现有 SDK 公共 LCD 内容及板级配网状态，不增加聊天正�
 
 ## 主题与动画设置
 
-开启 LVGL 后端后，可在 menuconfig 的 `mybot` 菜单调整：
+带屏板型可在 menuconfig 的 `mybot` 菜单调整：
 
 | 配置 | 默认值 | 作用 |
 | --- | --- | --- |
@@ -45,7 +44,7 @@ UI 接收现有 SDK 公共 LCD 内容及板级配网状态，不增加聊天正�
 idf.py -B build/cores3-lvgl-ui \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/cores3-lvgl-ui/sdkconfig \
-  -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;ci/lvgl-ui.defaults" build
+  -DSDKCONFIG_DEFAULTS=sdkconfig.defaults build
 idf.py -B build/cores3-lvgl-ui -p <PORT> flash monitor
 ```
 
@@ -53,17 +52,16 @@ idf.py -B build/cores3-lvgl-ui -p <PORT> flash monitor
 
 | 组合 | 建议构建目录 | `SDKCONFIG_DEFAULTS` |
 | --- | --- | --- |
-| 中文、视频关闭 | `build/cores3-lvgl-ui` | `sdkconfig.defaults;ci/lvgl-ui.defaults` |
-| 英文、视频关闭 | `build/cores3-lvgl-ui-en` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults` |
-| 中文、视频开启 | `build/cores3-lvgl-ui-video` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/video.defaults` |
-| 英文、视频开启 | `build/cores3-lvgl-ui-video-en` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults;ci/video.defaults` |
-| 英文、浅色主题、视频关闭 | `build/cores3-lvgl-ui-light-en` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults` |
-| 中文、静态指示、视频开启 | `build/cores3-lvgl-ui-static-video` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults` |
+| 中文、视频关闭 | `build/cores3-lvgl-ui` | `sdkconfig.defaults` |
+| 英文、视频关闭 | `build/cores3-lvgl-ui-en` | `sdkconfig.defaults;ci/en-us.defaults` |
+| 中文、视频开启 | `build/cores3-lvgl-ui-video` | `sdkconfig.defaults;ci/video.defaults` |
+| 英文、视频开启 | `build/cores3-lvgl-ui-video-en` | `sdkconfig.defaults;ci/en-us.defaults;ci/video.defaults` |
+| 英文、浅色主题、视频关闭 | `build/cores3-lvgl-ui-light-en` | `sdkconfig.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults` |
+| 中文、静态指示、视频开启 | `build/cores3-lvgl-ui-static-video` | `sdkconfig.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults` |
 
 将命令中的 `-B`、`-DSDKCONFIG` 同时改为选定目录，并使用对应的 defaults 列表。
-所有带屏板型统一使用 `CONFIG_MYBOT_LVGL_UI`。对比原有 UI 时，在另一目录编译且不加入 `ci/lvgl-ui.defaults`；
-修改 defaults 不会覆盖已生成的 sdkconfig，也可通过对应构建的 `menuconfig` 关闭该选项。
-浅色/静态 defaults 文件仅修改对应选项，必须与 `ci/lvgl-ui.defaults` 一起使用。
+所有带屏板型自动编入此 UI。修改 defaults 不会覆盖已生成的 sdkconfig，请使用新的
+sdkconfig，或通过 `menuconfig` 修改主题和动画选项。浅色/静态 defaults 文件仅修改对应选项。
 
 ## 渲染与资源
 
@@ -82,14 +80,13 @@ RGB565 内部 DMA 缓冲，共 10,240 字节。通过局部刷新更新变化区
 LVGL 自身需要任务、对象、字体和渲染开销，移除旧页面缓存不等于已经确认总内存或 CPU
 消耗降低。音频和摄像头代码保持不变，同时运行的表现仍需测量；SDK 公共接口保持不变。
 
-生命周期日志使用 `event=lcd` 和 `backend=lvgl`。原有 `ui_stats` 的绘制/刷新耗时描述
-默认缓存渲染器，不适用于此后端。通过 CPU/堆统计、生命周期日志及实际显示效果
-评估 LVGL 路径。
+生命周期日志使用 `event=lcd` 和 `backend=lvgl`。通过 CPU/堆统计、生命周期日志及实际
+显示效果评估 UI；播放统计不包含 LVGL 的绘制/刷新耗时。
 
 ## 真机验收
 
-CoreS3 基础 LVGL 状态界面已通过真机测试，后续新增的主题、表情、通知及状态动画仍需真机回归。
-CI 保留已有全部配置，覆盖四种中英文/视频组合及浅色主题、静态指示变体；编译和主机检查
+CoreS3 LVGL UI 已通过真机测试，显示栈变更后仍需真机回归。
+CI 覆盖四种中英文/视频组合及浅色主题、静态指示变体；编译和主机检查
 不能证明真实设备上的听音或显示效果。
 
 用于发布前，请完成以下验证：
@@ -100,8 +97,7 @@ CI 保留已有全部配置，覆盖四种中英文/视频组合及浅色主题�
   配对码和声纹状态始终可读。
 - 验证短触及长按三秒配网、首次启动配网、Wi-Fi 断线恢复，以及反复 SDK 停止/启动，
   确认没有旧画面残留或黑屏。
-- 界面更新时持续进行全双工语音，检查沙沙声；开启 1 fps 视频后重复测试，并在相同音量、
-  网络下与原渲染器对比。
+- 界面更新时持续进行全双工语音，检查沙沙声；保持相同音量、网络，开启 1 fps 视频后重复测试。
 - 通过 `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR` 记录每核 CPU、内部 RAM/PSRAM 峰值、
   最低剩余堆及最大连续空闲块，多轮会话确认内存没有持续增长。
 

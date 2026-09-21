@@ -32,7 +32,7 @@ set(MYBOT_BOARD_SOURCES
     "${MYBOT_AMOLED175_COMMON_DIR}/amoled175_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/amoled175_codec_audio.c"
 )
-mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "amoled175_renderer.c")
+mybot_display_add_panel(MYBOT_BOARD_SOURCES "co5300/co5300_panel.c")
 set(MYBOT_BOARD_REQUIRES
     button
     esp_codec_dev
@@ -49,7 +49,4 @@ set(MYBOT_BOARD_REQUIRES
     nvs_flash
 )
 
-if(CONFIG_MYBOT_LVGL_UI)
-    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")
-    mybot_display_add_lvgl_bridge(MYBOT_BOARD_SOURCES "amoled175_panel_provider.c")
-endif()
+mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")

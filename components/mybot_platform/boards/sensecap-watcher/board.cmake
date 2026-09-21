@@ -31,7 +31,7 @@ set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/sensecap_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/sensecap_codec_audio.c"
 )
-mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "sensecap_renderer.c")
+mybot_display_add_panel(MYBOT_BOARD_SOURCES "spd2010/spd2010_panel.c")
 set(MYBOT_BOARD_REQUIRES
     esp_codec_dev
     esp_driver_gpio
@@ -48,7 +48,4 @@ set(MYBOT_BOARD_REQUIRES
     knob
 )
 
-if(CONFIG_MYBOT_LVGL_UI)
-    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")
-    mybot_display_add_lvgl_bridge(MYBOT_BOARD_SOURCES "sensecap_panel_provider.c")
-endif()
+mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")

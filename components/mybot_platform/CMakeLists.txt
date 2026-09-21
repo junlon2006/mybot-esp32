@@ -7,6 +7,13 @@ include("${CMAKE_CURRENT_LIST_DIR}/boards/boards.cmake")
 mybot_resolve_board("${MYBOT_BOARD}")
 include("${MYBOT_BOARD_PROFILE}")
 
+# Pass a fixed Kconfig file to IDF so menuconfig/confserver use the same board
+# capability even when invoked separately from the CMake configure process.
+set(mybot_display_kconfig "${CMAKE_CURRENT_LIST_DIR}/Kconfig.display")
+if(MYBOT_BOARD STREQUAL "respeaker-flex-xvf3800-circular4-xiao")
+    set(mybot_display_kconfig "${CMAKE_CURRENT_LIST_DIR}/Kconfig.headless")
+endif()
+
 set(MYBOT_AUDIO_ASSET_DIR
     "${CMAKE_CURRENT_LIST_DIR}/assets/locales/${CONFIG_MYBOT_LANGUAGE_TAG}")
 set(MYBOT_EMBEDDED_AUDIO_ASSETS
@@ -65,6 +72,7 @@ if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST)
 endif()
 
 idf_component_register(
+    KCONFIG "${mybot_display_kconfig}"
     SRCS
         "src/platform/platform_register.c"
         "src/services/network/https.c"

@@ -31,7 +31,7 @@ SenseCAP Watcher.
 - Agora RTSA full-duplex audio, Cloud AEC, AI QoS, RTM channel subscription, and voice-print status.
 - Chinese and English local pairing-code and Wi-Fi provisioning prompts.
 - Compile-time board profiles with isolated Flash, PSRAM, partition, driver, and pin configuration.
-- Optional shared LVGL workflow UI adapters for panel boards; the existing renderer remains the default.
+- Shared LVGL workflow UI for every display board, enabled automatically by the board profile.
 
 ## Supported Boards
 
@@ -166,8 +166,8 @@ monitor after troubleshooting. High CPU load alone does not establish the cause 
 On all boards the same switch also enables interval `mybot_stats` playback reports: `playback_stats` counts I2S
 writes, requested/written frames, timeouts, errors, short writes and zero-progress writes, plus
 average/maximum write duration. `playback_gaps` measures maximum start-to-start and return-to-next-start
-intervals. For the default CoreS3 cached renderer, `ui_stats` separates framebuffer rendering from
-SPI flushing and reports the longest total update. Durations use microseconds; `*_at_ms` identifies
+intervals. Use CPU/heap statistics and display lifecycle logs to assess the UI. Playback durations
+use microseconds; `*_at_ms` identifies
 the peak operation's start time since boot.
 Counters and maxima reset after each report. Writes spanning reports count on completion; interrupted
 shutdown writes also count. Speech pauses can produce long gaps, so gaps alone do not prove underruns.
@@ -214,8 +214,8 @@ GPIO15, PA GPIO4, and an active-low LCD reset on GPIO3. V1.2 uses DIN GPIO3, PA 
 active-high LCD reset on GPIO47. If neither GPIO48 power state exposes the ES8311 at `0x18`, Board
 preparation fails instead of selecting a potentially destructive fallback pin map.
 
-The 360 x 360 round display uses the panel-specific ST77916 initialization sequence and a strip DMA
-renderer; no framebuffer, LVGL, or external animation assets are required. USB Serial/JTAG owns the
+The 360 x 360 round display uses the panel-specific ST77916 initialization sequence and the shared
+LVGL UI with partial DMA updates. USB Serial/JTAG owns the
 console because the normal ESP32-S3 UART0 pins overlap the backlight and board LED.
 
 The physical audio link runs directly at mybot's 16 kHz boundary. Capture and playback share a
@@ -272,22 +272,13 @@ CoreS3 playback uses a bounded PCM FIFO and independent I2S writer to absorb pro
 variation. The optional [offline audio comparison](docs/CORES3_AUDIO_TEST.md) tests timed and
 continuous feeding with and without capture; normal firmware uses the same buffered path.
 
-The default CoreS3 renderer pre-renders eight fixed workflow pages and eight conversation/voiceprint combinations during
-the first LCD initialization. These 16 native RGB565 frames use 2,457,600 bytes of PSRAM (about
-2.34 MiB), in addition to the dynamic pairing-code framebuffer. Subsequent updates flush cached
-pixels without repeating font and shape rendering. Initialization yields between pages; allocation
-failure releases partial caches and falls back to dynamic rendering. Cache references survive SDK
-stop/start and are freed with the final LCD owner. SPI still refreshes the entire screen.
+The [LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing codes,
+persistent voiceprint status, local state emoji, and listening/thinking/speaking indicators.
+It uses partial redraws and a 10 KiB DMA buffer; the previous full-screen cached renderer has
+been removed. CoreS3 LVGL has passed real-device testing. Light/dark themes and optional 10-fps
+activity animations are configured in menuconfig; touch gestures remain unchanged.
 
-An optional [LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing
-codes, persistent voiceprint status, local state emoji, and listening/thinking/speaking indicators. Enable
-`CONFIG_MYBOT_LVGL_UI` to select it instead of the cached renderer; the option defaults to
-off. It uses partial redraws and a 10 KiB DMA buffer without the 16-page cache. The initial status
-UI has passed real-device testing; light/dark themes, brief event notifications, and optional
-10-fps activity animations require hardware regression testing. Theme and animation choices are
-set in menuconfig; touch gestures remain unchanged.
-
-All supported panel boards use the shared LVGL backend with `CONFIG_MYBOT_LVGL_UI`. See
+All supported display boards automatically use LVGL as their only rendering backend. See
 [platform UI](docs/PLATFORM_UI.md) for panel sizes, adapter coverage, build variants, and validation limits.
 
 CoreS3 also provides optional GC0308 camera uplink: 320 x 240 software JPEG, at most 1 fps while
@@ -354,9 +345,9 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds all board profiles, both languages, and the bundled RTSA 60 ms cadence. Six CoreS3
-configurations cover the LVGL UI language/video combinations, light theme, and disabled activity
-animations; additional LVGL variants cover the other panel adapters listed in
+CI builds 22 configurations covering all board profiles, both languages, and the bundled RTSA
+60 ms cadence. Six CoreS3 configurations cover the language/video combinations, light theme,
+and disabled activity animations. All display-board builds use LVGL, as described in
 [Platform LVGL UI](docs/PLATFORM_UI.md). M5Stack CoreS3
 provisioning and bidirectional voice interaction have been validated on
 real hardware. The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack

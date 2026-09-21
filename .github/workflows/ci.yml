@@ -156,108 +156,16 @@ jobs:
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: m5stack-core-s3
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: m5stack-core-s3
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: m5stack-core-s3
-            language: zh-CN
-            ptime: 60
-            video: jpeg-1fps
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/video.defaults
-          - board: m5stack-core-s3
-            language: en-US
-            ptime: 60
-            video: jpeg-1fps
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults;ci/video.defaults
-          - board: m5stack-core-s3
             language: en-US
             ptime: 60
             ui: lvgl-light
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults
+            defaults: ci/ptime60.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults
           - board: m5stack-core-s3
             language: zh-CN
             ptime: 60
             video: jpeg-1fps
             ui: lvgl-static
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults
-          - board: zhengchen-1.54tft-ml307
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: zhengchen-1.54tft-ml307
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: zhengchen-1.54tft-wifi
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: zhengchen-1.54tft-wifi
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: m5stack-stick-s3
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: m5stack-stick-s3
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: esp-vocat
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: esp-vocat
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: esp32-s3-touch-amoled-1.75
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: esp32-s3-touch-amoled-1.75
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: esp32-s3-touch-amoled-1.75c
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: esp32-s3-touch-amoled-1.75c
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
-          - board: sensecap-watcher
-            language: zh-CN
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults
-          - board: sensecap-watcher
-            language: en-US
-            ptime: 60
-            ui: lvgl
-            defaults: ci/ptime60.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults
+            defaults: ci/ptime60.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults
     steps:
       - uses: actions/checkout@v4
       - name: Verify toolchain

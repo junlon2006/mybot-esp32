@@ -36,7 +36,8 @@ reject the enabled configuration. CoreS3-SE has no GC0308 and is not a supported
 Two 153,600-byte capture buffers and one 131,072-byte JPEG buffer use about 428 KiB of PSRAM.
 The encoder also allocates workspace. The DVP driver reserves 32 KiB of internal DMA memory plus
 descriptors and a capture task; the encoding worker has a 6 KiB stack. Check internal free memory
-and the largest free block during a call, not only total PSRAM. Existing UI caches remain enabled.
+and the largest free block during a call, not only total PSRAM. LVGL objects use PSRAM and the UI
+has a separate 10 KiB internal DMA buffer; it does not allocate a full-screen page cache.
 
 The JPEG worker uses priority 3 and no additional encoder helper task. The DVP copy task retains
 the upstream driver's higher priority for timely DMA service. This path does not use the audio

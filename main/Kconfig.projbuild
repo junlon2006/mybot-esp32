@@ -88,14 +88,6 @@ menu "mybot"
             and continuous without capture. Uses the saved speaker volume.
             Wi-Fi and mybot are not started. Disable and rebuild to resume normal use.
 
-    config MYBOT_LVGL_UI
-        bool "Enable LVGL UI on supported display boards"
-        default n
-        help
-            Enables the shared LVGL workflow UI on display boards that provide
-            a panel adapter, including m5stack-core-s3.
-            Unsupported or headless boards reject this option during configuration.
-
     config MYBOT_LVGL_UI_LIGHT_THEME
         bool "Use the LVGL light theme"
         depends on MYBOT_LVGL_UI

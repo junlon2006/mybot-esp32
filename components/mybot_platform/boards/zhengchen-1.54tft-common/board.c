@@ -5,6 +5,7 @@
 
 #include "platform/board_actions.h"
 #include "board_config.h"
+#include "display/board_backlight.h"
 #include "announcement/embedded_ogg_prompt.h"
 #include "esp_log.h"
 #include "network/wifi_control.h"
@@ -21,9 +22,6 @@ const mybot_key_ops_t *mybot_esp32s3_button_ops(void);
 const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_esp32s3_lcd_ops(void);
-#if CONFIG_MYBOT_LVGL_UI
-const mybot_lcd_ops_t *MYBOT_LVGL_OPS_NAME(void);
-#endif
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 int mybot_esp32s3_buttons_start(void);
 
@@ -64,12 +62,24 @@ static void board_on_button_provisioning(void) {
     board_on_provisioning("button");
 }
 
+int mybot_board_set_display_backlight(unsigned percent) {
+    if (percent > 100) {
+        return -1;
+    }
+    return gpio_set_level(MYBOT_DISPLAY_BACKLIGHT, percent != 0) == ESP_OK ? 0 : -1;
+}
+
 static int board_prepare(void) {
-#if CONFIG_MYBOT_LVGL_UI
-    s_lcd_ops = MYBOT_LVGL_OPS_NAME();
-#else
+    const gpio_config_t power_config = {
+        .pin_bit_mask = (1ULL << MYBOT_DISPLAY_POWER) | (1ULL << MYBOT_DISPLAY_BACKLIGHT),
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    if (gpio_config(&power_config) != ESP_OK || gpio_set_level(MYBOT_DISPLAY_POWER, 1) != ESP_OK ||
+        mybot_board_set_display_backlight(0) < 0) {
+        ESP_LOGE(TAG, "event=board_prepare component=display_power result=error");
+        return -1;
+    }
     s_lcd_ops = mybot_esp32s3_lcd_ops();
-#endif
     if (!s_lcd_ops || s_lcd_ops->init(&s_lcd_ctx) < 0) {
         ESP_LOGE(TAG, "event=board_prepare component=display result=error");
         return -1;
@@ -121,12 +131,7 @@ static int board_register_platform(void) {
         .audio_volume = mybot_esp32s3_audio_volume_ops(),
         .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
-        .lcd =
-#if CONFIG_MYBOT_LVGL_UI
-            MYBOT_LVGL_OPS_NAME(),
-#else
-            mybot_esp32s3_lcd_ops(),
-#endif
+        .lcd = mybot_esp32s3_lcd_ops(),
     };
 
     return mybot_platform_register(&descriptor);

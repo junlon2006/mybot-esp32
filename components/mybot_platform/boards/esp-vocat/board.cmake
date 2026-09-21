@@ -32,11 +32,8 @@ set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/vocat_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/vocat_codec_audio.c"
 )
-mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "vocat_renderer.c")
-if(CONFIG_MYBOT_LVGL_UI)
-    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")
-    mybot_display_add_lvgl_bridge(MYBOT_BOARD_SOURCES "vocat_panel_provider.c")
-endif()
+mybot_display_add_panel(MYBOT_BOARD_SOURCES "st77916/st77916_panel.c")
+mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")
 set(MYBOT_BOARD_REQUIRES
     button
     esp_codec_dev

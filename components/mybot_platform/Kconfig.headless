@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+config MYBOT_LVGL_UI
+    bool
+    default n
+    help
+        The selected board has no display and does not compile the LVGL backend.

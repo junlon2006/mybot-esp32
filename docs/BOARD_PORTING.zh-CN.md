@@ -79,6 +79,10 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 7. 增加隔离的 CI 构建与尺寸报告，并记录真实设备的配网、HTTPS、RTC、双向音频、输入、
    显示、挂断与重复启停验证。
 
+所有带屏板型使用共享 LVGL 界面，不保留旧渲染器或后端选择开关。控制器初始化和销毁放在
+`src/drivers/display/panels/`，通过 `display.cmake` 和可复用的 LVGL 适配器接入。
+`CONFIG_MYBOT_LVGL_UI` 是根据板型确定的隐藏配置，无屏板型不启用；主题与动画仍可配置。
+
 LCD `indicators` 是语义化基础画面上的非互斥叠加状态。实现应显示已识别的 bit，不替换基础
 流程标题，并忽略未知 bit。`MYBOT_LCD_INDICATOR_VP_REGISTERED` 当前只在
 `MYBOT_LCD_SCREEN_IN_CONVERSATION` 有意义。ESP32-S3 显示实现会在尚未出现 registered
@@ -117,8 +121,8 @@ ESP-VoCat 采集与播放使用相同的两槽标准 I2S 时钟，直接运行�
 提供共享时钟。如果发布硬件无法稳定使用 16 kHz，应在该 driver 内实现有状态的 24 到 16 kHz
 与 16 到 24 kHz 转换，不改变 mybot 契约。
 
-360 x 360 ST77916 圆屏使用 Board 专用初始化序列与全宽 RGB565 DMA 条带。CST816S 使用
-GPIO10 任意沿中断，仅在事件后读取控制器；20 ms 定时检查只在按住期间运行，用于识别 3 秒
+360 x 360 ST77916 圆屏使用 Board 专用初始化序列与共享 LVGL 界面，通过 RGB565 DMA 局部
+刷新。CST816S 使用 GPIO10 任意沿中断，仅在事件后读取控制器；20 ms 定时检查只在按住期间运行，用于识别 3 秒
 长按。该 profile 禁止 CST816S ID 读取，因为已支持的触摸固件批次不保证响应该寄存器。
 CST816S 与 Boot 输入由 Board 常驻持有，使 mybot 停止期间仍可长按配网。电量、BMI270、
 PCB 电容控制、SD、LED 行为、摄像头扩展、本地 AEC、参考音频、关机与低功耗均不在首版范围。
@@ -139,8 +143,8 @@ ES7210 与 ES8311 共用 I2S0 时钟域。首版只选择主麦，TX/RX 统一�
 I2S；采集提取左 slot，播放将单声道复制到两个 slot，并保持 Cloud AEC。仅采集时也必须保持
 TX 运行以提供 MCLK/BCLK/WS。播放参考输入与本地 AEC 不通过 mybot 音频接口暴露。
 
-CO5300 QSPI 使用 466 x 16 RGB565 全宽 DMA 条带和 (6, 0) panel gap，每次传输保持偶数像素
-边界；首版明确不引入完整 framebuffer 与 LVGL。CST9217 与 Boot 输入由 Board 常驻持有，使
+CO5300 QSPI 使用共享 LVGL 界面、RGB565 局部 DMA 缓冲和 (6, 0) panel gap，每次传输保持
+偶数像素边界，不分配完整 framebuffer。CST9217 与 Boot 输入由 Board 常驻持有，使
 mybot 停止期间任一输入仍能请求配网。在各自匹配的发布硬件完成电源、音频 slot、显示和触摸
 验证前，两个 profile 均仅属于构建支持。
 

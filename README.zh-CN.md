@@ -27,7 +27,7 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
   集成者提供匹配的 RTSA 构建。
 - Agora RTSA 全双工音频、Cloud AEC、AI QoS、RTM 频道订阅与声纹状态显示。
 - 所有 Board profile 共用有界 PCM 播放缓冲和独立 I2S 播放任务。
-- LCD 板型可选共享 LVGL 流程界面，默认继续使用原有渲染器。
+- 所有带屏板型自动启用共享 LVGL 流程界面。
 - 中英文配对码与 Wi-Fi 配网本地提示音。
 - 编译期 Board profile，隔离 Flash、PSRAM、分区、驱动和引脚配置。
 
@@ -156,8 +156,8 @@ CPU 和内存诊断可在 menuconfig 的 `mybot → Enable debug CPU and memory 
 
 所有板型在同一开关下还会输出 `mybot_stats` 播放周期统计：`playback_stats` 包含 I2S 写入次数、
 请求/实际帧数、超时、错误、短写、零进展次数与平均/最大写入耗时；`playback_gaps` 包含
-两次 I2S 写入起点的最大间隔，以及上次返回到下次开始的最大间隔。CoreS3 默认缓存渲染器的
-`ui_stats` 另外统计 framebuffer 绘制和 SPI 刷新的平均/最大耗时及总耗时峰值。耗时单位为微秒，`*_at_ms` 是
+两次 I2S 写入起点的最大间隔，以及上次返回到下次开始的最大间隔。可通过 CPU/堆统计及
+显示生命周期日志评估 UI。播放耗时单位为微秒，`*_at_ms` 是
 峰值操作起点的启动后毫秒数，可与串口日志时间对照。计数和峰值在每次汇总后清零；跨周期
 写入归入完成时所在周期。停止时被打断的写入也包含在统计内。语音停顿会产生长间隔，不能据此
 直接判断欠载；SDK 公开接口未提供队列欠载计数，因此显示 `sdk_queue_underruns=unavailable`。
@@ -202,8 +202,8 @@ GPIO3 低有效 LCD reset；V1.2 使用 DIN GPIO3、PA GPIO15 与 GPIO47 高有�
 GPIO48 两种电源状态都无法探测到 `0x18` 的 ES8311，Board prepare 会直接失败，不会选择可能
 驱动冲突引脚的默认版本。
 
-360 x 360 圆屏使用专用 ST77916 初始化序列与条带 DMA 渲染，不依赖 framebuffer、LVGL 或
-外部动画资源。ESP32-S3 默认 UART0 引脚与背光及板载 LED 重叠，因此控制台使用 USB
+360 x 360 圆屏使用专用 ST77916 初始化序列与共享 LVGL UI，通过 DMA 局部刷新。
+ESP32-S3 默认 UART0 引脚与背光及板载 LED 重叠，因此控制台使用 USB
 Serial/JTAG。
 
 物理音频链路直接使用 mybot 的 16 kHz 边界。采集与播放共享两槽标准 I2S 时钟域；采集仅向
@@ -254,19 +254,12 @@ CoreS3 播放使用有界 PCM FIFO 和独立 I2S 播放任务，缓冲供数调�
 [离线音频对照测试](docs/CORES3_AUDIO_TEST.zh-CN.md) 对比定时/连续供数及采集开启/关闭；
 普通固件使用相同的缓冲播放路径。
 
-CoreS3 默认渲染器在首次 LCD 初始化时预渲染 8 张固定状态页和 8 张对话/声纹状态组合，共缓存 16 张
-原生 RGB565 画面，额外使用 2,457,600 字节 PSRAM（约 2.34 MiB）。配对码仍使用动态
-framebuffer。后续状态更新直接刷新缓存像素，不再重复计算字体和图形。初始化逐张让出 CPU；
-分配失败时释放已建缓存并回退到动态绘制。缓存跨 SDK 启停复用，在最后一个 LCD 使用者退出
-时释放。SPI 仍采用全屏刷新。
+[LVGL UI](docs/CORES3_UI.zh-CN.md) 提供中英文流程页面、配对码、常驻声纹状态、
+本地状态表情及聆听/思考/说话指示，采用局部刷新和 10 KiB DMA 缓冲，原全屏缓存渲染器
+已删除。CoreS3 LVGL 已通过真机验证。明暗主题和可选的 10 fps 状态动画通过 menuconfig
+选择，触摸手势保持不变。
 
-可选的 [LVGL UI](docs/CORES3_UI.zh-CN.md) 提供中英文流程页面、配对码、常驻声纹状态、
-本地状态表情及聆听/思考/说话指示。开启 `CONFIG_MYBOT_LVGL_UI` 后替换缓存渲染器，此选项
-默认关闭。新界面采用局部刷新和 10 KiB DMA 缓冲，不分配 16 页缓存。
-基础状态界面已通过真机验证；新增明暗主题、短时事件通知和可选的 10 fps 状态动画仍需真机
-回归。主题及动画通过 menuconfig 选择，触摸手势保持不变。
-
-所有支持的 LCD 板型均通过 `CONFIG_MYBOT_LVGL_UI` 使用共享 LVGL 后端，面板尺寸、适配范围、
+所有支持的带屏板型自动使用 LVGL 作为唯一渲染后端，面板尺寸、适配范围、
 构建变体和验证边界见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。
 
 CoreS3 另提供可选的 GC0308 视频上行：320 x 240 软件 JPEG，仅在 RTC 连接期间以最多
@@ -328,9 +321,9 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 构建全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；六项 CoreS3
-配置覆盖 LVGL UI 的中英文/视频组合、浅色主题及关闭状态动画，其他面板适配器也有额外
-LVGL 变体，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。M5Stack CoreS3
+CI 共构建 22 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
+六项 CoreS3 配置覆盖中英文/视频组合、浅色主题及关闭状态动画。所有带屏板型构建均使用
+LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。M5Stack CoreS3
 已完成真机配网与双向语音交互验证。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
 硬件版本、M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。
