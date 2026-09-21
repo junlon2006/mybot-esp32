@@ -11,7 +11,7 @@ Versioning and Conventional Commits.
   pairing codes, voiceprint status, and listening/thinking/speaking indicators.
 - LVGL light/dark themes, local state emoji, rounded status cards, persistent voiceprint
   indicators, and brief pairing/voiceprint/network notifications. Optional activity animations
-  run at up to 10 fps; theme and animation choices are build settings.
+  run at up to 5 fps; theme and animation choices are build settings.
 - Provisioning screens display the actual device hotspot name. Names and connection hints
   scroll only when they exceed the available width, including with activity animations disabled;
   leaving provisioning stops the text scrolling.
@@ -57,6 +57,10 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Request CoreS3 DVP capture at most five times per second, holding capture buffers between
+  samples so idle periods stop DMA and copying. The sensor retains its 20 fps timing and JPEG
+  uplink remains capped at 1 fps. Increase the DVP DMA configuration to 16,384 bytes
+  (15 KiB allocated for QVGA YUYV), and reduce shared UI activity animation to 5 fps.
 - Count in-flight SPI callbacks across consecutive CoreS3 LVGL UI flushes so teardown waits
   for all pending transfers.
 
@@ -103,7 +107,8 @@ Versioning and Conventional Commits.
 
 - CoreS3 LVGL, including the theme/emoji stage, has passed real-device testing. The subsequent
   rollout and renderer cleanup across display boards, and the latest provisioning SSID/scrolling
-  changes, still need hardware regression testing. Conversation transcripts, cloud emotion
+  changes, still need hardware regression testing. The newer 5 fps DVP sampling and larger DMA
+  buffers also require CPU, internal-memory, and concurrent-audio measurements. Conversation transcripts, cloud emotion
   messages, and GIF animation are not included.
 - ML307/4G and wake words are not yet supported.
 - Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback

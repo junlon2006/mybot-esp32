@@ -72,6 +72,9 @@ Firmware integration differences are limited to the active ESP32-S3 build:
 - The video components include only the GC0308 DVP path, native I2C SCCB, and the ESP32-S3 JPEG
   library. Local CMake/Kconfig replace registry metadata and pin component versions; sensor
   detection uses the static table, the default format is QVGA YUYV, and SCCB timeout is 100 ms.
+  The local DVP DMA-size default is 16,384 bytes with video enabled; the driver's frame alignment
+  allocates 15 KiB of internal DMA memory for QVGA YUYV. The platform supplies capture buffers
+  at most five times per second while retaining the sensor's 20 fps register configuration.
   Unused transports, sensors, examples, and registry caches are omitted. Video sources and the
   JPEG binary are linked only with `CONFIG_MYBOT_ENABLE_VIDEO=y`.
 

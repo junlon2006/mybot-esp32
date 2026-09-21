@@ -28,7 +28,9 @@ in the header when the corresponding state transition is observed. Notifications
 pairing digits or replace the conversation voiceprint indicator. Repeated unchanged states do
 not repeatedly trigger notifications. Moving to another workflow screen clears the previous notification.
 
-Listening/thinking/speaking activity uses small, local dot/bar animations capped at 10 fps.
+Listening/thinking/speaking activity uses small, local dot/bar animations capped at 5 fps
+(one animation step every 200 ms). State changes and provisioning text scrolling retain their
+existing refresh behavior.
 These indicate the SDK state and do not measure audio amplitude. Activity animation stops when
 leaving the active state; provisioning text can still scroll when needed.
 

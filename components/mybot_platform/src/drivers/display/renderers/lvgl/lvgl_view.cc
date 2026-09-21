@@ -16,7 +16,7 @@ LV_FONT_DECLARE(lv_font_montserrat_10);
 
 namespace {
 
-constexpr uint32_t kTimerPeriodMs = 100;
+constexpr uint32_t kTimerPeriodMs = 200;
 constexpr uint32_t kNotificationMs = 2000;
 
 struct Theme {

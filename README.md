@@ -279,7 +279,7 @@ continuous feeding with and without capture; normal firmware uses the same buffe
 
 The [LVGL UI](docs/CORES3_UI.md) provides Chinese/English workflow screens, pairing codes,
 persistent voiceprint status, local state emoji, and listening/thinking/speaking indicators.
-It uses partial redraws and a 10 KiB DMA buffer. Light/dark themes and optional 10-fps activity
+It uses partial redraws and a 10 KiB DMA buffer. Light/dark themes and optional 5-fps activity
 animations are configured in menuconfig; necessary provisioning text scrolling remains enabled
 when activity animation is off. Touch gestures remain unchanged.
 
