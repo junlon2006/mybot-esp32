@@ -4,11 +4,15 @@
 
 All nine board profiles use one PCM playback buffer through seven board audio drivers. This
 keeps the SDK boundary at 16 kHz, mono signed-16 PCM and moves continuous I2S feeding into an
-independent task. It does not change capture clocks, codec initialization, or the vendored SDK.
+independent task. The shared implementation is
+[`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c);
+each board driver supplies its native I2S sink.
 
 ## Why buffer playback
 
-The SDK supplies 960 frames of PCM every 60 ms. Previously, each driver wrote these packets
+The bundled SDK/RTSA combination uses 960-frame PCM packets at 60 ms. This is the default and
+the only packet duration supported by the bundled RTSA library; selecting 20 or 40 ms is rejected
+at configuration time until a matching library is supplied. Previously, each driver wrote these packets
 directly to I2S; continuity between burst writes and continuous DMA consumption depended on
 buffer levels and refill timing. The CoreS3 comparison reproduced crackle with stable timed
 feeding but clean continuous feeding; DMA zero insertion and prefetch boundaries were not
@@ -16,12 +20,15 @@ measured directly. All boards shared this supply pattern, but audible noise was 
 on every board.
 
 The shared writer accepts up to 3,840 mono frames (7,680 bytes) into a FIFO. Playback starts
-at 1,920 buffered frames, or after 100 ms from the first frame for short clips. It writes at most
+at 1,920 buffered frames, or when 100 ms has elapsed from the first queued frame. The latter
+is a prebuffer deadline checked when the worker runs, not a guaranteed scheduling latency.
+An explicit drain also releases the prebuffer so a short tail can finish. It writes at most
 240 frames (15 ms) at a time; the I2S driver's wait for available DMA space paces subsequent
 writes. All current sinks use six DMA buffers of 240 frames, totaling 90 ms at 16 kHz.
 
 The FIFO prefers PSRAM and falls back to internal RAM. Each playback stream also owns a
-4-KiB task stack, conversion state, and synchronization objects. Buffering adds latency; verify
+4-KiB task stack, a 480-byte PCM scratch buffer, conversion state, and synchronization objects.
+The writer runs at priority 5 without fixed core affinity. Buffering adds latency; verify
 conversation responsiveness and Cloud AEC as well as clean audio.
 
 ## Board output formats
@@ -58,21 +65,26 @@ and preload silence into DMA before reusing it. The board-specific power, clock,
 behavior remains in each driver.
 
 Wi-Fi provisioning prompts and the offline test use a separate drain operation before stopping,
-allowing the FIFO and hardware tail to finish. Drain includes 120 ms after the last accepted I2S write, covering the
+allowing the FIFO and hardware tail to finish. Provisioning prompts feed this same FIFO in
+320-frame chunks, independently of the SDK's 960-frame packets. Drain includes 120 ms after the last accepted I2S write, covering the
 current 90-ms DMA capacity; this is a conservative timing bound, not a hardware completion event.
 
 ## Diagnostics and validation
 
 Normal `event=playback_buffer` logs report start configuration, write failures, and stop totals
-on every board. `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR` additionally enables periodic playback
-timing/error statistics; these describe the worker's I2S writes rather than SDK packet delivery.
+on every board. `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR` defaults to off. Enabling it adds per-core
+CPU estimates, internal/PSRAM heap statistics, and `event=playback_stats`/`event=playback_gaps`.
+The default interval is 5,000 ms, controlled by `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR_INTERVAL_MS`.
+Playback counters cover each report interval and describe the worker's I2S writes rather than
+SDK packet delivery. The removed renderer's `event=ui_stats` is no longer emitted.
 `rebuffer_events` estimates when playback needs buffering again and may include speech pauses.
 It is not a DMA-underrun counter.
 
-The shared implementation is extracted from the CoreS3 buffering approach that passed real-device
-testing with video enabled and disabled. The extracted implementation and other boards still need
-hardware regression testing; host simulations and firmware builds cannot establish their audible
-result. The [offline comparison](CORES3_AUDIO_TEST.md) remains CoreS3-only.
+CoreS3 real-device testing passed all three offline stages after buffering was added; normal
+conversations also passed with video enabled and disabled. That is the recorded hardware baseline.
+The subsequent shared-buffer extraction and platform/UI changes still need per-board regression;
+host simulations and firmware builds cannot establish their audible result. The
+[offline comparison](CORES3_AUDIO_TEST.md) remains CoreS3-only.
 
 For each additional board, test continuous conversation with capture active, first-boot and
 button-triggered Wi-Fi prompts, pairing-code tails, repeated hangup/restart, volume persistence,

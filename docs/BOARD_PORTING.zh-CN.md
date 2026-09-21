@@ -2,27 +2,42 @@
 
 > [English](BOARD_PORTING.md) | [简体中文](BOARD_PORTING.zh-CN.md)
 
-mybot 固件在编译期只选择一块 Board。工程不做运行时板卡探测，因为 ESP-IDF target、Flash
-大小与模式、PSRAM 模式和分区表都必须在组件配置前确定。
+mybot 固件在编译期只选择一个 Board profile，不在运行时切换 profile，因为 ESP-IDF target、
+Flash 大小与模式、PSRAM 模式和分区表都必须在组件配置前确定。同一个 profile 可以探测兼容的
+硬件版本，例如 ESP-VoCat。
 
 ## 目录布局
 
 ```text
+main/                                      应用启动、网络前置条件与 MyBot 启停
+components/mybot_stack/
+  mybot_sdk/CMakeLists.txt                  SDK 快照的 ESP-IDF 构建封装
+  mybot_sdk/mybot/                          MyBot SDK 只读快照
+  aosl/                                    AOSL 组件
+  agora_rtc/                               Agora RTSA 头文件和库
 components/mybot_platform/
-  include/mybot_platform/board.h       Board 元数据与注册入口
-  src/platform/               Board 注册与配网事件归属
-  src/services/               网络、存储、提示音、音频和诊断等公共服务
-  src/drivers/                可复用的硬件驱动
-  boards/<board-id>/          Board 描述、引脚、源码和 sdkconfig defaults
+  include/mybot_platform/                   平台集成的公开头文件
+  src/platform/                            Board 注册与配网事件归属
+  src/services/                            网络、存储、提示音、音频与诊断
+  src/drivers/                             音频、显示、输入与视频驱动
+  src/internal/<module>/                    服务和驱动的私有头文件
+  boards/<board-id>/                        Board 描述、引脚、源码和 sdkconfig defaults
 ```
+
+`mybot_sdk`、`aosl` 和 `agora_rtc` 仍是独立 ESP-IDF 组件，由根 CMake 通过
+`EXTRA_COMPONENT_DIRS` 发现；父目录 `mybot_stack` 本身不是组件。平台代码只能引用
+`mybot_sdk/mybot/include/mybot/` 下的公开头文件，不得引用 SDK 私有头文件或源码。上游版本
+记录在 [VENDORED_SOURCES.md](../VENDORED_SOURCES.md)。
 
 固定版本的 mybot core 保持与板卡无关。每个 Board 提供生命周期覆盖整个进程的
 `mybot_board_t`，负责产品网络前置条件和配网流程，并注册一个完整的
 `mybot_platform_descriptor_t`。mybot Wi-Fi adapter 只连接已可用的网络并监听运行期链路变化；
-它不负责首次配网，也不关闭 Board 网络。
+它不负责首次配网，也不关闭 Board 网络。`main/app_main.c` 等待网络可用后调用
+`mybot_start()`，按键触发配网时先调用 `mybot_stop()`；SDK 停止期间，Board 持有的显示和
+输入仍然可用。
 
-KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD、提示音与唤醒词在当前产品
-配置要求时才是必需能力。
+Wi-Fi、KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS、LCD、提示音与唤醒词在当前
+产品配置要求时才是必需能力。
 
 编码视频通过 `CONFIG_MYBOT_ENABLE_VIDEO` 显式开启。CoreS3 使用公开的 `mybot_video_ops_t`
 接入 GC0308 采集和 JPEG 编码，最多 1 fps。初始化不得启动采集；start 调度编码任务；stop
@@ -64,6 +79,11 @@ idf.py -B build/<board-id> \
 Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `sdkconfig.defaults`，target
 公共设置放在 `sdkconfig.defaults.<target>`。
 
+随附 RTSA 包只支持 60 ms 音频帧。虽然 menuconfig 仍列出 20 ms 和 40 ms，但在提供匹配的
+RTSA 包前，SDK 构建封装会拒绝这些配置。[CI 工作流](../.github/workflows/ci.yml)当前有
+22 项固件构建：九个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
+主题构建，以及一个关闭会话动画的视频构建。这是构建覆盖，不代表真机验收。
+
 ## 新增 Board
 
 1. 新增 `boards/<board-id>/board.cmake`、`board.c`、`board_config.h` 与
@@ -76,12 +96,22 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 5. 电源时序及特殊 codec、显示、触摸或输入行为应留在 Board 或硬件 driver 内，不要向
    `components/mybot_stack/mybot_sdk/mybot` 添加 ESP-IDF 细节。
 6. 保持 SDK 音频边界：16 kHz、单声道、signed 16-bit PCM，接口传帧数而不是字节数。
-7. 增加隔离的 CI 构建与尺寸报告，并记录真实设备的配网、HTTPS、RTC、双向音频、输入、
-   显示、挂断与重复启停验证。
+7. 在 `components/mybot_platform/CMakeLists.txt` 选择显示能力：带屏板型使用
+   `Kconfig.display` 启用 LVGL，无屏板型使用 `Kconfig.headless`。当前无屏选择覆盖
+   ReSpeaker Flex，新增无屏板型时需同步此选择。
+8. 增加两种语言的隔离 CI 构建与尺寸报告，并记录真实设备的配网、HTTPS、RTC、双向音频、
+   输入、显示、挂断与重复启停验证。
 
 所有带屏板型使用共享 LVGL 界面，不保留旧渲染器或后端选择开关。控制器初始化和销毁放在
 `src/drivers/display/panels/`，通过 `display.cmake` 和可复用的 LVGL 适配器接入。
 `CONFIG_MYBOT_LVGL_UI` 是根据板型确定的隐藏配置，无屏板型不启用；主题与动画仍可配置。
+共享面板契约位于 `src/internal/display/display_panel.h`，内部头文件不属于 SDK API；
+板级电源和背光控制仍归 Board 层所有。
+
+配网页面通过网络服务的 `mybot_wifi_get_provisioning_ssid()` 获取实际 SoftAP 名称。服务
+在状态锁保护下复制到调用者缓冲区，不返回借用指针，也不在 getter 中获取网络操作锁。
+不要复用 SDK 的配对码字段传递网络文字。即使关闭会话动画，配网长文字仍可自动滚动，
+详见[平台 UI](PLATFORM_UI.zh-CN.md)。
 
 LCD `indicators` 是语义化基础画面上的非互斥叠加状态。实现应显示已识别的 bit，不替换基础
 流程标题，并忽略未知 bit。`MYBOT_LCD_INDICATOR_VP_REGISTERED` 当前只在
@@ -161,10 +191,12 @@ SenseCAP Watcher 必须使用专用分区表。其 `nvsfactory` 分区从 `0x900
 
 Watcher 首版将 ES8311 与 ES7243E 直接配置为 16 kHz 单声道 signed-16 PCM。如果真机无法
 稳定使用该时钟配置，应保留 24 kHz 物理链路并在 Board driver 内加入有状态重采样，不改变
-SDK 边界。SPD2010 QSPI 刷新的 X 起点与宽度必须按 4 像素对齐；412 像素全宽条带满足该约束。
+SDK 边界。SPD2010 QSPI 刷新的 X 起点与宽度必须按 4 像素对齐；共享适配器在 LVGL 绘制前
+扩展无效区域，使 412 像素面板的局部刷新保持该约束。
 
 M5Stack StickS3 的 M5PM1 G2 是 ST7789P3 显示屏与 ES8311 codec 共用的进程级电源，固件
 运行期间保持开启；G3 归播放生命周期管理，codec 准备播放前不得开启。物理 I2S 链路使用
 双声道，但 SDK 边界仍为 16 kHz 单声道 signed-16 PCM：采集选择麦克风 slot，播放将单声道
 样本复制到两个 slot。135 x 240 显示区域使用 (52, 40) panel offset，所有状态文字与配对码
 必须按 135 像素逻辑宽度计算。GPIO11 由 Board 常驻持有，使 mybot 停止期间仍能长按请求配网。
+背光由 Board 的 LEDC 输出控制，亮度为 60%；显示适配器不得将该引脚重新配置为普通 GPIO。

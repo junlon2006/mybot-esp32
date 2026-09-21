@@ -4,8 +4,8 @@
 
 `m5stack-core-s3` uses LVGL as its only display backend. The same semantic view is reused by all
 supported panel adapters; see [Platform LVGL UI](PLATFORM_UI.md). The board profile automatically
-sets the hidden `CONFIG_MYBOT_LVGL_UI` symbol. The previous cached renderer and its 16-page,
-approximately 2.34 MiB PSRAM cache have been removed.
+sets the hidden `CONFIG_MYBOT_LVGL_UI` symbol; no renderer selection or separate enable flag is
+required. Theme and activity-animation settings remain configurable.
 
 ## Displayed information
 
@@ -19,13 +19,18 @@ During Wi-Fi provisioning, the central title shows the actual device SoftAP SSID
 The lower hint remains "Connect to device Wi-Fi" or "请连接设备热点" according to the language.
 LVGL scrolls the title and hint in a loop only when they exceed the available width; short text
 stays still. Leaving the provisioning screen stops text scrolling.
+The SSID comes from the active AP, not a second UI-side MAC calculation. If it is unavailable,
+the title remains "Wi-Fi setup" (or "Wi-Fi 配网"); the serial log reports
+`event=provision_ap action=read_ssid result=unavailable`.
 
 Pairing success, voiceprint registration, and network recovery can show a notification for up to two seconds
 in the header when the corresponding state transition is observed. Notifications do not cover
 pairing digits or replace the conversation voiceprint indicator. Repeated unchanged states do
 not repeatedly trigger notifications. Moving to another workflow screen clears the previous notification.
 
-Listening/thinking/speaking activity uses small, local dot/bar animations capped at 10 fps.
+Listening/thinking/speaking activity uses small, local dot/bar animations capped at 5 fps
+(one animation step every 200 ms). State changes and provisioning text scrolling retain their
+existing refresh behavior.
 These indicate the SDK state and do not measure audio amplitude. Activity animation stops when
 leaving the active state; provisioning text can still scroll when needed.
 
@@ -82,6 +87,8 @@ The light/static defaults files change only their respective option.
 The UI task runs on Core 1 at priority 1. LVGL objects use PSRAM; SPI transfers use a single
 320 × 16 RGB565 buffer, or 10,240 bytes of internal DMA memory. Partial redraws update invalidated
 regions instead of copying complete cached screens. No image or full-screen page cache is allocated.
+The DMA buffer is not the total display memory: the UI task has a 7 KiB stack, and objects,
+rendering scratch space, synchronization objects, and bus descriptors need additional memory.
 
 Four 64 × 64 local emoji are stored as predecoded constant images in Flash, totaling approximately
 64 KiB of pixel data. Rendering needs no PNG/GIF decoder or large decoded-image cache. Activity
@@ -91,17 +98,18 @@ State submissions copy the latest LCD content and wake the UI task. A 50-ms LVGL
 pending content; rapid intermediate updates can be combined. SDK callbacks do not draw or wait
 for SPI transfers. Board and SDK references share the display across provisioning and conversation.
 
-LVGL introduces task, object, font, and rendering overhead. Removing the old page cache does not
-by itself establish the total memory savings or lower CPU usage. Audio and camera code are
-unchanged; their concurrent performance still needs measurement. The public SDK remains unchanged.
+Shared layouts adapt to each panel's dimensions and select smaller English fonts on narrow
+screens while retaining Chinese glyph coverage. Provisioning SSIDs use the readable 20 px font;
+pairing digits shrink to fit their available width. See [platform UI](PLATFORM_UI.md) for the
+StickS3 details. The public SDK interface remains unchanged.
 
 Lifecycle logs use `event=lcd` and `backend=lvgl`. Use CPU/heap statistics, lifecycle logs, and
 visual checks to assess the UI. LVGL render/flush timing is not included in the playback statistics.
 
 ## Hardware validation
 
-The earlier CoreS3 LVGL UI passed real-device testing. The provisioning SSID display and scrolling
-still need hardware regression testing. CI covers the four language/video combinations plus light-theme
+The earlier CoreS3 LVGL UI passed real-device testing. The LVGL-only cleanup and provisioning
+SSID display/scrolling still need hardware regression testing. CI covers the four language/video combinations plus light-theme
 and static-indicator variants. Successful builds and host checks do not establish the audible
 or visual result on the device.
 
@@ -121,4 +129,4 @@ Verify the following before selecting it for a release:
 - Record per-core CPU load, peak internal/PSRAM usage, minimum free heap and largest free blocks
   with `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR`; repeat sessions to detect sustained memory growth.
 
-Record firmware language, UI/video/theme/animation flags, volume, and complete serial logs with each result.
+Record firmware language, board, video/theme/animation settings, volume, and complete serial logs with each result.

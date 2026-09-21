@@ -6,13 +6,15 @@ This offline listening test helps investigate intermittent playback crackle on `
 It compares timed and continuous producers through the same buffered playback driver, then repeats
 continuous playback with microphone capture disabled. All three stages exercise the shared
 PCM FIFO and independent I2S writer. The expected result is clean playback in every stage; this
-still requires listening on the device.
+still requires listening on the device. The implementation is
+[`cores3_playback_test.c`](../components/mybot_platform/src/drivers/audio/cores3_playback_test.c).
 
 ## Playback path under test
 
 CoreS3 accepts PCM into a bounded 3,840-sample FIFO (7,680 bytes). An independent writer starts
-after buffering 1,920 samples (120 ms of audio), or after at most 100 ms from the first sample so
-that short clips can play. It feeds I2S continuously in 240-sample blocks (15 ms of audio), with
+after buffering 1,920 samples (120 ms of audio), or when the 100-ms prebuffer deadline expires so
+that short clips can play. Actual wake-up time also depends on task scheduling. It feeds I2S
+continuously in blocks of up to 240 samples (15 ms of audio), with
 driver waits pacing output. This separates producer scheduling from hardware feeding.
 
 Normal CoreS3 firmware also uses this path. `CONFIG_MYBOT_AUDIO_PLAYBACK_TEST` only enables the
@@ -21,13 +23,13 @@ with board-specific I2S formatting; see [buffered audio playback](AUDIO_PLAYBACK
 16 kHz sample rate, and codec settings remain unchanged. Buffering adds playback latency: after the offline
 test, verify normal conversations, end-of-speech tails, interruption/hangup, and Cloud AEC.
 
-The shared buffer is extracted from the CoreS3 approach that passed real-device testing with
-video enabled and disabled. The extracted implementation and other boards still need hardware
-regression testing.
+The three buffered stages have already passed CoreS3 real-device listening tests, as have normal
+conversations with video enabled and disabled. The later shared-buffer extraction and platform/UI
+changes still need regression testing; those changes do not establish results for other boards.
 
 ## Build and run
 
-Use ESP-IDF v5.5.2 and a separate build directory:
+Activate ESP-IDF v5.5.2, then run from the repository root with a separate build directory:
 
 ```sh
 idf.py -B build/cores3-audio-test \
@@ -41,10 +43,14 @@ idf.py -B build/cores3-audio-test -p <PORT> flash monitor
 video. The test and video options are mutually exclusive. Enabling the test on another board is
 rejected at configuration time. The test runs after
 board preparation on every boot, before Wi-Fi or `mybot_start`. Normal provisioning, pairing, and
-conversations do not run in this firmware.
+conversations do not run in this firmware. A fresh build uses Chinese prompts. To test English,
+append `;ci/en-us.defaults` to `SDKCONFIG_DEFAULTS` in a new build directory, or change
+`mybot → Product language` with `idf.py -B build/cores3-audio-test menuconfig`.
 
 Repeat the same build and flash commands in the same build directory after source updates to
-retest. The test restores the saved speaker volume from NVS and does not change it. Use the same device,
+retest. The test uses the saved speaker volume from NVS, or the driver's default of 70 if no valid
+record exists; it does not call the volume setter. The normal driver may remove an invalid NVS
+record. Use the same device,
 power supply, volume, and listening position throughout the comparison. No network connection or
 server audio is required.
 
@@ -54,7 +60,9 @@ The built-in pairing prompt and spoken digits 0–9 are decoded once to PCM befo
 fades and 250-ms silence separate clips to avoid abrupt joins. Each stage repeats that same audio
 from the beginning, using 16 kHz, mono signed-16 PCM and producer writes of 960 samples (60 ms of
 audio; partial writes retry the remaining samples). These are writes into the FIFO, not individual
-I2S transactions. Language follows the firmware's prompt language setting.
+I2S transactions. This 60-ms cadence matches the currently bundled RTSA package; 20/40-ms
+firmware configurations require a different matching package. Language follows the firmware's
+prompt language setting.
 
 | Stage | Audio duration | Playback | Microphone |
 | --- | --- | --- | --- |
@@ -99,8 +107,10 @@ longer waiting for FIFO space than timed producers. Producer writes wait at most
 may report short writes under normal backpressure; the test retries the remaining samples.
 Short writes alone do not mean data was lost.
 
-When resource/debug statistics are enabled, `event=playback_stats` measures the I2S writer's
-240-sample transactions rather than the producer's 960-sample writes. `event=playback_buffer`
+`CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR` is off by default and is not enabled by
+`ci/audio-test.defaults`; the test's own `event=progress` logs do not require it. When enabled,
+`event=playback_stats` measures the I2S writer's transactions of up to 240 samples rather than
+the producer's 960-sample writes. `event=playback_buffer`
 reports the following totals when playback stops:
 
 ```text

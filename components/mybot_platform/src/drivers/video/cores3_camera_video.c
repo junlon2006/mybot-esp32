@@ -33,6 +33,9 @@
 #define VIDEO_BUFFER_COUNT 2
 #define VIDEO_JPEG_CAPACITY (128 * 1024)
 #define VIDEO_INTERVAL_US INT64_C(1000000)
+#define VIDEO_CAPTURE_INTERVAL_US INT64_C(200000)
+#define VIDEO_CAPTURE_TIMEOUT_US INT64_C(1000000)
+#define VIDEO_CAPTURE_POLL_MS 100
 #define VIDEO_MIN_BPS 64000U
 #define VIDEO_MAX_BPS 512000U
 #define VIDEO_INITIAL_BPS ((VIDEO_MIN_BPS + VIDEO_MAX_BPS) / 2)
@@ -217,73 +220,105 @@ static int prepare_capture(void) {
     if (prepare_buffers() < 0) {
         return -1;
     }
-    return set_capture_timeout(100);
+    return set_capture_timeout(VIDEO_CAPTURE_POLL_MS);
+}
+
+static bool wait_for_capture_slot(int64_t deadline_us) {
+    while (!should_stop()) {
+        int64_t remaining_us = deadline_us - esp_timer_get_time();
+        if (remaining_us <= 0) {
+            return true;
+        }
+        uint32_t wait_ms = (uint32_t)((remaining_us + 999) / 1000);
+        if (wait_ms > VIDEO_CAPTURE_POLL_MS) {
+            wait_ms = VIDEO_CAPTURE_POLL_MS;
+        }
+        TickType_t ticks = pdMS_TO_TICKS(wait_ms);
+        vTaskDelay(ticks ? ticks : 1);
+    }
+    return false;
 }
 
 static void video_worker(void *argument) {
     (void)argument;
-    unsigned int encoded = 0, sent = 0, rejected = 0, dropped = 0, capture_errors = 0;
+    unsigned int captured = 0, encoded = 0, sent = 0, rejected = 0, dropped = 0, capture_errors = 0;
     unsigned int quality = 60;
-    unsigned int stale_frames = 0;
+    unsigned int capture_index = 0;
+    bool capture_pending = false;
     uint32_t previous_bps = target_bitrate();
     int64_t next_frame_us = esp_timer_get_time() + VIDEO_INTERVAL_US;
     int64_t next_send_us = 0;
+    int64_t next_capture_us = 0;
+    int64_t capture_deadline_us = 0;
     int64_t report_us = esp_timer_get_time();
     int64_t max_encode_us = 0;
     int last_bytes = 0;
 
-    s_video.buffers_clean = false;
-    for (unsigned int index = 0; index < VIDEO_BUFFER_COUNT; ++index) {
-        if (queue_buffer(index) < 0) {
-            ESP_LOGE(TAG, "event=video action=queue result=error");
-            goto done;
-        }
+    if (should_stop()) {
+        goto done;
     }
+    s_video.buffers_clean = false;
+    if (queue_buffer(capture_index) < 0) {
+        ESP_LOGE(TAG, "event=video action=queue result=error");
+        goto done;
+    }
+    capture_pending = true;
     const enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (should_stop() || ioctl(s_video.fd, VIDIOC_STREAMON, &type) < 0) {
         ESP_LOGW(TAG, "event=video action=stream_on result=not_started");
         goto done;
     }
     s_video.streaming = true;
-    ESP_LOGI(TAG, "event=video action=stream_on width=320 height=240 format=yuyv uplink_fps=1");
+    /* STREAMON may allocate/start the capture driver. Do not let that startup time
+     * consume the first sample spacing or the outstanding-frame deadline. */
+    next_capture_us = esp_timer_get_time() + VIDEO_CAPTURE_INTERVAL_US;
+    capture_deadline_us = esp_timer_get_time() + VIDEO_CAPTURE_TIMEOUT_US;
+    ESP_LOGI(TAG, "event=video action=stream_on width=320 height=240 format=yuyv sensor_fps=20 "
+                  "capture_fps=5 uplink_fps=1");
 
     while (!should_stop()) {
+        if (!capture_pending) {
+            if (!wait_for_capture_slot(next_capture_us)) {
+                break;
+            }
+            if (queue_buffer(capture_index) < 0) {
+                ESP_LOGE(TAG, "event=video action=queue result=error");
+                break;
+            }
+            capture_pending = true;
+            /* Schedule from this actual request, never catch up after a slow send. */
+            next_capture_us = esp_timer_get_time() + VIDEO_CAPTURE_INTERVAL_US;
+            capture_deadline_us = esp_timer_get_time() + VIDEO_CAPTURE_TIMEOUT_US;
+        }
         struct v4l2_buffer buffer = {
             .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
             .memory = V4L2_MEMORY_MMAP,
         };
         if (ioctl(s_video.fd, VIDIOC_DQBUF, &buffer) < 0) {
             ++capture_errors;
+            /* Timeout does not return ownership: keep waiting on the same buffer.
+             * The DVP driver can retry malformed frames internally; bound that work. */
+            if (esp_timer_get_time() >= capture_deadline_us) {
+                ESP_LOGE(TAG, "event=video action=capture result=timeout pending_buffers=1");
+                break;
+            }
             vTaskDelay(pdMS_TO_TICKS(1));
         } else {
-            if (buffer.index >= VIDEO_BUFFER_COUNT) {
+            if (buffer.index >= VIDEO_BUFFER_COUNT || buffer.index != capture_index) {
                 ESP_LOGE(TAG, "event=video action=capture result=error reason=buffer_index");
                 break;
             }
+            ++captured;
+            capture_pending = false;
+            capture_index = (buffer.index + 1) % VIDEO_BUFFER_COUNT;
+            /* With only one buffer queued and DVP backup reuse disabled, frame completion
+             * leaves the queue empty and stops DMA. Hold this buffer until the next 200-ms
+             * sample slot. Sensor/VSYNC continue at 20 fps; unrequested frames are not copied. */
             int bytes = 0;
             bool jpeg_ready = false;
             const int64_t now = esp_timer_get_time();
-            if (stale_frames > 0) {
-                --stale_frames;
-            } else if (!should_stop() && now >= next_frame_us) {
+            if (!should_stop() && now >= next_frame_us) {
                 next_frame_us = now + VIDEO_INTERVAL_US;
-                /* At most one queued older frame can remain with two capture buffers. */
-                if (set_capture_timeout(0) < 0) {
-                    break;
-                }
-                struct v4l2_buffer latest = {
-                    .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-                    .memory = V4L2_MEMORY_MMAP,
-                };
-                if (ioctl(s_video.fd, VIDIOC_DQBUF, &latest) == 0) {
-                    if (queue_buffer(buffer.index) < 0 || latest.index >= VIDEO_BUFFER_COUNT) {
-                        break;
-                    }
-                    buffer = latest;
-                }
-                if (set_capture_timeout(100) < 0) {
-                    break;
-                }
                 const uint32_t bps = target_bitrate();
                 if (bps != previous_bps) {
                     quality = 30 + (bps - VIDEO_MIN_BPS) * 30 / (VIDEO_MAX_BPS - VIDEO_MIN_BPS);
@@ -312,10 +347,6 @@ static void video_worker(void *argument) {
                     ++dropped;
                 }
             }
-            if (queue_buffer(buffer.index) < 0) {
-                ESP_LOGE(TAG, "event=video action=requeue result=error");
-                break;
-            }
             if (jpeg_ready && !should_stop()) {
                 const uint32_t budget = target_bitrate() / 8;
                 const int64_t send_us = esp_timer_get_time();
@@ -341,21 +372,21 @@ static void video_worker(void *argument) {
                     } else {
                         ++rejected;
                     }
-                    /* A slow RTC callback may leave both raw buffers old. Drain them before
-                     * selecting the next image, rather than encoding a pre-stall frame. */
-                    stale_frames = VIDEO_BUFFER_COUNT;
+                    /* No buffer is queued during sending. The next sample is captured only
+                     * after this returns, so a slow callback cannot accumulate stale frames. */
                 }
             }
         }
         const int64_t now = esp_timer_get_time();
         if (now - report_us >= INT64_C(10000000)) {
             ESP_LOGI(TAG,
-                     "event=video_stats encoded=%u sent=%u rejected=%u dropped=%u "
+                     "event=video_stats window_ms=%" PRId64
+                     " captured=%u encoded=%u sent=%u rejected=%u dropped=%u "
                      "capture_errors=%u last_bytes=%d quality=%u target_bps=%" PRIu32
                      " encode_max_us=%" PRId64,
-                     encoded, sent, rejected, dropped, capture_errors, last_bytes, quality,
-                     target_bitrate(), max_encode_us);
-            encoded = sent = rejected = dropped = capture_errors = 0;
+                     (now - report_us) / 1000, captured, encoded, sent, rejected, dropped,
+                     capture_errors, last_bytes, quality, target_bitrate(), max_encode_us);
+            captured = encoded = sent = rejected = dropped = capture_errors = 0;
             max_encode_us = 0;
             report_us = now;
         }
@@ -363,11 +394,12 @@ static void video_worker(void *argument) {
 done:
     (void)stop_stream();
     if (should_stop()) {
-        ESP_LOGI(TAG, "event=video action=worker_exit result=stopped sent=%u rejected=%u", sent,
-                 rejected);
+        ESP_LOGI(TAG,
+                 "event=video action=worker_exit result=stopped captured=%u sent=%u rejected=%u",
+                 captured, sent, rejected);
     } else {
-        ESP_LOGE(TAG, "event=video action=worker_exit result=error sent=%u rejected=%u", sent,
-                 rejected);
+        ESP_LOGE(TAG, "event=video action=worker_exit result=error captured=%u sent=%u rejected=%u",
+                 captured, sent, rejected);
     }
     xSemaphoreGive(s_video.stopped);
     vTaskDelete(NULL);
@@ -401,7 +433,8 @@ static int video_init(void **out_context, mybot_video_frame_handler_t handler, v
     s_video.user_data = user_data;
     s_video.initialized = true;
     *out_context = &s_video;
-    ESP_LOGI(TAG, "event=video action=initialize result=ok codec=jpeg uplink_fps=1 buffers=2");
+    ESP_LOGI(TAG, "event=video action=initialize result=ok codec=jpeg capture_fps=5 uplink_fps=1 "
+                  "buffers=2 queued_limit=1");
     return 0;
 }
 

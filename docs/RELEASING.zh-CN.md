@@ -7,6 +7,8 @@
 - [ ] 确定语义化版本，并同步更新 `CMakeLists.txt` 中的 `PROJECT_VER` 与 `CHANGELOG.md`。
 - [ ] 确认 README、板卡支持、已知限制与配置文档符合当前实现。
 - [ ] 审查全部依赖版本、随附许可证与 `THIRD_PARTY_NOTICES.md`。
+- [ ] 核对 `components/mybot_stack` 中的 MyBot 快照、AOSL 源码及 RTSA 头文件/库与
+      `VENDORED_SOURCES.md` 一致；除明确同步上游版本外，不修改 SDK 快照。
 - [ ] 确认拥有重新分发每个内置二进制的书面权利，尤其是 Agora RTSA。
 - [ ] 确认未跟踪凭据、token、私有服务地址、客户数据、生成的 sdkconfig 或 NVS 数据。
 
@@ -17,18 +19,29 @@
 test "$(idf.py --version)" = "ESP-IDF v5.5.2"
 idf.py -B build/release \
   -DMYBOT_BOARD=zhengchen-1.54tft-ml307 \
-  -DSDKCONFIG=build/release/sdkconfig build
+  -DSDKCONFIG=build/release/sdkconfig \
+  -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;ci/ptime60.defaults" build
 idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] 所有支持板卡、两种语言及随附 RTSA 的 60 ms 音频包长 CI 全部通过。
+- [ ] [CI 工作流](../.github/workflows/ci.yml)的 22 项固件构建全部通过：九个板型分别构建
+      中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色主题构建，以及一个关闭会话
+      动画的视频构建。所有构建使用 60 ms 音频帧。
+- [ ] 确认随附 RTSA 仍会在配置阶段拒绝不支持的 20 ms 和 40 ms 设置。
+- [ ] 分别记录固件构建、主机测试和真机结果。主机布局或生命周期测试不能验证屏幕传输、
+      上电时序或声学表现。
 - [ ] 两个 OTA 分区保留足够的回滚空间。
 - [ ] 格式、SPDX、空白与提交信息检查通过。
 - [ ] 在每个发布板卡上验证配网、重连、配对、HTTPS、双向音频、声纹状态、挂断、重复启停
       与重启持久化。
+- [ ] 带屏板型在实际面板验证唯一的 LVGL 渲染器，包括颜色、方向、配对码/声纹状态的
+      可读性和背光。确认配网页面显示当前设备热点名，长文字可滚动，离开配网后停止滚动；
+      覆盖首次启动、按键配网和连接失败重试。ReSpeaker Flex 保持无屏，详见
+      [平台 UI](PLATFORM_UI.zh-CN.md)。
 - [ ] 对 CoreS3 视频，验证 GC0308 颜色/方向、服务端 JPEG 接收、最多 1 fps、带宽适配、
-      内部 DMA 内存、音频/UI 并行、重复对话、推流中配网及停止成功后无回调，见 CORES3_VIDEO.zh-CN.md。
+      内部 DMA 内存、音频/UI 并行、重复对话、推流中配网及停止成功后无回调，见
+      [CoreS3 视频](CORES3_VIDEO.zh-CN.md)。
 - [ ] 负向测试无效 CA、hostname 不匹配、TLS 超时、NVS 值缺失与 Wi-Fi 丢失。
 - [ ] 确认日志与发布归档不包含任何凭据。
 - [ ] 确认发布配置采用预期的 NVS/Flash encryption 与 Secure Boot 策略。
@@ -48,12 +61,14 @@ git diff --check
       8 MB PSRAM、MCLK GPIO16、LCD reset GPIO1、触摸 reset GPIO2、不探测 TCA9554、主麦
       路由、全双工音频、PA 噪声、显示/触摸与配网。扩展安全的 16 MB 分区布局前，必须先确认
       启动日志检测到的 Flash 容量。
-- [ ] 对两个 Waveshare AMOLED 版本分别尝试配置另一版本的 profile 做负向测试，并确认发布
-      流程绝不会交叉烧录两个固件制品。
+- [ ] 确认已有构建目录拒绝切换 `MYBOT_BOARD`，并为两个 Waveshare AMOLED 版本保留独立
+      制品。全新构建目录可以使用任一 profile，无法识别连接设备的硬件版本；烧录前须核对
+      实际硬件版本与固件是否匹配。
 - [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不
       改变该区域，且发布流程不得包含 `erase-flash`。
 - [ ] 对 M5Stack StickS3，验证 USB 与电池启动、M5PM1 G2/G3 时序、扬声器爆音/噪声、
-      16 kHz 采集 slot、ST7789P3 偏移与颜色，以及 mybot 停止期间 GPIO11 长按配网。
+      16 kHz 采集 slot、ST7789P3 偏移与颜色、60% PWM 背光，以及 mybot 停止期间 GPIO11
+      长按配网。
 
 ## 发布
 

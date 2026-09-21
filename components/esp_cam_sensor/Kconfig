@@ -20,7 +20,7 @@ config CAM_CTRL_DVP_DMA_BUFFER_SIZE
     # value to a frame-divisible half-buffer and allocates two halves from
     # internal DMA-capable RAM. Keep the video path small enough for boards
     # that have only a limited contiguous internal heap at runtime.
-    default 8192 if MYBOT_ENABLE_VIDEO
+    default 16384 if MYBOT_ENABLE_VIDEO
     default 32768
 
 config CAM_CTRL_DVP_TASK_STACK_SIZE

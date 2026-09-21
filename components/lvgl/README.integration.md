@@ -8,7 +8,7 @@ The import retains public/internal headers, core display and object code,
 software drawing, text fonts, basic widgets, flex layout, and the built-in
 binary decoder required by LVGL initialization. It excludes examples, demos,
 tests, downloads, other platform implementations, optional image codecs, and
-unused font bitmaps. Montserrat 14 and 32 include the upstream Font Awesome 5
+unused font bitmaps. The bundled Montserrat fonts include the upstream Font Awesome 5
 symbol glyphs. Their licenses are retained under
 `scripts/built_in_font/font_license/`; `LICENCE.txt` and `COPYRIGHTS.md` retain
 the upstream library notices.
@@ -20,7 +20,8 @@ Local files:
   Dependencies remain declared during ESP-IDF's early component discovery.
 - `Kconfig` supplies the draw-buffer alignment required by the display port.
 - `lv_conf.h` selects RGB565, a single software draw unit, basic widgets,
-  Montserrat 14/32, and disables themes, external decoders, and diagnostics.
+  Montserrat 10/12/14/32, and disables built-in themes, external decoders, and diagnostics.
+  The platform supplies its own light/dark palettes and Chinese font subset.
 - `local/lv_mem_psram.c` implements LVGL's custom allocator interface. Objects
   and draw scratch allocations use PSRAM with no internal-RAM fallback. An
   aligned allocation header tracks blocks so `lv_mem_deinit()` can reclaim
