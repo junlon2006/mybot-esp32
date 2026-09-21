@@ -318,11 +318,11 @@ USB Serial/JTAG。声学处理由 XVF3800 完成，因此该 profile 禁用 Clou
 ## 目录结构
 
 ```text
-components/agora_rtc/        ESP32-S3 Agora RTSA 包
-components/aosl/             AOSL 与 ESP32-S3 平台集成
-components/mybot_sdk/        mybot SDK 的 ESP-IDF 构建包装
+components/mybot_stack/agora_rtc/        ESP32-S3 Agora RTSA 包
+components/mybot_stack/aosl/             AOSL 与 ESP32-S3 平台集成
+components/mybot_stack/mybot_sdk/        mybot SDK 的 ESP-IDF 构建包装
 components/mybot_platform/   公共服务、可复用驱动与 Board profile
-third_party/mybot/           固定版本的 mybot 公共头和核心源码
+components/mybot_stack/mybot_sdk/mybot/           固定版本的 mybot 公共头和核心源码
 main/                        固件入口与工程 Kconfig
 ```
 

@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "mybot_board.h"
+#include "mybot_platform/board.h"
 
 #include <mybot/platform/mybot_platform.h>
 
-#include "board_actions.h"
+#include "platform/board_actions.h"
 #include "board_config.h"
-#include "embedded_ogg_prompt.h"
+#include "announcement/embedded_ogg_prompt.h"
 #include "esp_log.h"
-#include "wifi_control.h"
+#include "network/wifi_control.h"
 
 #include <stdbool.h>
 

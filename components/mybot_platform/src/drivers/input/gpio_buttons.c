@@ -4,7 +4,7 @@
 #include <mybot/mybot.h>
 #include <mybot/platform/mybot_key.h>
 
-#include "board_actions.h"
+#include "platform/board_actions.h"
 #include "button_gpio.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "ogg_opus_decoder.h"
+#include "announcement/ogg_opus_decoder.h"
 
 #include "decoder/esp_audio_dec.h"
 #include "decoder/impl/esp_opus_dec.h"

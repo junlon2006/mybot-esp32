@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
-#include "pcm_playback_buffer.h"
+#include "audio/pcm_playback_buffer.h"
 #include "sensecap_hardware.h"
 
 #include <mybot/platform/mybot_audio.h>

@@ -9,10 +9,10 @@ mybot 固件在编译期只选择一块 Board。工程不做运行时板卡探�
 
 ```text
 components/mybot_platform/
-  include/mybot_board.h       Board 元数据与注册入口
-  src/common/                 与 Board 无关的 ESP-IDF 服务
+  include/mybot_platform/board.h       Board 元数据与注册入口
+  src/platform/               Board 注册与配网事件归属
+  src/services/               网络、存储、提示音、音频和诊断等公共服务
   src/drivers/                可复用的硬件驱动
-  src/core/                   所选 Board 的注册逻辑
   boards/<board-id>/          Board 描述、引脚、源码和 sdkconfig defaults
 ```
 
@@ -74,7 +74,7 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 4. 实现 Board 网络生命周期：`ensure_network()` 只在 IP 网络可用后返回；
    `provision_wifi()` 只在配网后 STA 重新连接时返回；`shutdown_network()` 完成最终网络拆除。
 5. 电源时序及特殊 codec、显示、触摸或输入行为应留在 Board 或硬件 driver 内，不要向
-   `third_party/mybot` 添加 ESP-IDF 细节。
+   `components/mybot_stack/mybot_sdk/mybot` 添加 ESP-IDF 细节。
 6. 保持 SDK 音频边界：16 kHz、单声道、signed 16-bit PCM，接口传帧数而不是字节数。
 7. 增加隔离的 CI 构建与尺寸报告，并记录真实设备的配网、HTTPS、RTC、双向音频、输入、
    显示、挂断与重复启停验证。

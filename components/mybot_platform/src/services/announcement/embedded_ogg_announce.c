@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include <mybot/platform/mybot_announce.h>
 
-#include "ogg_opus_decoder.h"
+#include "announcement/ogg_opus_decoder.h"
 
 #include "esp_heap_caps.h"
 #include "esp_log.h"

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#ifndef MYBOT_PCM_PLAYBACK_BUFFER_H_
-#define MYBOT_PCM_PLAYBACK_BUFFER_H_
+#ifndef MYBOT_PLATFORM_PCM_PLAYBACK_BUFFER_H_
+#define MYBOT_PLATFORM_PCM_PLAYBACK_BUFFER_H_
 
 #include "esp_err.h"
 
@@ -35,4 +35,4 @@ int mybot_pcm_playback_buffer_destroy(mybot_pcm_playback_buffer_t *buffer);
 /* Implemented by the selected board's audio driver, for finite local prompts. */
 int mybot_audio_playback_drain(void *context, uint32_t timeout_ms);
 
-#endif /* MYBOT_PCM_PLAYBACK_BUFFER_H_ */
+#endif /* MYBOT_PLATFORM_PCM_PLAYBACK_BUFFER_H_ */

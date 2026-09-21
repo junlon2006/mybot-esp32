@@ -57,7 +57,7 @@ endif()
 
 set(mybot_debug_sources "")
 if(CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR)
-    list(APPEND mybot_debug_sources "src/common/debug_stats.c")
+    list(APPEND mybot_debug_sources "src/services/diagnostics/debug_stats.c")
 endif()
 
 if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST)
@@ -66,14 +66,14 @@ endif()
 
 idf_component_register(
     SRCS
-        "src/core/platform.c"
-        "src/common/https.c"
-        "src/common/kv_store.c"
-        "src/common/wifi.cpp"
-        "src/common/embedded_ogg_announce.c"
-        "src/common/embedded_ogg_prompt.c"
-        "src/common/ogg_opus_decoder.c"
-        "src/common/pcm_playback_buffer.c"
+        "src/platform/platform_register.c"
+        "src/services/network/https.c"
+        "src/services/storage/kv_store.c"
+        "src/services/network/wifi.cpp"
+        "src/services/announcement/embedded_ogg_announce.c"
+        "src/services/announcement/embedded_ogg_prompt.c"
+        "src/services/announcement/ogg_opus_decoder.c"
+        "src/services/audio/pcm_playback_buffer.c"
         ${MYBOT_BOARD_SOURCES}
         ${mybot_debug_sources}
     INCLUDE_DIRS "include"

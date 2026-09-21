@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#ifndef MYBOT_BOARD_H_
-#define MYBOT_BOARD_H_
+#ifndef MYBOT_PLATFORM_BOARD_H_
+#define MYBOT_PLATFORM_BOARD_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -29,4 +29,4 @@ bool mybot_board_wait_wifi_provisioning_request(uint32_t timeout_ms);
 }
 #endif
 
-#endif /* MYBOT_BOARD_H_ */
+#endif /* MYBOT_PLATFORM_BOARD_H_ */

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "pcm_playback_buffer.h"
+#include "audio/pcm_playback_buffer.h"
 
 #include "esp_heap_caps.h"
 #include "esp_log.h"
@@ -8,7 +8,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
-#include "mybot_debug_stats.h"
+#include "mybot_platform/debug_stats.h"
 #endif
 
 #include <inttypes.h>

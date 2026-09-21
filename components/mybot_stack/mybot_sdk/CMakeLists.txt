@@ -1,4 +1,4 @@
-set(MYBOT_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../third_party/mybot")
+set(MYBOT_ROOT "${CMAKE_CURRENT_LIST_DIR}/mybot")
 
 # The bundled ESP32-S3 RTSA package (build 1270872) emits 60 ms jitter-buffer
 # frames. The synchronized SDK validates every downlink frame against this

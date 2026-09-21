@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "embedded_ogg_prompt.h"
+#include "announcement/embedded_ogg_prompt.h"
 
-#include "ogg_opus_decoder.h"
-#include "pcm_playback_buffer.h"
+#include "announcement/ogg_opus_decoder.h"
+#include "audio/pcm_playback_buffer.h"
 
 #include "esp_log.h"
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#ifndef MYBOT_BOARD_ACTIONS_H_
-#define MYBOT_BOARD_ACTIONS_H_
+#ifndef MYBOT_PLATFORM_BOARD_ACTIONS_H_
+#define MYBOT_PLATFORM_BOARD_ACTIONS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,4 +12,4 @@ int mybot_board_handle_boot_long_press(void);
 }
 #endif
 
-#endif /* MYBOT_BOARD_ACTIONS_H_ */
+#endif /* MYBOT_PLATFORM_BOARD_ACTIONS_H_ */

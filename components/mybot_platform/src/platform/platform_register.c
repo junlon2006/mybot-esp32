@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "mybot_board.h"
+#include "mybot_platform/board.h"
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
