@@ -121,8 +121,9 @@ python -m esptool --chip esp32s3 --baud 2000000 --before default_reset \
 ## 配网与控制
 
 NVS 中没有 Wi-Fi 凭据时，设备创建以 `mybot-` 开头的配置 AP。连接后打开
-`http://192.168.4.1` 完成配网。STA 获取可用 IP 后才启动 mybot；配备显示屏的板卡在配网
-期间显示 `WIFI SETUP`。
+`http://192.168.4.1` 完成配网。STA 获取可用 IP 后才启动 mybot；带屏板型在配网页面中央
+显示实际设备热点名称（`mybot-xxxx`），底部显示中英文连接提示。文字仅在超出可用宽度时
+循环滚动，退出配网后停止滚动。
 
 - 征辰 ML307 与 Wi-Fi：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并
   持久化扬声器音量。

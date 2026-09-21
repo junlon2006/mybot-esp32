@@ -29,6 +29,11 @@ indicator, and listening/thinking/speaking state. Coordinates are derived from e
 logical width and height; the view does not assume the CoreS3 320 × 240 geometry. Small local
 state images are predecoded into Flash; no runtime PNG/GIF decoder or full-screen cache is added.
 
+The provisioning screen shows the actual device SoftAP SSID (`mybot-xxxx`) in the center and a
+Chinese/English connection hint below. Its title and hint scroll in a loop only when wider than
+their labels; short text stays still, and scrolling stops on exit. This text scrolling remains
+available when `CONFIG_MYBOT_LVGL_UI_ANIMATIONS` disables state activity animation.
+
 Touch and button events remain in each board's input driver. The UI does not add a new
 gesture, alter provisioning, or change the audio/video lifecycle. The backend uses one partial
 RGB565 DMA stripe and a dedicated LVGL task; the panel adapter owns reset, offsets, color order,
@@ -52,7 +57,8 @@ not override values saved in an existing sdkconfig.
 
 ## Validation status
 
-The CoreS3 LVGL UI has passed real-device testing. CI covers the nine board profiles in both
+The earlier CoreS3 LVGL UI passed real-device testing; provisioning SSID display and scrolling
+still need hardware validation. CI covers the nine board profiles in both
 languages, CoreS3 video in both languages, and two theme/animation variants (22 configurations).
 These are build checks only. No new board is claimed to have passed real-device color, touch, audio,
 provisioning, or teardown validation. Complete hardware testing must cover all workflow screens,

@@ -4,6 +4,7 @@
  * reference identified in LVGL_VIEW_LICENSE.txt. */
 #include "display/lvgl_view.h"
 #include "display/lvgl_assets.h"
+#include "network/wifi_control.h"
 
 #include "sdkconfig.h"
 
@@ -122,6 +123,7 @@ struct View {
     lv_timer_t *timer;
     const lv_image_dsc_t *emoji_source;
     mybot_lcd_content_t previous;
+    char provisioning_ssid[MYBOT_WIFI_PROVISIONING_SSID_CAPACITY];
     bool has_content;
     bool notification_visible;
     bool vp_notification_shown;
@@ -386,12 +388,13 @@ int mybot_lvgl_view_create_sized(lv_display_t *display, int width, int height) {
     lv_obj_set_style_text_align(s_view.brand, LV_TEXT_ALIGN_LEFT, 0);
     if (width < 240) {
         lv_obj_set_style_text_font(s_view.brand, &lv_font_montserrat_14, 0);
-        lv_obj_set_style_text_font(s_view.status, &lv_font_montserrat_10, 0);
 #if CONFIG_MYBOT_LANGUAGE_ZH_CN
+        lv_obj_set_style_text_font(s_view.status, &mybot_lvgl_font_20, 0);
         lv_obj_set_style_text_font(s_view.notification, &mybot_lvgl_font_20, 0);
         lv_obj_set_style_text_font(s_view.title, &mybot_lvgl_font_20, 0);
         lv_obj_set_style_text_font(s_view.notice, &mybot_lvgl_font_20, 0);
 #else
+        lv_obj_set_style_text_font(s_view.status, &lv_font_montserrat_10, 0);
         lv_obj_set_style_text_font(s_view.notification, &lv_font_montserrat_10, 0);
         lv_obj_set_style_text_font(s_view.title, &lv_font_montserrat_10, 0);
         lv_obj_set_style_text_font(s_view.notice, &lv_font_montserrat_10, 0);
@@ -443,6 +446,11 @@ void mybot_lvgl_view_update(const mybot_lcd_content_t *content) {
     normalized.screen = content->screen;
     const bool pairing_code = content->screen == MYBOT_LCD_SCREEN_PAIR_CODE;
     const bool conversation = content->screen == MYBOT_LCD_SCREEN_IN_CONVERSATION;
+    const bool provisioning = content->screen == MYBOT_LCD_SCREEN_WIFI_PROVISIONING;
+    char provisioning_ssid[MYBOT_WIFI_PROVISIONING_SSID_CAPACITY]{};
+    if (provisioning) {
+        (void)mybot_wifi_get_provisioning_ssid(provisioning_ssid, sizeof(provisioning_ssid));
+    }
     if (pairing_code) {
         std::memcpy(normalized.pair_code, content->pair_code, sizeof(normalized.pair_code) - 1);
     }
@@ -451,11 +459,30 @@ void mybot_lvgl_view_update(const mybot_lcd_content_t *content) {
     }
     if (s_view.has_content && normalized.screen == s_view.previous.screen &&
         normalized.indicators == s_view.previous.indicators &&
-        std::strcmp(normalized.pair_code, s_view.previous.pair_code) == 0) {
+        std::strcmp(normalized.pair_code, s_view.previous.pair_code) == 0 &&
+        std::strcmp(provisioning_ssid, s_view.provisioning_ssid) == 0) {
         return;
     }
 
     Presentation presentation = kScreens[content->screen];
+    if (provisioning && provisioning_ssid[0]) {
+        presentation.title = provisioning_ssid;
+    }
+    if (!s_view.has_content ||
+        provisioning != (s_view.previous.screen == MYBOT_LCD_SCREEN_WIFI_PROVISIONING)) {
+        /* LVGL starts a marquee only when the text exceeds the label width.
+         * Restore clipping on exit to remove the provisioning scroll animations. */
+        const auto mode = provisioning ? LV_LABEL_LONG_SCROLL_CIRCULAR : LV_LABEL_LONG_CLIP;
+        lv_label_set_long_mode(s_view.title, mode);
+        lv_label_set_long_mode(s_view.notice, mode);
+        const lv_font_t *title_font = &mybot_lvgl_font_20;
+#if !CONFIG_MYBOT_LANGUAGE_ZH_CN
+        if (view_width() < 240 && !provisioning) {
+            title_font = &lv_font_montserrat_10;
+        }
+#endif
+        lv_obj_set_style_text_font(s_view.title, title_font, 0);
+    }
     uint32_t notice_color = kTheme.muted;
     Activity activity = Activity::None;
     auto emoji = MYBOT_UI_EMOJI_NEUTRAL;
@@ -548,6 +575,7 @@ void mybot_lvgl_view_update(const mybot_lcd_content_t *content) {
     }
     update_notifications(normalized);
     s_view.previous = normalized;
+    std::memcpy(s_view.provisioning_ssid, provisioning_ssid, sizeof(s_view.provisioning_ssid));
     s_view.has_content = true;
     update_timer();
 }
