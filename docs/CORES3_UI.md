@@ -15,14 +15,19 @@ shutdown. Rounded status cards and local emoji distinguish workflow states. Duri
 voiceprint registration stays visible alongside listening/thinking/speaking status. Static labels
 follow the firmware's Chinese/English language setting. Pairing codes remain dynamic.
 
+During Wi-Fi provisioning, the central title shows the actual device SoftAP SSID (`mybot-xxxx`).
+The lower hint remains "Connect to device Wi-Fi" or "请连接设备热点" according to the language.
+LVGL scrolls the title and hint in a loop only when they exceed the available width; short text
+stays still. Leaving the provisioning screen stops text scrolling.
+
 Pairing success, voiceprint registration, and network recovery can show a notification for up to two seconds
 in the header when the corresponding state transition is observed. Notifications do not cover
 pairing digits or replace the conversation voiceprint indicator. Repeated unchanged states do
 not repeatedly trigger notifications. Moving to another workflow screen clears the previous notification.
 
 Listening/thinking/speaking activity uses small, local dot/bar animations capped at 10 fps.
-These indicate the SDK state and do not measure audio amplitude. Other screens remain static;
-animation stops when leaving the active state.
+These indicate the SDK state and do not measure audio amplitude. Activity animation stops when
+leaving the active state; provisioning text can still scroll when needed.
 
 The UI receives existing public SDK LCD content and board provisioning state. It does not add
 conversation transcripts, cloud emotion messages, GIF animation, battery reporting, or new
@@ -40,7 +45,8 @@ These options appear under `mybot` in menuconfig for display boards:
 | `CONFIG_MYBOT_LVGL_UI_ANIMATIONS` | `y` | Enables state activity animation; `n` keeps the indicators static |
 
 Both choices are fixed at build time. No new touch gesture changes themes or animation settings.
-Disabling activity animation preserves state changes, local emoji, and event notifications.
+`CONFIG_MYBOT_LVGL_UI_ANIMATIONS` controls only state activity animation. Disabling it preserves
+state changes, local emoji, event notifications, and necessary provisioning text scrolling.
 
 ## Build and flash
 
@@ -78,8 +84,8 @@ The UI task runs on Core 1 at priority 1. LVGL objects use PSRAM; SPI transfers 
 regions instead of copying complete cached screens. No image or full-screen page cache is allocated.
 
 Four 64 × 64 local emoji are stored as predecoded constant images in Flash, totaling approximately
-64 KiB of pixel data. Rendering needs no PNG/GIF decoder or large decoded-image cache. Only the
-small activity indicators are animated; the emoji images themselves are static.
+64 KiB of pixel data. Rendering needs no PNG/GIF decoder or large decoded-image cache. Activity
+indicators and overflowing provisioning text may animate; the emoji images themselves are static.
 
 State submissions copy the latest LCD content and wake the UI task. A 50-ms LVGL timer applies
 pending content; rapid intermediate updates can be combined. SDK callbacks do not draw or wait
@@ -94,8 +100,8 @@ visual checks to assess the UI. LVGL render/flush timing is not included in the 
 
 ## Hardware validation
 
-The CoreS3 LVGL UI has passed real-device testing. Hardware regression testing is still needed
-after changes to the display stack. CI covers the four language/video combinations plus light-theme
+The earlier CoreS3 LVGL UI passed real-device testing. The provisioning SSID display and scrolling
+still need hardware regression testing. CI covers the four language/video combinations plus light-theme
 and static-indicator variants. Successful builds and host checks do not establish the audible
 or visual result on the device.
 
@@ -103,11 +109,13 @@ Verify the following before selecting it for a release:
 
 - Check orientation, red/green/blue colors, small text, large pairing digits, and all ten screens.
 - Test voiceprint and listening/thinking/speaking changes, including rapid transitions and hangup.
-- Check both themes and animation settings. Confirm idle screens stop animating, event
+- Check both themes and animation settings. Confirm activity indicators stop outside conversations, event
   notifications expire within two seconds or on a workflow transition, and pairing codes and
   voiceprint status stay readable.
 - Confirm short touch and three-second provisioning gestures, first-boot provisioning, Wi-Fi
   loss/recovery, and repeated SDK stop/start without stale screens or blank output.
+- Match the displayed provisioning SSID to the device hotspot. Check that overflowing title/hint
+  text scrolls, short text stays still, and scrolling stops on exit, including with activity animation disabled.
 - Listen for crackle during continuous full-duplex audio while the UI changes. Repeat with 1 fps
   video enabled, using the same volume and network.
 - Record per-core CPU load, peak internal/PSRAM usage, minimum free heap and largest free blocks

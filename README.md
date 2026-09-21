@@ -126,7 +126,9 @@ service-recovery data.
 
 When NVS contains no Wi-Fi credentials, the device creates a configuration AP whose SSID starts
 with `mybot-`. Connect to it and open `http://192.168.4.1`. mybot starts only after the station has
-a usable IP address; boards with a display show `WIFI SETUP` while provisioning.
+a usable IP address. Display boards show the actual device AP name (`mybot-xxxx`) in the center
+and a Chinese/English connection hint below. Text scrolls only when it exceeds the available width;
+leaving provisioning stops the scrolling.
 
 - Zhengchen ML307 and Wi-Fi: short-press Boot to start/stop a conversation; hold Boot for 3 seconds
   to provision. The volume buttons adjust and persist speaker volume.

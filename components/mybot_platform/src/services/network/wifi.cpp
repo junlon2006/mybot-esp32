@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cstdio>
 #include <condition_variable>
+#include <cstring>
 #include <mutex>
 #include <string>
 
@@ -32,6 +33,7 @@ struct WifiControl {
     bool config_mode = false;
     bool sdk_active = false;
     bool sdk_connected = false;
+    char provisioning_ssid[MYBOT_WIFI_PROVISIONING_SSID_CAPACITY] = {};
     mybot_wifi_event_handler_t emit = nullptr;
     void *user_data = nullptr;
 };
@@ -86,6 +88,7 @@ void handle_wifi_event(WifiEvent event, const std::string &data) {
             break;
         case WifiEvent::ConfigModeExit:
             control.config_mode = false;
+            control.provisioning_ssid[0] = '\0';
             break;
         default:
             break;
@@ -118,6 +121,7 @@ int run_provisioning_locked(mybot_wifi_provisioning_handler_t on_provisioning) {
                 return -1;
             }
             control.network_connected = false;
+            control.provisioning_ssid[0] = '\0';
         }
 
         ESP_LOGI(TAG, "event=provision_ap state=starting");
@@ -125,6 +129,24 @@ int run_provisioning_locked(mybot_wifi_provisioning_handler_t on_provisioning) {
         if (!manager.IsConfigMode()) {
             ESP_LOGE(TAG, "event=provision_ap state=starting result=error");
             return -1;
+        }
+        const std::string ssid = manager.GetApSsid();
+        bool ssid_available = false;
+        {
+            std::lock_guard<std::mutex> lock(control.state_mutex);
+            if (!control.initialized || control.stopping) {
+                return -1;
+            }
+            if (control.config_mode && !ssid.empty() &&
+                ssid.size() < sizeof(control.provisioning_ssid)) {
+                std::memcpy(control.provisioning_ssid, ssid.c_str(), ssid.size() + 1);
+                ssid_available = true;
+            }
+        }
+        if (ssid_available) {
+            ESP_LOGI(TAG, "event=provision_ap state=active ssid=%s", ssid.c_str());
+        } else {
+            ESP_LOGW(TAG, "event=provision_ap action=read_ssid result=unavailable");
         }
         if (!provisioning_announced && on_provisioning) {
             provisioning_announced = true;
@@ -293,6 +315,26 @@ extern "C" int mybot_wifi_run_provisioning(mybot_wifi_provisioning_handler_t on_
     return run_provisioning_locked(on_provisioning);
 }
 
+extern "C" int mybot_wifi_get_provisioning_ssid(char *ssid, size_t capacity) {
+    if (!ssid || capacity == 0) {
+        return -1;
+    }
+    ssid[0] = '\0';
+    /* The provisioning callback runs while operation_mutex is held. Only use
+     * state_mutex here so both that callback and the LVGL worker can read safely. */
+    std::lock_guard<std::mutex> lock(control.state_mutex);
+    if (!control.initialized || control.stopping || !control.config_mode ||
+        !control.provisioning_ssid[0]) {
+        return -1;
+    }
+    const size_t length = std::strlen(control.provisioning_ssid);
+    if (length >= capacity) {
+        return -1;
+    }
+    std::memcpy(ssid, control.provisioning_ssid, length + 1);
+    return 0;
+}
+
 extern "C" void mybot_wifi_shutdown_network(void) {
     auto &manager = WifiManager::GetInstance();
     {
@@ -302,6 +344,7 @@ extern "C" void mybot_wifi_shutdown_network(void) {
         control.initialized = false;
         control.network_connected = false;
         control.config_mode = false;
+        control.provisioning_ssid[0] = '\0';
         control.sdk_active = false;
         control.sdk_connected = false;
         control.emit = nullptr;
