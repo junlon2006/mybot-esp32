@@ -31,11 +31,10 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif CMake utilities 0.5.0 | Apache-2.0 | `components/cmake_utilities` |
 | M5Stack M5PM1 1.0.7 | MIT | `components/m5pm1` |
 | Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets/locales`, `components/mybot_platform/src/services/announcement/ogg_opus_decoder.c` |
-| Liberation Sans UI glyphs (OFL-1.1) | SIL Open Font License 1.1 | `components/mybot_platform/src/drivers/display/renderers/legacy/ili9342_font.inc`, `components/mybot_platform/src/drivers/display/assets/licenses/OFL-1.1.txt` |
 | Source Han Sans UI glyph subset | SIL Open Font License 1.1 | `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_fonts.c`, `components/mybot_platform/src/drivers/display/assets/licenses/LVGL_VIEW_FONT_LICENSE.txt` |
 | Noto Color Emoji rasterized glyphs | SIL Open Font License 1.1 | `components/mybot_platform/assets/ui/noto_emoji`, `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_assets.c` |
 | Shared LVGL view (`1d5eeb2` reference) | MIT | `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_view.cc`, `components/mybot_platform/src/internal/display/lvgl_view.h` |
-| Project-maintained shared LVGL panel adapters | Apache-2.0 unless file SPDX says otherwise | `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`, `components/mybot_platform/src/drivers/display/adapters/lvgl/shared_lvgl_adapter.cc`, `components/mybot_platform/src/drivers/display/adapters/lvgl/vocat_panel_provider.c` |
+| Project-maintained shared LVGL panel adapters | Apache-2.0 unless file SPDX says otherwise | `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`, `components/mybot_platform/src/drivers/display/adapters/lvgl/shared_lvgl_adapter.cc` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
@@ -85,7 +84,6 @@ full permission text in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`
 
 - `components/mybot_platform/boards/m5stack-core-s3/`
 - `components/mybot_platform/src/drivers/audio/cores3_codec_audio.c`
-- `components/mybot_platform/src/drivers/display/renderers/legacy/core_s3_ili9342_renderer.c`
 - `components/mybot_platform/src/drivers/display/panels/ili9342/ili9342_panel.c`
 - `components/mybot_platform/src/internal/display/ili9342_panel.h`
 - `components/mybot_platform/src/drivers/display/adapters/lvgl/ili9342_lvgl_adapter.cc`
@@ -117,7 +115,7 @@ the complete copyright and permission notice is retained in
 
 - `components/mybot_platform/boards/sensecap-watcher/`
 - `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`
-- `components/mybot_platform/src/drivers/display/renderers/legacy/sensecap_renderer.c`
+- `components/mybot_platform/src/drivers/display/panels/spd2010/spd2010_panel.c`
 - `partitions/v2/32m-sensecap.csv`
 
 The M5Stack StickS3 hardware mapping, M5PM1 sequencing, ES8311 integration, and ST7789P3 display
@@ -128,7 +126,7 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 
 - `components/mybot_platform/boards/m5stack-stick-s3/`
 - `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`
-- `components/mybot_platform/src/drivers/display/renderers/legacy/sticks3_st7789_renderer.c`
+- `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`
 
 The vendored M5PM1 production sources retain the upstream M5Stack MIT license in
 `components/m5pm1/LICENSE`.
@@ -144,7 +142,7 @@ the complete copyright and permission notice is retained in
 - `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75/`
 - `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c/`
 - `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`
-- `components/mybot_platform/src/drivers/display/renderers/legacy/amoled175_renderer.c`
+- `components/mybot_platform/src/drivers/display/panels/co5300/co5300_panel.c`
 
 The ESP-VoCat PCB detection, hardware mapping, ST77916 initialization, CST816S input behavior, and
 codec routing are derived in part from the MIT-licensed `github.com/junlon2006/xiaozhi-esp32`
@@ -154,7 +152,7 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 
 - `components/mybot_platform/boards/esp-vocat/`
 - `components/mybot_platform/src/drivers/audio/vocat_codec_audio.c`
-- `components/mybot_platform/src/drivers/display/renderers/legacy/vocat_renderer.c`
+- `components/mybot_platform/src/drivers/display/panels/st77916/st77916_panel.c`
 
 ## Vendored SDK Notice
 

@@ -22,20 +22,8 @@ typedef struct {
     int64_t max_gap_at_us;
 } playback_stats_t;
 
-typedef struct {
-    uint32_t calls;
-    uint32_t errors;
-    int64_t render_us;
-    int64_t flush_us;
-    int64_t max_render_us;
-    int64_t max_flush_us;
-    int64_t max_total_us;
-    int64_t max_total_at_us;
-} ui_stats_t;
-
 static portMUX_TYPE s_lock = portMUX_INITIALIZER_UNLOCKED;
 static playback_stats_t s_playback;
-static ui_stats_t s_ui;
 
 void mybot_debug_record_playback(uint32_t requested, uint32_t written, bool timeout, bool error,
                                  int64_t begin, int64_t end, int64_t previous_begin,
@@ -64,31 +52,10 @@ void mybot_debug_record_playback(uint32_t requested, uint32_t written, bool time
     portEXIT_CRITICAL(&s_lock);
 }
 
-void mybot_debug_record_ui(int64_t begin, int64_t rendered, int64_t end, bool error) {
-    portENTER_CRITICAL(&s_lock);
-    ++s_ui.calls;
-    s_ui.errors += error;
-    s_ui.render_us += rendered - begin;
-    s_ui.flush_us += end - rendered;
-    if (rendered - begin > s_ui.max_render_us) {
-        s_ui.max_render_us = rendered - begin;
-    }
-    if (end - rendered > s_ui.max_flush_us) {
-        s_ui.max_flush_us = end - rendered;
-    }
-    if (end - begin > s_ui.max_total_us) {
-        s_ui.max_total_us = end - begin;
-        s_ui.max_total_at_us = begin;
-    }
-    portEXIT_CRITICAL(&s_lock);
-}
-
 void mybot_debug_stats_report(void) {
     portENTER_CRITICAL(&s_lock);
     const playback_stats_t playback = s_playback;
-    const ui_stats_t ui = s_ui;
     s_playback = (playback_stats_t){0};
-    s_ui = (ui_stats_t){0};
     portEXIT_CRITICAL(&s_lock);
 
     /* Counters cover this report interval; *_at_ms is monotonic time since boot. */
@@ -105,11 +72,4 @@ void mybot_debug_stats_report(void) {
              "event=playback_gaps start_gap_max_us=%" PRId64 " idle_gap_max_us=%" PRId64
              " idle_gap_at_ms=%" PRId64 " sdk_queue_underruns=unavailable",
              playback.max_start_gap_us, playback.max_idle_gap_us, playback.max_gap_at_us / 1000);
-    ESP_LOGI("mybot_stats",
-             "event=ui_stats calls=%" PRIu32 " errors=%" PRIu32 " render_avg_us=%" PRId64
-             " render_max_us=%" PRId64 " flush_avg_us=%" PRId64 " flush_max_us=%" PRId64
-             " total_max_us=%" PRId64 " total_max_at_ms=%" PRId64,
-             ui.calls, ui.errors, ui.calls ? ui.render_us / ui.calls : 0, ui.max_render_us,
-             ui.calls ? ui.flush_us / ui.calls : 0, ui.max_flush_us, ui.max_total_us,
-             ui.max_total_at_us / 1000);
 }

@@ -43,11 +43,7 @@ set(MYBOT_BOARD_REQUIRES
     esp_lvgl_port
 )
 
-if(CONFIG_MYBOT_LVGL_UI)
-    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "ili9342_lvgl_adapter.cc")
-else()
-    mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "core_s3_ili9342_renderer.c")
-endif()
+mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "ili9342_lvgl_adapter.cc")
 
 if(CONFIG_MYBOT_ENABLE_VIDEO)
     list(APPEND MYBOT_BOARD_SOURCES "${MYBOT_PLATFORM_ROOT}/src/drivers/video/cores3_camera_video.c")

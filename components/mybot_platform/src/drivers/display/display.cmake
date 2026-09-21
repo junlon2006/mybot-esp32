@@ -8,21 +8,11 @@ function(mybot_display_add_panel source_var source_name)
     set(${source_var} "${${source_var}}" PARENT_SCOPE)
 endfunction()
 
-function(mybot_display_add_legacy_renderer source_var source_name)
-    list(APPEND ${source_var} "${MYBOT_DISPLAY_ROOT}/renderers/legacy/${source_name}")
-    set(${source_var} "${${source_var}}" PARENT_SCOPE)
-endfunction()
-
 function(mybot_display_add_lvgl_sources source_var adapter_name)
     list(APPEND ${source_var}
         "${MYBOT_DISPLAY_ROOT}/adapters/lvgl/${adapter_name}"
         "${MYBOT_DISPLAY_ROOT}/renderers/lvgl/lvgl_view.cc"
         "${MYBOT_DISPLAY_ROOT}/renderers/lvgl/lvgl_assets.c"
         "${MYBOT_DISPLAY_ROOT}/renderers/lvgl/lvgl_fonts.c")
-    set(${source_var} "${${source_var}}" PARENT_SCOPE)
-endfunction()
-
-function(mybot_display_add_lvgl_bridge source_var source_name)
-    list(APPEND ${source_var} "${MYBOT_DISPLAY_ROOT}/adapters/lvgl/${source_name}")
     set(${source_var} "${${source_var}}" PARENT_SCOPE)
 endfunction()

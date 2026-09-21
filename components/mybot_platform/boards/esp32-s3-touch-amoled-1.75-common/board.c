@@ -22,10 +22,7 @@ const mybot_announce_ops_t *mybot_esp32s3_announce_ops(void);
 const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
 const mybot_key_ops_t *mybot_amoled175_input_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
-const mybot_lcd_ops_t *mybot_amoled175_lcd_ops(void);
-#if CONFIG_MYBOT_LVGL_UI
 const mybot_lcd_ops_t *mybot_shared_lvgl_ops(void);
-#endif
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 int mybot_amoled175_input_start(void);
 int mybot_amoled175_input_stop(void);
@@ -84,11 +81,7 @@ static int board_prepare(void) {
         return -1;
     }
 
-#if CONFIG_MYBOT_LVGL_UI
     s_lcd_ops = mybot_shared_lvgl_ops();
-#else
-    s_lcd_ops = mybot_amoled175_lcd_ops();
-#endif
     if (!s_lcd_ops || s_lcd_ops->init(&s_lcd_context) < 0) {
         board_rollback_prepare();
         ESP_LOGE(TAG, "event=board_prepare component=display result=error");
@@ -134,11 +127,7 @@ static void board_shutdown_network(void) {
 }
 
 static int board_register_platform(void) {
-#if CONFIG_MYBOT_LVGL_UI
     const mybot_lcd_ops_t *lcd_ops = mybot_shared_lvgl_ops();
-#else
-    const mybot_lcd_ops_t *lcd_ops = mybot_amoled175_lcd_ops();
-#endif
     const mybot_platform_descriptor_t descriptor = {
         .wifi = mybot_esp32s3_wifi_ops(),
         .kv_store = mybot_esp32s3_kv_store_ops(),

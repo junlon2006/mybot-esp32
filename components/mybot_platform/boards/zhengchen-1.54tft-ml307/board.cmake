@@ -18,11 +18,7 @@ set(MYBOT_BOARD_SOURCES
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/raw_i2s_audio.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/input/gpio_buttons.c"
 )
-if(CONFIG_MYBOT_LVGL_UI)
-    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "st7789_lvgl_adapter.cc")
-else()
-    mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "zhengchen_st7789_renderer.c")
-endif()
+mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "st7789_lvgl_adapter.cc")
 set(MYBOT_BOARD_REQUIRES
     button
     esp_driver_gpio
@@ -31,6 +27,4 @@ set(MYBOT_BOARD_REQUIRES
     esp_lcd
     esp_timer
 )
-if(CONFIG_MYBOT_LVGL_UI)
-    list(APPEND MYBOT_BOARD_REQUIRES esp_lvgl_port)
-endif()
+list(APPEND MYBOT_BOARD_REQUIRES esp_lvgl_port)

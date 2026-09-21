@@ -26,11 +26,7 @@ set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/sticks3_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/sticks3_es8311_audio.c"
 )
-if(CONFIG_MYBOT_LVGL_UI)
-    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "st7789_lvgl_adapter.cc")
-else()
-    mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "sticks3_st7789_renderer.c")
-endif()
+mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "st7789_lvgl_adapter.cc")
 set(MYBOT_BOARD_REQUIRES
     button
     esp_codec_dev

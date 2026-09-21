@@ -82,6 +82,11 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 7. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,
    bidirectional audio, input, display, hangup, and repeated start/stop validation.
 
+All display boards use the shared LVGL view; there is no legacy renderer or selectable backend.
+Keep controller setup and teardown in `src/drivers/display/panels/`, and wire it through
+`display.cmake` and a reusable LVGL adapter. `CONFIG_MYBOT_LVGL_UI` is a hidden board-derived
+setting, disabled for headless boards. Theme and animation settings remain user-configurable.
+
 LCD `indicators` are non-exclusive overlays on the semantic base screen. Render recognized bits
 without replacing the underlying workflow label and ignore unknown bits.
 `MYBOT_LCD_INDICATOR_VP_REGISTERED` is currently meaningful only on
@@ -128,9 +133,10 @@ during capture-only operation to supply shared clocks. If a release device canno
 put stateful 24-to-16 and 16-to-24 kHz conversion inside this driver without changing the mybot
 contract.
 
-The 360 x 360 ST77916 round display uses its Board-specific initialization sequence and full-width
-RGB565 DMA strips. CST816S input uses GPIO10 any-edge interrupts and reads the controller only after
-an event; a 20 ms timer runs only while pressed to detect the 3-second hold. The profile disables
+The 360 x 360 ST77916 round display uses its Board-specific initialization sequence and the shared
+LVGL view with partial RGB565 DMA updates. CST816S input uses GPIO10 any-edge interrupts and reads
+the controller only after an event; a 20 ms timer runs only while pressed to detect the 3-second
+hold. The profile disables
 CST816S ID reads because supported touch-firmware batches do not consistently answer that register.
 CST816S and Boot input remain Board-owned, allowing long-press provisioning while mybot is stopped.
 Battery reporting, BMI270, PCB capacitive controls, SD, LED behavior, camera
@@ -157,9 +163,9 @@ capture slot, duplicates mono playback into both slots, and keeps Cloud AEC enab
 operation must keep TX running to supply MCLK/BCLK/WS. The playback-reference input and local AEC
 are not exposed through the mybot audio contract.
 
-CO5300 QSPI rendering uses full-width 466 x 16 RGB565 DMA strips with a (6, 0) panel gap. Every
-transfer region keeps even start/end pixel boundaries; a full framebuffer and LVGL are intentionally
-excluded. CST9217 and Boot input remain Board-owned so either can request provisioning while mybot
+CO5300 QSPI rendering uses the shared LVGL view and a partial RGB565 DMA buffer with a (6, 0)
+panel gap. Every transfer region keeps even start/end pixel boundaries; no full-screen framebuffer
+is allocated. CST9217 and Boot input remain Board-owned so either can request provisioning while mybot
 is stopped. Each profile is a build target only until power, audio-slot, display, and touch behavior
 are verified on its matching release device.
 

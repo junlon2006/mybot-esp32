@@ -2,10 +2,10 @@
 
 [English](CORES3_UI.md) | [简体中文](CORES3_UI.zh-CN.md)
 
-`CONFIG_MYBOT_LVGL_UI` selects the optional LVGL display backend for `m5stack-core-s3`.
-It defaults to off. The same semantic view is reused by all supported panel adapters; see
-[Platform LVGL UI](PLATFORM_UI.md). The default firmware keeps the existing cached renderer; an LVGL build
-excludes that renderer and its 16-page, approximately 2.34 MiB PSRAM cache.
+`m5stack-core-s3` uses LVGL as its only display backend. The same semantic view is reused by all
+supported panel adapters; see [Platform LVGL UI](PLATFORM_UI.md). The board profile automatically
+sets the hidden `CONFIG_MYBOT_LVGL_UI` symbol. The previous cached renderer and its 16-page,
+approximately 2.34 MiB PSRAM cache have been removed.
 
 ## Displayed information
 
@@ -32,7 +32,7 @@ three seconds still enters Wi-Fi provisioning.
 
 ## Theme and animation settings
 
-These options appear under `mybot` in menuconfig when the LVGL backend is enabled:
+These options appear under `mybot` in menuconfig for display boards:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
@@ -50,7 +50,7 @@ Use ESP-IDF v5.5.2 and a separate build directory and sdkconfig:
 idf.py -B build/cores3-lvgl-ui \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/cores3-lvgl-ui/sdkconfig \
-  -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;ci/lvgl-ui.defaults" build
+  -DSDKCONFIG_DEFAULTS=sdkconfig.defaults build
 idf.py -B build/cores3-lvgl-ui -p <PORT> flash monitor
 ```
 
@@ -59,19 +59,17 @@ directories when comparing these variants:
 
 | Variant | Suggested build directory | `SDKCONFIG_DEFAULTS` |
 | --- | --- | --- |
-| Chinese, video off | `build/cores3-lvgl-ui` | `sdkconfig.defaults;ci/lvgl-ui.defaults` |
-| English, video off | `build/cores3-lvgl-ui-en` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults` |
-| Chinese, video on | `build/cores3-lvgl-ui-video` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/video.defaults` |
-| English, video on | `build/cores3-lvgl-ui-video-en` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/en-us.defaults;ci/video.defaults` |
-| English, light theme, video off | `build/cores3-lvgl-ui-light-en` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults` |
-| Chinese, static indicators, video on | `build/cores3-lvgl-ui-static-video` | `sdkconfig.defaults;ci/lvgl-ui.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults` |
+| Chinese, video off | `build/cores3-lvgl-ui` | `sdkconfig.defaults` |
+| English, video off | `build/cores3-lvgl-ui-en` | `sdkconfig.defaults;ci/en-us.defaults` |
+| Chinese, video on | `build/cores3-lvgl-ui-video` | `sdkconfig.defaults;ci/video.defaults` |
+| English, video on | `build/cores3-lvgl-ui-video-en` | `sdkconfig.defaults;ci/en-us.defaults;ci/video.defaults` |
+| English, light theme, video off | `build/cores3-lvgl-ui-light-en` | `sdkconfig.defaults;ci/lvgl-ui-light.defaults;ci/en-us.defaults` |
+| Chinese, static indicators, video on | `build/cores3-lvgl-ui-static-video` | `sdkconfig.defaults;ci/lvgl-ui-static.defaults;ci/video.defaults` |
 
 Change both `-B` and `-DSDKCONFIG` to the chosen directory and use the matching defaults list.
-The same option enables this UI on every supported panel board. To compare with the original UI,
-build in another directory without `ci/lvgl-ui.defaults`; changing defaults does not overwrite an existing
-generated sdkconfig. You can also disable the option through that build's `menuconfig`.
-The light/static defaults files change only their respective option and must be combined with
-`ci/lvgl-ui.defaults`.
+All display boards include this UI automatically. Changing defaults does not overwrite an existing
+generated sdkconfig; use a new sdkconfig or change theme/animation settings through `menuconfig`.
+The light/static defaults files change only their respective option.
 
 ## Rendering and resources
 
@@ -91,15 +89,13 @@ LVGL introduces task, object, font, and rendering overhead. Removing the old pag
 by itself establish the total memory savings or lower CPU usage. Audio and camera code are
 unchanged; their concurrent performance still needs measurement. The public SDK remains unchanged.
 
-Lifecycle logs use `event=lcd` and `backend=lvgl`. The existing `ui_stats` render/flush timings
-describe the default cached renderer, not this backend. Use CPU/heap statistics,
-lifecycle logs, and visual checks to assess the LVGL path.
+Lifecycle logs use `event=lcd` and `backend=lvgl`. Use CPU/heap statistics, lifecycle logs, and
+visual checks to assess the UI. LVGL render/flush timing is not included in the playback statistics.
 
 ## Hardware validation
 
-The initial CoreS3 LVGL status UI has passed real-device testing. The subsequent theme, emoji,
-notification, and activity-animation changes still need hardware regression testing. CI retains
-all earlier configurations and covers the four language/video combinations plus light-theme
+The CoreS3 LVGL UI has passed real-device testing. Hardware regression testing is still needed
+after changes to the display stack. CI covers the four language/video combinations plus light-theme
 and static-indicator variants. Successful builds and host checks do not establish the audible
 or visual result on the device.
 
@@ -113,7 +109,7 @@ Verify the following before selecting it for a release:
 - Confirm short touch and three-second provisioning gestures, first-boot provisioning, Wi-Fi
   loss/recovery, and repeated SDK stop/start without stale screens or blank output.
 - Listen for crackle during continuous full-duplex audio while the UI changes. Repeat with 1 fps
-  video enabled, and compare with the existing renderer using the same volume and network.
+  video enabled, using the same volume and network.
 - Record per-core CPU load, peak internal/PSRAM usage, minimum free heap and largest free blocks
   with `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR`; repeat sessions to detect sustained memory growth.
 

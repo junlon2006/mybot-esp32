@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 /* Generic LVGL/ST7789 adapter for board profiles with a SPI RGB565 panel. */
 #include "board_config.h"
+#include "display/board_backlight.h"
 #include "display/lvgl_view.h"
 
 #include <mybot/platform/mybot_lcd.h>
 
-#include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "esp_lcd_io_spi.h"
 #include "esp_lcd_panel_io.h"
@@ -73,6 +73,8 @@ struct Context {
     bool spi_ready = false;
     bool port_started = false;
     bool accepting = false;
+    bool cleanup_pending = false;
+    bool backlight_ready = false;
 };
 
 Context s_context;
@@ -112,6 +114,12 @@ void flush(lv_display_t *display, const lv_area_t *area, uint8_t *pixels) {
 }
 
 int close_panel() {
+    if (s_context.backlight_ready) {
+        if (mybot_board_set_display_backlight(0) < 0) {
+            return -1;
+        }
+        s_context.backlight_ready = false;
+    }
     if (s_context.panel && esp_lcd_panel_del(s_context.panel) != ESP_OK) {
         return -1;
     }
@@ -124,19 +132,15 @@ int close_panel() {
         return -1;
     }
     s_context.spi_ready = false;
-    gpio_set_level(MYBOT_DISPLAY_BACKLIGHT, 0);
     return 0;
 }
 
 int open_panel() {
-    gpio_config_t backlight = {
-        .pin_bit_mask = 1ULL << MYBOT_DISPLAY_BACKLIGHT,
-        .mode = GPIO_MODE_OUTPUT,
-    };
-    if (gpio_config(&backlight) != ESP_OK) {
+    if (s_context.spi_ready || s_context.io || s_context.panel ||
+        mybot_board_set_display_backlight(0) < 0) {
         return -1;
     }
-    gpio_set_level(MYBOT_DISPLAY_BACKLIGHT, 0);
+    s_context.backlight_ready = true;
     const spi_bus_config_t bus = {
         .mosi_io_num = MYBOT_DISPLAY_MOSI,
         .miso_io_num = GPIO_NUM_NC,
@@ -155,13 +159,10 @@ int open_panel() {
         .spi_mode = MYBOT_DISPLAY_SPI_MODE,
         .pclk_hz = MYBOT_DISPLAY_PIXEL_CLOCK_HZ,
         .trans_queue_depth = 2,
-        .on_color_trans_done = transfer_done,
-        .user_ctx = &s_context,
         .lcd_cmd_bits = 8,
         .lcd_param_bits = 8,
     };
     if (esp_lcd_new_panel_io_spi(MYBOT_DISPLAY_SPI_HOST, &io_config, &s_context.io) != ESP_OK) {
-        close_panel();
         return -1;
     }
     const esp_lcd_panel_dev_config_t panel_config = {
@@ -189,10 +190,48 @@ int open_panel() {
     if (result != ESP_OK) {
         ESP_LOGE(TAG, "event=lcd action=initialize component=st7789 result=error error=%s",
                  esp_err_to_name(result));
-        close_panel();
         return -1;
     }
-    gpio_set_level(MYBOT_DISPLAY_BACKLIGHT, 1);
+    return 0;
+}
+
+/* Preserve all resources on a timeout so initialize/destroy can retry safely. */
+int release_display() {
+    s_context.cleanup_pending = true;
+    s_context.accepting = false;
+    if (s_context.display) {
+        if (!lvgl_port_lock(LOCK_TIMEOUT_MS)) {
+            return -1;
+        }
+        lv_display_delete_refr_timer(s_context.display);
+        const int64_t deadline = esp_timer_get_time() + LOCK_TIMEOUT_MS * 1000;
+        while (__atomic_load_n(&s_context.flushing, __ATOMIC_ACQUIRE)) {
+            if (esp_timer_get_time() >= deadline) {
+                lvgl_port_unlock();
+                return -1;
+            }
+            vTaskDelay(1);
+        }
+        mybot_lvgl_view_destroy();
+        /* Close IO before deleting the display; its destructor joins callbacks. */
+        if (close_panel() < 0 || lvgl_port_remove_disp(s_context.display) != ESP_OK) {
+            lvgl_port_unlock();
+            return -1;
+        }
+        s_context.display = nullptr;
+        lvgl_port_unlock();
+    } else if (close_panel() < 0) {
+        return -1;
+    }
+    if (s_context.port_started) {
+        if (lvgl_port_deinit() != ESP_OK) {
+            return -1;
+        }
+        s_context.port_started = false;
+    }
+    s_context.users = 0;
+    s_context.cleanup_pending = false;
+    __atomic_store_n(&s_context.flushing, 0, __ATOMIC_RELEASE);
     return 0;
 }
 
@@ -200,35 +239,35 @@ int initialize(void **out) {
     if (!out || !lock())
         return -1;
     *out = nullptr;
+    if (s_context.cleanup_pending && release_display() < 0) {
+        unlock();
+        return -1;
+    }
     if (s_context.users) {
         ++s_context.users;
         *out = &s_context;
         unlock();
         return 0;
     }
-    if (open_panel() < 0) {
-        unlock();
-        return -1;
-    }
+    int result = -1;
     lvgl_port_cfg_t port = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_port_display_cfg_t config{};
+    esp_lcd_panel_io_callbacks_t callbacks{};
+    if (open_panel() < 0) {
+        goto done;
+    }
     port.task_priority = 1;
     port.task_affinity = 1;
     port.task_stack = UI_STACK_BYTES;
     port.timer_period_ms = 5;
-    if (lvgl_port_init(&port) != ESP_OK) {
-        close_panel();
-        unlock();
-        return -1;
-    }
+    /* A failed port startup can retain a worker that must be joined on retry. */
     s_context.port_started = true;
-    if (!lvgl_port_lock(LOCK_TIMEOUT_MS)) {
-        (void)lvgl_port_deinit();
-        s_context.port_started = false;
-        close_panel();
-        unlock();
-        return -1;
+    if (lvgl_port_init(&port) != ESP_OK) {
+        goto done;
     }
-    lvgl_port_display_cfg_t config{};
+    if (!lvgl_port_lock(LOCK_TIMEOUT_MS)) {
+        goto done;
+    }
     config.io_handle = s_context.io;
     config.panel_handle = s_context.panel;
     config.buffer_size = MYBOT_DISPLAY_WIDTH * TRANSFER_ROWS;
@@ -237,29 +276,46 @@ int initialize(void **out) {
     config.color_format = LV_COLOR_FORMAT_RGB565;
     config.flags.buff_dma = true;
     config.flags.swap_bytes = false;
+    config.rotation.swap_xy = MYBOT_DISPLAY_SWAP_XY;
+    config.rotation.mirror_x = MYBOT_DISPLAY_MIRROR_X;
+    config.rotation.mirror_y = MYBOT_DISPLAY_MIRROR_Y;
     s_context.display = lvgl_port_add_disp(&config);
-    if (!s_context.display || mybot_lvgl_view_create_sized(s_context.display, MYBOT_DISPLAY_WIDTH,
-                                                           MYBOT_DISPLAY_HEIGHT) < 0) {
-        if (s_context.display)
-            (void)lvgl_port_remove_disp(s_context.display);
-        s_context.display = nullptr;
+    if (!s_context.display) {
         lvgl_port_unlock();
-        lvgl_port_deinit();
-        s_context.port_started = false;
-        close_panel();
-        unlock();
-        return -1;
+        goto done;
+    }
+    /* add_disp installs its own callback; replace it to track pending DMA. */
+    callbacks.on_color_trans_done = transfer_done;
+    if (esp_lcd_panel_io_register_event_callbacks(s_context.io, &callbacks, &s_context) != ESP_OK) {
+        lv_display_delete_refr_timer(s_context.display);
+        lvgl_port_unlock();
+        goto done;
     }
     lv_display_set_flush_cb(s_context.display, flush);
+    if (mybot_lvgl_view_create_sized(s_context.display, MYBOT_DISPLAY_WIDTH, MYBOT_DISPLAY_HEIGHT) <
+            0 ||
+        mybot_board_set_display_backlight(MYBOT_DISPLAY_BRIGHTNESS_PERCENT) < 0) {
+        lv_display_delete_refr_timer(s_context.display);
+        lvgl_port_unlock();
+        goto done;
+    }
     s_context.accepting = true;
     s_context.users = 1;
     lvgl_port_unlock();
     *out = &s_context;
+    result = 0;
     ESP_LOGI(
         TAG, "event=lcd action=initialize backend=lvgl width=%d height=%d offset=%d,%d result=ok",
         MYBOT_DISPLAY_WIDTH, MYBOT_DISPLAY_HEIGHT, MYBOT_DISPLAY_OFFSET_X, MYBOT_DISPLAY_OFFSET_Y);
+done:
+    if (result < 0) {
+        ESP_LOGE(TAG, "event=lcd action=initialize backend=lvgl result=error");
+        if (release_display() < 0) {
+            ESP_LOGE(TAG, "event=lcd action=cleanup backend=lvgl result=deferred");
+        }
+    }
     unlock();
-    return 0;
+    return result;
 }
 
 int render(void *opaque, const mybot_lcd_content_t *content) {
@@ -284,40 +340,9 @@ void destroy(void *opaque) {
         unlock();
         return;
     }
-    s_context.accepting = false;
-    if (s_context.display && lvgl_port_lock(LOCK_TIMEOUT_MS)) {
-        lv_display_delete_refr_timer(s_context.display);
-        const int64_t deadline = esp_timer_get_time() + LOCK_TIMEOUT_MS * 1000;
-        while (__atomic_load_n(&s_context.flushing, __ATOMIC_ACQUIRE) &&
-               esp_timer_get_time() < deadline) {
-            vTaskDelay(1);
-        }
-        if (!__atomic_load_n(&s_context.flushing, __ATOMIC_ACQUIRE)) {
-            mybot_lvgl_view_destroy();
-            (void)lvgl_port_remove_disp(s_context.display);
-            s_context.display = nullptr;
-        }
-        lvgl_port_unlock();
+    if (release_display() < 0) {
+        ESP_LOGE(TAG, "event=lcd action=destroy result=deferred reason=cleanup");
     }
-    if (s_context.display) {
-        unlock();
-        return;
-    }
-    if (close_panel() < 0) {
-        ESP_LOGE(TAG, "event=lcd action=destroy result=deferred reason=panel_cleanup");
-        unlock();
-        return;
-    }
-    if (s_context.port_started) {
-        if (lvgl_port_deinit() != ESP_OK) {
-            ESP_LOGE(TAG, "event=lcd action=destroy result=deferred reason=lvgl_deinit");
-            unlock();
-            return;
-        }
-        s_context.port_started = false;
-    }
-    s_context.users = 0;
-    __atomic_store_n(&s_context.flushing, 0, __ATOMIC_RELEASE);
     unlock();
 }
 
