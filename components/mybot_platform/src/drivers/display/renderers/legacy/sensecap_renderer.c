@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
-#include "dynamic_lcd_panel.h"
+#include "display/display_panel.h"
 
 #include <mybot/platform/mybot_lcd.h>
 
@@ -298,7 +298,7 @@ static int initialize_transport(void) {
     return 0;
 }
 
-int mybot_sensecap_lvgl_panel_open(mybot_dynamic_lcd_panel_t *panel,
+int mybot_sensecap_lvgl_panel_open(mybot_display_panel_t *panel,
                                    esp_lcd_panel_io_color_trans_done_cb_t callback,
                                    void *user_data) {
     if (!panel || s_context.initialized || transport_is_present() || initialize_transport() < 0) {
@@ -318,14 +318,14 @@ int mybot_sensecap_lvgl_panel_open(mybot_dynamic_lcd_panel_t *panel,
     return 0;
 }
 
-int mybot_sensecap_lvgl_panel_close(mybot_dynamic_lcd_panel_t *panel) {
+int mybot_sensecap_lvgl_panel_close(mybot_display_panel_t *panel) {
     if (!panel || !panel->ready || panel->io != s_context.io || panel->panel != s_context.panel) {
         return -1;
     }
     if (release_transport(true) < 0) {
         return -1;
     }
-    *panel = (mybot_dynamic_lcd_panel_t){0};
+    *panel = (mybot_display_panel_t){0};
     s_context = (lcd_context_t){0};
     return 0;
 }

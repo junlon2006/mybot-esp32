@@ -24,13 +24,14 @@ set(MYBOT_BOARD_FORBIDDEN_CONFIGS
 set(MYBOT_BOARD_PARTITION_TABLE "partitions/v2/32m-sensecap.csv")
 
 get_filename_component(MYBOT_PLATFORM_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+include("${MYBOT_PLATFORM_ROOT}/src/drivers/display/display.cmake")
 set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/board.c"
     "${CMAKE_CURRENT_LIST_DIR}/sensecap_hardware.c"
     "${CMAKE_CURRENT_LIST_DIR}/sensecap_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/sensecap_codec_audio.c"
-    "${MYBOT_PLATFORM_ROOT}/src/drivers/display/spd2010_lcd.c"
 )
+mybot_display_add_legacy_renderer(MYBOT_BOARD_SOURCES "sensecap_renderer.c")
 set(MYBOT_BOARD_REQUIRES
     esp_codec_dev
     esp_driver_gpio
@@ -48,9 +49,6 @@ set(MYBOT_BOARD_REQUIRES
 )
 
 if(CONFIG_MYBOT_LVGL_UI)
-    list(APPEND MYBOT_BOARD_SOURCES
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/dynamic_lvgl_lcd.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_view.cc"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_ui_assets.c"
-        "${MYBOT_PLATFORM_ROOT}/src/drivers/display/cores3_lvgl_font.c")
+    mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "shared_lvgl_adapter.cc")
+    mybot_display_add_lvgl_bridge(MYBOT_BOARD_SOURCES "sensecap_panel_provider.c")
 endif()

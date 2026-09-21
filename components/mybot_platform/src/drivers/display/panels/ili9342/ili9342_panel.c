@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2025 Project Contributors */
-#include "cores3_lcd_panel.h"
+#include "display/ili9342_panel.h"
 
 #include "board_config.h"
 #include "cores3_hardware.h"
@@ -9,9 +9,9 @@
 #include "esp_lcd_io_spi.h"
 #include "esp_log.h"
 
-#define TAG "cores3_panel"
+#define TAG "ili9342_panel"
 
-int mybot_cores3_lcd_panel_close(cores3_lcd_panel_t *lcd) {
+int mybot_ili9342_panel_close(ili9342_panel_t *lcd) {
     if (!lcd) {
         return -1;
     }
@@ -37,8 +37,8 @@ int mybot_cores3_lcd_panel_close(cores3_lcd_panel_t *lcd) {
     return 0;
 }
 
-int mybot_cores3_lcd_panel_open(cores3_lcd_panel_t *lcd,
-                                esp_lcd_panel_io_color_trans_done_cb_t done, void *user) {
+int mybot_ili9342_panel_open(ili9342_panel_t *lcd, esp_lcd_panel_io_color_trans_done_cb_t done,
+                             void *user) {
     if (!lcd || lcd->spi_ready || lcd->io || lcd->panel || !mybot_cores3_i2c_bus_handle()) {
         return -1;
     }
@@ -48,7 +48,7 @@ int mybot_cores3_lcd_panel_open(cores3_lcd_panel_t *lcd,
         .sclk_io_num = MYBOT_DISPLAY_SCLK,
         .quadwp_io_num = GPIO_NUM_NC,
         .quadhd_io_num = GPIO_NUM_NC,
-        .max_transfer_sz = MYBOT_DISPLAY_WIDTH * CORES3_LCD_TRANSFER_ROWS * sizeof(uint16_t),
+        .max_transfer_sz = MYBOT_DISPLAY_WIDTH * ILI9342_LCD_TRANSFER_ROWS * sizeof(uint16_t),
     };
     if (spi_bus_initialize(SPI3_HOST, &bus_config, SPI_DMA_CH_AUTO) != ESP_OK) {
         return -1;
@@ -83,7 +83,7 @@ int mybot_cores3_lcd_panel_open(cores3_lcd_panel_t *lcd,
     }
     return 0;
 failed:
-    if (mybot_cores3_lcd_panel_close(lcd) < 0) {
+    if (mybot_ili9342_panel_close(lcd) < 0) {
         ESP_LOGE(TAG, "event=panel action=cleanup result=error resources=retained");
     }
     return -1;

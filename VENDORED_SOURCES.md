@@ -5,7 +5,7 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 
 | Path | Source | Pinned revision |
 | --- | --- | --- |
-| `third_party/mybot` | `github.com/junlon2006/mybot` | v1.2.0 + post-release fixes, commit `5b7a6c1537f238580a0a523840274c9911a8efcf` |
+| `third_party/mybot` | `github.com/junlon2006/mybot` | v1.2.0 + post-release fixes, commit `4ae239c804257f8b5c557e5879b54d9a88d80847` |
 | `components/aosl` | `github.com/AgoraIO-Community/aosl` | v1.0.4 + post-release fixes, commit `84e086084ebcd0ae2455a0ce5721950c5fe2e656` |
 | `components/agora_rtc` | Agora RTSA Lite package archive | v1.10.1, build 1270872 (`20260828_194128`) |
 | `components/esp-wifi-connect` | `github.com/78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |
@@ -31,9 +31,9 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/cmake_utilities` | ESP Component Registry `espressif/cmake_utilities` | 0.5.0 |
 | `components/m5pm1` | ESP Component Registry `m5stack/m5pm1` | 1.0.7, content hash `731f79d0629e245787440f5419aac5d7a82befeb25f97689d6a2d0331a24a72d` |
 | `components/mybot_platform/assets/locales` | `github.com/junlon2006/mybot-bk7258` | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
-| `components/mybot_platform/src/drivers/display/ili9342_lcd_font.inc`, `components/mybot_platform/src/drivers/display/OFL-1.1.txt` | `github.com/junlon2006/mybot-bk7259` vendored SDK fonts | OFL-1.1 Liberation Sans glyphs |
-| `components/mybot_platform/src/drivers/display/cores3_lvgl_font.c`, `components/mybot_platform/src/drivers/display/CORES3_FONT_LICENSE.txt` | `github.com/lvgl/lvgl`, `scripts/built_in_font/SourceHanSansSC-Normal.otf` | LVGL 9.5.0 source font SHA-256 `1ee89e1669362dee13851129c0a8a791a87521eb4148e5efbf5d26596738e25b`; generated 20 px, 4 bpp static UI subset |
-| `components/mybot_platform/assets/ui/noto_emoji`, `components/mybot_platform/src/drivers/display/cores3_ui_assets.c` | Noto Color Emoji font glyphs rasterized by `github.com/78/noto-fonts`, `png/noto-color-emoji_64` | 2.0.0, commit `d45dbc64052d57048f20ab1770074172ce9eb53b`; per-image SHA-256 values and glyph provenance in `assets/ui/noto_emoji/SOURCES.json` |
+| `components/mybot_platform/src/drivers/display/renderers/legacy/ili9342_font.inc`, `components/mybot_platform/src/drivers/display/assets/licenses/OFL-1.1.txt` | `github.com/junlon2006/mybot-bk7259` vendored SDK fonts | OFL-1.1 Liberation Sans glyphs |
+| `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_fonts.c`, `components/mybot_platform/src/drivers/display/assets/licenses/LVGL_VIEW_FONT_LICENSE.txt` | `github.com/lvgl/lvgl`, `scripts/built_in_font/SourceHanSansSC-Normal.otf` | LVGL 9.5.0 source font SHA-256 `1ee89e1669362dee13851129c0a8a791a87521eb4148e5efbf5d26596738e25b`; generated 20 px, 4 bpp static UI subset |
+| `components/mybot_platform/assets/ui/noto_emoji`, `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_assets.c` | Noto Color Emoji font glyphs rasterized by `github.com/78/noto-fonts`, `png/noto-color-emoji_64` | 2.0.0, commit `d45dbc64052d57048f20ab1770074172ce9eb53b`; per-image SHA-256 values and glyph provenance in `assets/ui/noto_emoji/SOURCES.json` |
 
 External implementation references and hardware-mapping verification baselines used for
 project-maintained board ports are pinned separately; their application layer and dependency set
@@ -41,15 +41,15 @@ are not vendored into this repository.
 
 | Paths | Source | Pinned revision |
 | --- | --- | --- |
-| `components/mybot_platform/src/drivers/display/cores3_lvgl_view.cc`, `components/mybot_platform/src/internal/cores3_lvgl_view.h` | `github.com/junlon2006/xiaozhi-esp32`, `main/display/lcd_display.cc` and LVGL theme layout | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
-| `components/mybot_platform/src/drivers/display/vocat_lvgl_panel.c`, `components/mybot_platform/src/internal/vocat_st77916_lcd.h` | Project-maintained LVGL panel adapter over the existing VoCat ST77916 driver | Uses the pinned local `esp_lcd_st77916` component; no new upstream source |
-| `components/mybot_platform/src/drivers/display/dynamic_lvgl_lcd.cc`, `components/mybot_platform/src/internal/dynamic_lcd_panel.h` | Project-maintained shared adapter for CO5300 and SPD2010 panels | Uses the existing board panel drivers; no new upstream source |
+| `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_view.cc`, `components/mybot_platform/src/internal/display/lvgl_view.h` | `github.com/junlon2006/xiaozhi-esp32`, `main/display/lcd_display.cc` and LVGL theme layout | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
+| `components/mybot_platform/src/drivers/display/adapters/lvgl/vocat_panel_provider.c`, `components/mybot_platform/src/internal/display/vocat_renderer.h` | Project-maintained LVGL panel adapter over the existing VoCat ST77916 renderer | Uses the pinned local `esp_lcd_st77916` component; no new upstream source |
+| `components/mybot_platform/src/drivers/display/adapters/lvgl/shared_lvgl_adapter.cc`, `components/mybot_platform/src/internal/display/display_panel.h` | Project-maintained shared adapter for CO5300 and SPD2010 panels | Uses the existing board panel drivers; no new upstream source |
 | `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao`, `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`, `partitions/v2/8m.csv` | `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` | commit `b06024382eb104c998aead4841e1df647193065b` |
-| `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/spd2010_lcd.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
-| `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`, `components/mybot_platform/src/drivers/display/sticks3_st7789_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/renderers/legacy/sensecap_renderer.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`, `components/mybot_platform/src/drivers/display/renderers/legacy/sticks3_st7789_renderer.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/zhengchen-1.54tft-wifi/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
-| `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75-common`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c`, `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`, `components/mybot_platform/src/drivers/display/amoled175_co5300_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
-| `components/mybot_platform/boards/esp-vocat`, `components/mybot_platform/src/drivers/audio/vocat_codec_audio.c`, `components/mybot_platform/src/drivers/display/vocat_st77916_lcd.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75-common`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c`, `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`, `components/mybot_platform/src/drivers/display/renderers/legacy/amoled175_renderer.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/esp-vocat`, `components/mybot_platform/src/drivers/audio/vocat_codec_audio.c`, `components/mybot_platform/src/drivers/display/renderers/legacy/vocat_renderer.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/esp-vocat/board_config.h` (hardware mapping verification only) | `github.com/espressif/esp-brookesia` | commit `b22c488f50bafe53342c8e171081bd736396ef58` |
 
 Firmware integration differences are limited to the active ESP32-S3 build:
@@ -58,7 +58,7 @@ Firmware integration differences are limited to the active ESP32-S3 build:
   for display boards. The build omits examples, tests, and registry download metadata. The UI uses
   a static bilingual font subset and existing public LCD state; no upstream application services,
   asset download protocol, or SDK internals are imported.
-  `scripts/generate-cores3-lvgl-font.py` generates the font using Pillow 10.2.0 and FreeType 2.13.2;
+  `scripts/generate-lvgl-font.py` generates the font using Pillow 10.2.0 and FreeType 2.13.2;
   the checked-in glyph data is sufficient for firmware builds without the generator or source OTF.
   LVGL's local allocator keeps its heap in PSRAM; local component configuration selects the
   required rendering features and fonts without changing its upstream source files. Integration
@@ -66,7 +66,7 @@ Firmware integration differences are limited to the active ESP32-S3 build:
   rollback, and deinit contract are adapted for repeated initialization and teardown; the exact
   local corrections are recorded in `components/esp_lvgl_port/PATCHES.md`.
   The UI enables the unchanged upstream LVGL image widget. Four pinned local emoji PNGs
-  are converted by `scripts/generate-cores3-ui-assets.py` with Pillow 10.2.0 into 64x64 straight-alpha
+  are converted by `scripts/generate-lvgl-ui-assets.py` with Pillow 10.2.0 into 64x64 straight-alpha
   ARGB8888 constants (BGRA byte order), totaling 65,536 pixel bytes in Flash. The script pads the
   64x61 source images without scaling; the firmware does not include PNG/GIF decoding or an image
   cache. Original PNGs and their font license are retained for reproducibility.

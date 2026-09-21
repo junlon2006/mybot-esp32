@@ -20,7 +20,7 @@
     "transform": "center the original 64x61 pixels on a transparent 64x64 canvas; no scaling",
     "bytes_per_image": 16384,
     "total_pixel_bytes": 65536,
-    "generator": "scripts/generate-cores3-ui-assets.py",
+    "generator": "scripts/generate-lvgl-ui-assets.py",
     "validated_pillow_version": "10.2.0"
   },
   "images": [

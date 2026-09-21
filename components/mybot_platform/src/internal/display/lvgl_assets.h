@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#ifndef MYBOT_CORES3_UI_ASSETS_H_
-#define MYBOT_CORES3_UI_ASSETS_H_
+#ifndef MYBOT_LVGL_ASSETS_H_
+#define MYBOT_LVGL_ASSETS_H_
 
 #include "lvgl.h"
 
@@ -19,10 +19,10 @@ typedef enum {
 /* Constant 64x64 ARGB8888 images, straight alpha, stored as BGRA bytes.
  * The returned descriptor remains valid throughout firmware lifetime.
  * Invalid values select the neutral image. No allocation or decode occurs. */
-const lv_image_dsc_t *mybot_cores3_ui_emoji(mybot_ui_emoji_t emoji);
+const lv_image_dsc_t *mybot_lvgl_ui_emoji(mybot_ui_emoji_t emoji);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MYBOT_CORES3_UI_ASSETS_H_ */
+#endif /* MYBOT_LVGL_ASSETS_H_ */

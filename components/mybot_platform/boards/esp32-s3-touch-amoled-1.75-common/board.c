@@ -24,7 +24,7 @@ const mybot_key_ops_t *mybot_amoled175_input_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
 const mybot_lcd_ops_t *mybot_amoled175_lcd_ops(void);
 #if CONFIG_MYBOT_LVGL_UI
-const mybot_lcd_ops_t *mybot_dynamic_lvgl_ops(void);
+const mybot_lcd_ops_t *mybot_shared_lvgl_ops(void);
 #endif
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
 int mybot_amoled175_input_start(void);
@@ -85,7 +85,7 @@ static int board_prepare(void) {
     }
 
 #if CONFIG_MYBOT_LVGL_UI
-    s_lcd_ops = mybot_dynamic_lvgl_ops();
+    s_lcd_ops = mybot_shared_lvgl_ops();
 #else
     s_lcd_ops = mybot_amoled175_lcd_ops();
 #endif
@@ -135,7 +135,7 @@ static void board_shutdown_network(void) {
 
 static int board_register_platform(void) {
 #if CONFIG_MYBOT_LVGL_UI
-    const mybot_lcd_ops_t *lcd_ops = mybot_dynamic_lvgl_ops();
+    const mybot_lcd_ops_t *lcd_ops = mybot_shared_lvgl_ops();
 #else
     const mybot_lcd_ops_t *lcd_ops = mybot_amoled175_lcd_ops();
 #endif
