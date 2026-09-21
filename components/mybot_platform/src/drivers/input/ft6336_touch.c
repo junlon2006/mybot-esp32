@@ -5,7 +5,7 @@
 #include <mybot/mybot.h>
 #include <mybot/platform/mybot_key.h>
 
-#include "board_actions.h"
+#include "platform/board_actions.h"
 #include "cores3_hardware.h"
 #include "driver/i2c_master.h"
 #include "esp_log.h"

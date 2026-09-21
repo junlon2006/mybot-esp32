@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "board_config.h"
-#include "pcm_playback_buffer.h"
+#include "audio/pcm_playback_buffer.h"
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl_atomic.h>

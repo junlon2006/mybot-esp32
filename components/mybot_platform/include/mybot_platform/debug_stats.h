@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#ifndef MYBOT_DEBUG_STATS_H_
-#define MYBOT_DEBUG_STATS_H_
+#ifndef MYBOT_PLATFORM_DEBUG_STATS_H_
+#define MYBOT_PLATFORM_DEBUG_STATS_H_
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -7,7 +7,7 @@
 #include "cores3_hardware.h"
 #include "display/ili9342_panel.h"
 #if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
-#include "mybot_debug_stats.h"
+#include "mybot_platform/debug_stats.h"
 #endif
 #include "driver/spi_master.h"
 #include "esp_attr.h"

@@ -4,7 +4,7 @@
 #include <ssid_manager.h>
 #include <wifi_manager.h>
 
-#include "wifi_control.h"
+#include "network/wifi_control.h"
 
 #include "esp_log.h"
 #include "esp_mac.h"

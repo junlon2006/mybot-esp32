@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#ifndef MYBOT_WIFI_CONTROL_H_
-#define MYBOT_WIFI_CONTROL_H_
+#ifndef MYBOT_PLATFORM_WIFI_CONTROL_H_
+#define MYBOT_PLATFORM_WIFI_CONTROL_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,4 +17,4 @@ void mybot_wifi_shutdown_network(void);
 }
 #endif
 
-#endif /* MYBOT_WIFI_CONTROL_H_ */
+#endif /* MYBOT_PLATFORM_WIFI_CONTROL_H_ */

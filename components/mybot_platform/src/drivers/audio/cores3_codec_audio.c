@@ -2,7 +2,7 @@
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
 #include "cores3_hardware.h"
-#include "pcm_playback_buffer.h"
+#include "audio/pcm_playback_buffer.h"
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl_atomic.h>

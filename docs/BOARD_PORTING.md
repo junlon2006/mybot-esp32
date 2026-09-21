@@ -10,10 +10,10 @@ known before components are configured.
 
 ```text
 components/mybot_platform/
-  include/mybot_board.h       Board metadata and registration entry points
-  src/common/                 Board-independent ESP-IDF services
+  include/mybot_platform/board.h       Board metadata and registration entry points
+  src/platform/               Board registration and provisioning event ownership
+  src/services/               Board-independent network, storage, prompts, audio, and diagnostics
   src/drivers/                Reusable hardware-family drivers
-  src/core/                   Selected-board registration
   boards/<board-id>/          Board descriptor, pins, sources, and sdkconfig defaults
 ```
 
@@ -76,7 +76,7 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
    connectivity, `provision_wifi()` returns only after provisioning reconnects the station, and
    `shutdown_network()` performs final network teardown.
 5. Keep power sequencing and unusual codec, display, touch, or input behavior inside the Board or a
-   hardware-family driver; do not add ESP-IDF details to `third_party/mybot`.
+   hardware-family driver; do not add ESP-IDF details to `components/mybot_stack/mybot_sdk/mybot`.
 6. Preserve the SDK audio boundary: 16 kHz, mono, signed 16-bit PCM, with frame counts rather than
    byte counts.
 7. Add an isolated CI build and size report, then record real-device provisioning, HTTPS, RTC,

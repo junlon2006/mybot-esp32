@@ -5,9 +5,9 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 
 | Path | Source | Pinned revision |
 | --- | --- | --- |
-| `third_party/mybot` | `github.com/junlon2006/mybot` | v1.2.0 + post-release fixes, commit `4ae239c804257f8b5c557e5879b54d9a88d80847` |
-| `components/aosl` | `github.com/AgoraIO-Community/aosl` | v1.0.4 + post-release fixes, commit `84e086084ebcd0ae2455a0ce5721950c5fe2e656` |
-| `components/agora_rtc` | Agora RTSA Lite package archive | v1.10.1, build 1270872 (`20260828_194128`) |
+| `components/mybot_stack/mybot_sdk/mybot` | `github.com/junlon2006/mybot` | v1.2.0 + post-release fixes, commit `4ae239c804257f8b5c557e5879b54d9a88d80847` |
+| `components/mybot_stack/aosl` | `github.com/AgoraIO-Community/aosl` | v1.0.4 + post-release fixes, commit `84e086084ebcd0ae2455a0ce5721950c5fe2e656` |
+| `components/mybot_stack/agora_rtc` | Agora RTSA Lite package archive | v1.10.1, build 1270872 (`20260828_194128`) |
 | `components/esp-wifi-connect` | `github.com/78/esp-wifi-connect` | 3.2.2, commit `c24b97c194e6b4a1d7be0237b3c28980661cac1e` |
 | `components/esp_audio_codec` | ESP Component Registry `espressif/esp_audio_codec` | 2.5.0, commit `3bb83597d07b604e1ab5b78dd4370a28d6fa802d` |
 | `components/esp_codec_dev` | `github.com/espressif/esp-adf` | 1.5.11, commit `73befa9ebffdd6e5065b7145329f115910e13ab5` |

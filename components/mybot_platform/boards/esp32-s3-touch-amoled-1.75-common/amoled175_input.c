@@ -6,7 +6,7 @@
 #include <mybot/platform/mybot_key.h>
 
 #include "amoled175_hardware.h"
-#include "board_actions.h"
+#include "platform/board_actions.h"
 #include "button_gpio.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_touch.h"

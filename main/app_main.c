@@ -13,9 +13,9 @@
 #include "esp_psram.h"
 #include "esp_timer.h"
 #include "nvs_flash.h"
-#include "mybot_board.h"
+#include "mybot_platform/board.h"
 #if CONFIG_MYBOT_AUDIO_PLAYBACK_TEST
-#include "mybot_audio_playback_test.h"
+#include "mybot_platform/audio_playback_test.h"
 #endif
 #if CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR
 #include "resource_monitor.h"

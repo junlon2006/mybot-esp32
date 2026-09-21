@@ -5,9 +5,9 @@ It does not replace third-party terms. This file is informational and is not leg
 
 | Component | Terms | Location |
 | --- | --- | --- |
-| mybot SDK 1.2.0 + post-release fixes (`4ae239c`) | Apache-2.0; bundled JSON parser portions MIT | `third_party/mybot` |
-| AOSL (`84e0860`) | Bundled license: Apache-2.0 text plus additional deployment restrictions | `components/aosl` |
-| Agora RTSA Lite for ESP32-S3 1.10.1 (build 1270872) | Separate Agora distribution terms | `components/agora_rtc` |
+| mybot SDK 1.2.0 + post-release fixes (`4ae239c`) | Apache-2.0; bundled JSON parser portions MIT | `components/mybot_stack/mybot_sdk/mybot` |
+| AOSL (`84e0860`) | Bundled license: Apache-2.0 text plus additional deployment restrictions | `components/mybot_stack/aosl` |
+| Agora RTSA Lite for ESP32-S3 1.10.1 (build 1270872) | Separate Agora distribution terms | `components/mybot_stack/agora_rtc` |
 | esp-wifi-connect 3.2.2 | MIT | `components/esp-wifi-connect` |
 | Espressif audio codec 2.5.0 | Espressif Modified MIT and file-specific terms | `components/esp_audio_codec` |
 | Espressif codec device 1.5.11 | Apache-2.0 | `components/esp_codec_dev` |
@@ -30,7 +30,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | Espressif knob 1.1.0 | Apache-2.0 | `components/knob` |
 | Espressif CMake utilities 0.5.0 | Apache-2.0 | `components/cmake_utilities` |
 | M5Stack M5PM1 1.0.7 | MIT | `components/m5pm1` |
-| Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets/locales`, `components/mybot_platform/src/common/ogg_opus_decoder.c` |
+| Announcement assets and Ogg parser | MIT | `components/mybot_platform/assets/locales`, `components/mybot_platform/src/services/announcement/ogg_opus_decoder.c` |
 | Liberation Sans UI glyphs (OFL-1.1) | SIL Open Font License 1.1 | `components/mybot_platform/src/drivers/display/renderers/legacy/ili9342_font.inc`, `components/mybot_platform/src/drivers/display/assets/licenses/OFL-1.1.txt` |
 | Source Han Sans UI glyph subset | SIL Open Font License 1.1 | `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_fonts.c`, `components/mybot_platform/src/drivers/display/assets/licenses/LVGL_VIEW_FONT_LICENSE.txt` |
 | Noto Color Emoji rasterized glyphs | SIL Open Font License 1.1 | `components/mybot_platform/assets/ui/noto_emoji`, `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_assets.c` |
@@ -57,7 +57,7 @@ and the conversion method are recorded in that directory's `SOURCES.json`.
 ## AOSL
 
 The bundled AOSL license is based on Apache-2.0 and adds material deployment restrictions. Read
-`components/aosl/LICENSE` before using, modifying, deploying, or redistributing firmware containing
+`components/mybot_stack/aosl/LICENSE` before using, modifying, deploying, or redistributing firmware containing
 AOSL. Do not describe the combined repository or firmware image as uniformly Apache-2.0.
 
 ## Agora RTSA
@@ -159,7 +159,7 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 ## Vendored SDK Notice
 
 The original mybot SDK license and third-party notice are retained unchanged under
-`third_party/mybot/`. That notice may describe packages used by other mybot targets; it is preserved
+`components/mybot_stack/mybot_sdk/mybot/`. That notice may describe packages used by other mybot targets; it is preserved
 as part of the immutable SDK snapshot and does not redefine this firmware's dependency set.
 
 Every component license file and file-level SPDX/copyright notice remains in force.

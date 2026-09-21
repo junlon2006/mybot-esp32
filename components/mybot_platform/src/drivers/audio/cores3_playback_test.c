@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-#include "mybot_audio_playback_test.h"
-#include "ogg_opus_decoder.h"
-#include "pcm_playback_buffer.h"
+#include "mybot_platform/audio_playback_test.h"
+#include "announcement/ogg_opus_decoder.h"
+#include "audio/pcm_playback_buffer.h"
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl.h>

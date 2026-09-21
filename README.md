@@ -344,11 +344,11 @@ power-off gestures, and automatic sleep are not part of the initial port.
 ## Repository Layout
 
 ```text
-components/agora_rtc/        ESP32-S3 Agora RTSA package
-components/aosl/             AOSL with ESP32-S3 platform integration
-components/mybot_sdk/        ESP-IDF build wrapper for the mybot SDK
+components/mybot_stack/agora_rtc/        ESP32-S3 Agora RTSA package
+components/mybot_stack/aosl/             AOSL with ESP32-S3 platform integration
+components/mybot_stack/mybot_sdk/        ESP-IDF build wrapper for the mybot SDK
 components/mybot_platform/   Common services, reusable drivers, and board profiles
-third_party/mybot/           Pinned mybot public headers and core sources
+components/mybot_stack/mybot_sdk/mybot/           Pinned mybot public headers and core sources
 main/                        Firmware entry point and project Kconfig
 ```
 
