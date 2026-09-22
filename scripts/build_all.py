@@ -6,8 +6,8 @@ Display capability and video capability are derived from each board profile:
 display boards automatically select the LVGL Kconfig, and a board that adds
 the CoreS3 camera source receives the video defaults automatically.
 
-Build directories and merged firmware images are kept together under the
-repository's ``releases/`` directory by default.
+Build directories are kept under the repository's ``build/`` directory and
+merged firmware images are written to ``releases/`` by default.
 """
 
 from __future__ import annotations
