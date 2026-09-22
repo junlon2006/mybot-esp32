@@ -105,6 +105,21 @@ idf.py -B build/sensecap-watcher \
 八种带屏 profile 自动使用 LVGL，ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
 主题和状态活动动画仍可通过 menuconfig 配置。
 
+构建全部已支持的 profile，并自动启用带屏 LVGL 及 CoreS3 视频：
+
+```sh
+python3 scripts/build_all.py
+```
+
+脚本将合并固件输出到工程根目录的 `releases/`，各变体的编译目录放在工程根目录的 `build/`。
+使用
+默认构建中英文；使用 `--language zh-CN` 或 `--language en-US` 只构建一种语言，使用
+`--board <board-id>` 选择板型，使用
+`--build-root <dir>` 将中间构建目录放到其他位置，使用 `--video off` 关闭默认的 CoreS3 视频构建。
+每次运行前默认清理 `build/` 和 `releases/`；增量构建可追加 `--no-clean`。
+带屏 profile 由板级能力自动选择 LVGL，CoreS3 自动追加视频配置。脚本会打印每个变体的
+编译耗时和整批构建总耗时。
+
 烧录并查看日志：
 
 ```sh

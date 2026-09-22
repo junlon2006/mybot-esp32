@@ -108,6 +108,21 @@ Board defaults supply the required Flash, PSRAM, and partition settings.
 All eight display profiles use LVGL automatically; ReSpeaker Flex remains headless. There is no
 renderer enable switch. Theme and activity-animation options remain in menuconfig.
 
+To build all supported profiles with the automatic capabilities, use:
+
+```sh
+python3 scripts/build_all.py
+```
+
+The script places merged firmware images in `releases/` and per-variant build directories in
+`build/` by default, and builds both Chinese and English images. Use `--language zh-CN` or
+`--language en-US` for one language, `--board <board-id>` to select profiles,
+`--build-root <dir>` to place intermediate builds elsewhere, and
+`--video off` to disable the default CoreS3 video build. Each run cleans `build/` and `releases/`
+first; pass `--no-clean` for an incremental build. Display profiles select LVGL through
+their board capability; CoreS3 automatically receives the video defaults. The script prints each
+variant's elapsed time and the total batch duration.
+
 Flash and monitor the selected build:
 
 ```sh
