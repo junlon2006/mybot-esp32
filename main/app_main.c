@@ -12,6 +12,7 @@
 #include "esp_netif_sntp.h"
 #include "esp_psram.h"
 #include "esp_timer.h"
+#include "mbedtls/md5.h"
 #include "nvs_flash.h"
 #include "mybot_platform/board.h"
 #if CONFIG_MYBOT_AUDIO_PLAYBACK_TEST
@@ -27,6 +28,22 @@
 
 #define TAG "mybot_bootstrap"
 #define CONTROL_EVENT_WAIT_MS 100
+
+static int build_device_id(char *device_id, size_t capacity, const uint8_t mac[6]) {
+    uint8_t digest[16];
+    char digest_hex[sizeof(digest) * 2 + 1];
+    /* The digest keeps the ID stable without placing the raw MAC in requests or logs.
+     * It is an identifier obfuscation, not a secret or authentication token. */
+    if (!device_id || capacity == 0 || !mac || mbedtls_md5(mac, 6, digest) != 0) {
+        return -1;
+    }
+    for (size_t i = 0; i < sizeof(digest); ++i) {
+        snprintf(&digest_hex[i * 2], 3, "%02x", digest[i]);
+    }
+    digest_hex[sizeof(digest_hex) - 1] = '\0';
+    int written = snprintf(device_id, capacity, "esp32s3-%s", digest_hex);
+    return written > 0 && (size_t)written < capacity ? 0 : -1;
+}
 
 static esp_event_handler_instance_t s_got_ip_handler;
 static bool s_sntp_initialized;
@@ -147,8 +164,10 @@ void app_main(void) {
     }
 
     mybot_config_t config = {0};
-    snprintf(config.device_id, sizeof(config.device_id), "esp32s3-%02x%02x%02x%02x%02x%02x", mac[0],
-             mac[1], mac[2], mac[3], mac[4], mac[5]);
+    if (build_device_id(config.device_id, sizeof(config.device_id), mac) < 0) {
+        ESP_LOGE(TAG, "failed to derive device ID from device MAC");
+        return;
+    }
     snprintf(config.server_base, sizeof(config.server_base), "%s", CONFIG_MYBOT_SERVER_BASE);
     snprintf(config.firmware_ver, sizeof(config.firmware_ver), "%s", app_description->version);
     snprintf(config.hw_model, sizeof(config.hw_model), "%s", board->hw_model);
