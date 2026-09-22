@@ -141,35 +141,37 @@ int open_panel() {
         return -1;
     }
     s_context.backlight_ready = true;
-    const spi_bus_config_t bus = {
-        .mosi_io_num = MYBOT_DISPLAY_MOSI,
-        .miso_io_num = GPIO_NUM_NC,
-        .sclk_io_num = MYBOT_DISPLAY_SCLK,
-        .quadwp_io_num = GPIO_NUM_NC,
-        .quadhd_io_num = GPIO_NUM_NC,
-        .max_transfer_sz = MYBOT_DISPLAY_WIDTH * TRANSFER_ROWS * sizeof(uint16_t),
-    };
+    spi_bus_config_t bus = {};
+    bus.mosi_io_num = MYBOT_DISPLAY_MOSI;
+    bus.miso_io_num = GPIO_NUM_NC;
+    bus.sclk_io_num = MYBOT_DISPLAY_SCLK;
+    bus.quadwp_io_num = GPIO_NUM_NC;
+    bus.quadhd_io_num = GPIO_NUM_NC;
+    bus.data4_io_num = GPIO_NUM_NC;
+    bus.data5_io_num = GPIO_NUM_NC;
+    bus.data6_io_num = GPIO_NUM_NC;
+    bus.data7_io_num = GPIO_NUM_NC;
+    bus.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
+    bus.max_transfer_sz = MYBOT_DISPLAY_WIDTH * TRANSFER_ROWS * sizeof(uint16_t);
     if (spi_bus_initialize(MYBOT_DISPLAY_SPI_HOST, &bus, SPI_DMA_CH_AUTO) != ESP_OK) {
         return -1;
     }
     s_context.spi_ready = true;
-    const esp_lcd_panel_io_spi_config_t io_config = {
-        .cs_gpio_num = MYBOT_DISPLAY_CS,
-        .dc_gpio_num = MYBOT_DISPLAY_DC,
-        .spi_mode = MYBOT_DISPLAY_SPI_MODE,
-        .pclk_hz = MYBOT_DISPLAY_PIXEL_CLOCK_HZ,
-        .trans_queue_depth = 2,
-        .lcd_cmd_bits = 8,
-        .lcd_param_bits = 8,
-    };
+    esp_lcd_panel_io_spi_config_t io_config = {};
+    io_config.cs_gpio_num = MYBOT_DISPLAY_CS;
+    io_config.dc_gpio_num = MYBOT_DISPLAY_DC;
+    io_config.spi_mode = MYBOT_DISPLAY_SPI_MODE;
+    io_config.pclk_hz = MYBOT_DISPLAY_PIXEL_CLOCK_HZ;
+    io_config.trans_queue_depth = 2;
+    io_config.lcd_cmd_bits = 8;
+    io_config.lcd_param_bits = 8;
     if (esp_lcd_new_panel_io_spi(MYBOT_DISPLAY_SPI_HOST, &io_config, &s_context.io) != ESP_OK) {
         return -1;
     }
-    const esp_lcd_panel_dev_config_t panel_config = {
-        .reset_gpio_num = MYBOT_DISPLAY_RESET,
-        .rgb_ele_order = MYBOT_DISPLAY_RGB_ORDER,
-        .bits_per_pixel = 16,
-    };
+    esp_lcd_panel_dev_config_t panel_config = {};
+    panel_config.reset_gpio_num = MYBOT_DISPLAY_RESET;
+    panel_config.rgb_ele_order = MYBOT_DISPLAY_RGB_ORDER;
+    panel_config.bits_per_pixel = 16;
     esp_err_t result = esp_lcd_new_panel_st7789(s_context.io, &panel_config, &s_context.panel);
     if (result == ESP_OK)
         result = esp_lcd_panel_reset(s_context.panel);
