@@ -1,6 +1,7 @@
 # ESP-IDF generated output
 /build/
 /build-*/
+/releases/
 /sdkconfig
 /sdkconfig.old
 /managed_components/
