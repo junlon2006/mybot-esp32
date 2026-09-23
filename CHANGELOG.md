@@ -57,6 +57,9 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Sync the MyBot SDK snapshot to `83fbcb0` (1.2.0 plus post-release fixes), serializing video
+  control with shutdown, retaining announcements until RTC callbacks stop, and consolidating
+  RTM-to-LCD indicator handling and device-service response parsing.
 - Request CoreS3 DVP capture at most five times per second, holding capture buffers between
   samples so idle periods stop DMA and copying. The sensor retains its 20 fps timing and JPEG
   uplink remains capped at 1 fps. Increase the DVP DMA configuration to 16,384 bytes
