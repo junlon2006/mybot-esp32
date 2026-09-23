@@ -4,14 +4,44 @@ This project follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Add a repeatable release script to package an explicit tag from main with its pinned AOSL
+  sources, generate SHA-256 checksums, and verify the corresponding GitHub Release assets.
+
+### Fixed
+
+- Align public Wi-Fi comments and integration guides with product-owned provisioning, and
+  correct the embedded notes on RTSA logging and per-frame heap allocations.
+- Serialize video startup and encoder control with shutdown on the application control worker,
+  discarding stale conversation notifications.
+- Retain announcement resources until RTC callbacks have stopped, preventing downlink audio
+  callbacks from accessing a destroyed announcement mutex during shutdown.
+
 ### Changed
 
+- Share RTM-to-LCD event queuing, session validation, and rendering for voiceprint and server-state
+  indicators while preserving their independent and mutually exclusive display semantics.
+- Share the device-service conversation response with the synchronous application callback,
+  removing a duplicate parameter type, allocation, and copy. Reuse one optional JSON string reader.
+- Compile unit tests with the SDK's exported feature definitions and preserve selected features
+  and RTSA dependencies in source/install integration tests, with compile-time consumer checks.
+- Add video-enabled CI and video lifecycle tests for initialization/start failure, stop retry,
+  callback forwarding, and stopping while a frame is in flight.
 - Ensure `mybot_start()` raises an overly restrictive AOSL log level to `AOSL_LOG_NOTICE`
   while preserving existing `INFO` and `DEBUG` levels.
 - Move routine RTM events, message previews, and forwarding logs to debug level while
   retaining warning/error diagnostics for failures and invalid callbacks.
 - Set RTSA logging to `RTC_LOG_ERROR` and restore the previous AOSL log level after
   RTSA initialization, including when initialization fails.
+
+### Removed
+
+- Remove the duplicated `examples/bk725x` firmware project and `platforms/bk725x` adapters.
+  BK platform code, board configuration, and firmware resources are maintained in the independent
+  [BK7258](https://github.com/junlon2006/mybot-bk7258) and
+  [BK7259](https://github.com/junlon2006/mybot-bk7259) projects. The SDK core and Linux reference
+  implementation remain in this repository.
 
 ## [1.2.0] - 2026-09-15
 

@@ -50,6 +50,7 @@ typedef struct {
     mybot_media_pipeline_t media;
 #if MYBOT_ENABLE_VIDEO
     mybot_video_t video;
+    aosl_atomic_t video_generation;
 #endif
     mybot_device_lifecycle_t lifecycle;
     /* Snapshots used to reject stale RTM events from a previous conversation. */
@@ -196,55 +197,8 @@ static bool rtm_data_get_lcd_indicator(const void *data, size_t len,
     return true;
 }
 
-static void handle_server_state(const aosl_ts_t *queued_ts, aosl_refobj_t robj, uintptr_t argc,
-                                uintptr_t argv[]);
-
-static void queue_server_state(mybot_runtime_t *runtime, const char *channel, const char *rtm_uid,
-                               mybot_lcd_indicator_t indicator, bool active) {
-    size_t rtm_uid_len = strlen(rtm_uid);
-    uint32_t rtm_uid_hash = rtm_uid_fingerprint(rtm_uid, rtm_uid_len);
-    size_t channel_len = strlen(channel);
-    uint32_t channel_hash = rtm_uid_fingerprint(channel, channel_len);
-
-    AOSL_LOG_DBG("[RTM] matched server state (channel=%s, from=%s, indicator=0x%x, active=%d)",
-                 channel, rtm_uid, (unsigned int)indicator, active ? 1 : 0);
-    if (aosl_mpq_queue(runtime->control_mpq, AOSL_MPQ_INVALID, AOSL_REF_INVALID,
-                       "handle_server_state", handle_server_state, 7, (uintptr_t)runtime,
-                       (uintptr_t)rtm_uid_len, (uintptr_t)rtm_uid_hash, (uintptr_t)channel_len,
-                       (uintptr_t)channel_hash, (uintptr_t)indicator, (uintptr_t)active) < 0) {
-        AOSL_LOG_WRN("failed to queue server state LCD event");
-    }
-}
-
-static void handle_vp_register_success(const aosl_ts_t *queued_ts, aosl_refobj_t robj,
-                                       uintptr_t argc, uintptr_t argv[]) {
-    (void)queued_ts;
-    (void)robj;
-    if (argc != 5) {
-        return;
-    }
-
-    mybot_runtime_t *runtime = (mybot_runtime_t *)argv[0];
-    size_t rtm_uid_len = (size_t)argv[1];
-    uint32_t rtm_uid_hash = (uint32_t)argv[2];
-    size_t channel_len = (size_t)argv[3];
-    uint32_t channel_hash = (uint32_t)argv[4];
-    if (!runtime || !runtime_is_running(runtime) ||
-        runtime_get_state(runtime) != MYBOT_STATE_IN_CONVERSATION ||
-        strlen(runtime->rtc_agent_uid) != rtm_uid_len ||
-        rtm_uid_fingerprint(runtime->rtc_agent_uid, rtm_uid_len) != rtm_uid_hash ||
-        strlen(runtime->rtc_channel) != channel_len ||
-        rtm_uid_fingerprint(runtime->rtc_channel, channel_len) != channel_hash) {
-        return;
-    }
-
-    AOSL_LOG_DBG("[RTM] voiceprint registration succeeded");
-    mybot_presenter_set_vp_registered(&runtime->presenter, true);
-    mybot_presenter_show_screen(&runtime->presenter, MYBOT_LCD_SCREEN_IN_CONVERSATION);
-}
-
-static void handle_server_state(const aosl_ts_t *queued_ts, aosl_refobj_t robj, uintptr_t argc,
-                                uintptr_t argv[]) {
+static void handle_lcd_indicator(const aosl_ts_t *queued_ts, aosl_refobj_t robj, uintptr_t argc,
+                                 uintptr_t argv[]) {
     (void)queued_ts;
     (void)robj;
     if (argc != 7) {
@@ -267,8 +221,30 @@ static void handle_server_state(const aosl_ts_t *queued_ts, aosl_refobj_t robj, 
         return;
     }
 
-    mybot_presenter_update_server_indicator(&runtime->presenter, indicator, active);
+    if (indicator == MYBOT_LCD_INDICATOR_VP_REGISTERED) {
+        AOSL_LOG_DBG("[RTM] voiceprint registration succeeded");
+        mybot_presenter_set_vp_registered(&runtime->presenter, active);
+    } else {
+        mybot_presenter_update_server_indicator(&runtime->presenter, indicator, active);
+    }
     mybot_presenter_show_screen(&runtime->presenter, MYBOT_LCD_SCREEN_IN_CONVERSATION);
+}
+
+static void queue_lcd_indicator(mybot_runtime_t *runtime, const char *channel, const char *rtm_uid,
+                                mybot_lcd_indicator_t indicator, bool active) {
+    size_t rtm_uid_len = strlen(rtm_uid);
+    uint32_t rtm_uid_hash = rtm_uid_fingerprint(rtm_uid, rtm_uid_len);
+    size_t channel_len = strlen(channel);
+    uint32_t channel_hash = rtm_uid_fingerprint(channel, channel_len);
+
+    AOSL_LOG_DBG("[RTM] matched LCD indicator (channel=%s, from=%s, indicator=0x%x, active=%d)",
+                 channel, rtm_uid, (unsigned int)indicator, active ? 1 : 0);
+    if (aosl_mpq_queue(runtime->control_mpq, AOSL_MPQ_INVALID, AOSL_REF_INVALID,
+                       "handle_lcd_indicator", handle_lcd_indicator, 7, (uintptr_t)runtime,
+                       (uintptr_t)rtm_uid_len, (uintptr_t)rtm_uid_hash, (uintptr_t)channel_len,
+                       (uintptr_t)channel_hash, (uintptr_t)indicator, (uintptr_t)active) < 0) {
+        AOSL_LOG_WRN("failed to queue LCD indicator event");
+    }
 }
 
 static void handle_start_conversation(const aosl_ts_t *queued_ts, aosl_refobj_t robj,
@@ -317,6 +293,58 @@ static void media_on_wake_word(const char *wake_word, void *user_data) {
     }
 }
 
+#if MYBOT_ENABLE_VIDEO
+typedef enum {
+    VIDEO_CONTROL_START,
+    VIDEO_CONTROL_KEY_FRAME,
+    VIDEO_CONTROL_BITRATE,
+} video_control_event_t;
+
+static void handle_video_control(const aosl_ts_t *ts, aosl_refobj_t ref, uintptr_t argc,
+                                 uintptr_t argv[]) {
+    (void)ts;
+    (void)ref;
+    if (argc != 4) {
+        return;
+    }
+    mybot_runtime_t *runtime = (mybot_runtime_t *)argv[0];
+    if (!runtime_is_running(runtime) ||
+        argv[1] != (uintptr_t)aosl_atomic_read(&runtime->video_generation) ||
+        runtime_get_state(runtime) != MYBOT_STATE_IN_CONVERSATION || !runtime->rtc_channel[0] ||
+        aosl_atomic_read(&runtime->lifecycle.stop_request) ||
+        !aosl_atomic_read(&runtime->media.rtc_connected)) {
+        return;
+    }
+    switch ((video_control_event_t)argv[2]) {
+    case VIDEO_CONTROL_START:
+        if (mybot_video_start(&runtime->video) < 0) {
+            AOSL_LOG_ERR("failed to start video source");
+        }
+        break;
+    case VIDEO_CONTROL_KEY_FRAME:
+        mybot_video_request_key_frame(&runtime->video);
+        break;
+    case VIDEO_CONTROL_BITRATE:
+        mybot_video_set_target_bitrate(&runtime->video, (uint32_t)argv[3]);
+        break;
+    }
+}
+
+static void queue_video_control(mybot_runtime_t *runtime, video_control_event_t event,
+                                uint32_t target_bps) {
+    if (!runtime_is_running(runtime)) {
+        return;
+    }
+    /* Copy scalars into the queue; only the control worker touches the encoder. */
+    uintptr_t generation = (uintptr_t)aosl_atomic_read(&runtime->video_generation);
+    if (aosl_mpq_queue(runtime->control_mpq, AOSL_MPQ_INVALID, AOSL_REF_INVALID,
+                       "handle_video_control", handle_video_control, 4, (uintptr_t)runtime,
+                       generation, (uintptr_t)event, (uintptr_t)target_bps) < 0) {
+        AOSL_LOG_WRN("failed to queue video control event (%d)", (int)event);
+    }
+}
+#endif
+
 static void rtc_on_remote_audio(uint32_t uid, const void *data, size_t len, void *user_data) {
     (void)uid;
     mybot_runtime_t *runtime = user_data;
@@ -328,9 +356,8 @@ static void rtc_on_state_changed(mybot_rtc_state_t state, void *user_data) {
     bool connected = state == MYBOT_RTC_STATE_CONNECTED;
     mybot_media_pipeline_set_rtc_connected(&runtime->media, connected);
 #if MYBOT_ENABLE_VIDEO
-    if (state == MYBOT_RTC_STATE_CONNECTED && runtime_is_running(runtime) &&
-        mybot_video_start(&runtime->video) < 0) {
-        AOSL_LOG_ERR("failed to start video source");
+    if (connected) {
+        queue_video_control(runtime, VIDEO_CONTROL_START, 0);
     }
 #endif
     AOSL_LOG_NTC("rtc -> %s", connected ? "connected" : "disconnected");
@@ -348,24 +375,6 @@ static void rtc_on_rtm_event(const char *rtm_uid, mybot_rtm_event_type_t event_t
     if ((event_type == MYBOT_RTM_EVENT_LOGIN && error_code != 0) ||
         event_type == MYBOT_RTM_EVENT_KICKOFF || event_type == MYBOT_RTM_EVENT_EXIT) {
         mybot_device_lifecycle_notify_conversation_ended(&runtime->lifecycle);
-    }
-}
-
-static void queue_vp_register_success(mybot_runtime_t *runtime, const char *channel,
-                                      const char *rtm_uid, const char *custom_type, size_t len) {
-    size_t rtm_uid_len = strlen(rtm_uid);
-    uint32_t rtm_uid_hash = rtm_uid_fingerprint(rtm_uid, rtm_uid_len);
-    size_t channel_len = strlen(channel);
-    uint32_t channel_hash = rtm_uid_fingerprint(channel, channel_len);
-
-    AOSL_LOG_DBG("[RTM] matched channel VP_REGISTER_SUCCESS (channel=%s, type=%s, len=%zu)",
-                 channel, custom_type ? custom_type : "(null)", len);
-    if (aosl_mpq_queue(runtime->control_mpq, AOSL_MPQ_INVALID, AOSL_REF_INVALID,
-                       "handle_vp_register_success", handle_vp_register_success, 5,
-                       (uintptr_t)runtime, (uintptr_t)rtm_uid_len, (uintptr_t)rtm_uid_hash,
-                       (uintptr_t)channel_len, (uintptr_t)channel_hash) < 0) {
-        /* This is a best-effort UI notification; a full control queue must not tear down RTC. */
-        AOSL_LOG_WRN("failed to queue VP_REGISTER_SUCCESS LCD event");
     }
 }
 
@@ -425,11 +434,7 @@ static void rtc_on_rtm_subscribe_data(const char *channel, const char *rtm_uid, 
     mybot_lcd_indicator_t indicator;
     bool active;
     if (rtm_data_get_lcd_indicator(data, len, &indicator, &active)) {
-        if (indicator == MYBOT_LCD_INDICATOR_VP_REGISTERED) {
-            queue_vp_register_success(runtime, channel, rtm_uid, custom_type, len);
-        } else {
-            queue_server_state(runtime, channel, rtm_uid, indicator, active);
-        }
+        queue_lcd_indicator(runtime, channel, rtm_uid, indicator, active);
         return;
     }
 
@@ -448,18 +453,12 @@ static void rtc_on_token_will_expire(void *user_data) {
 #if MYBOT_ENABLE_VIDEO
 static void rtc_on_video_key_frame_requested(void *user_data) {
     mybot_runtime_t *runtime = user_data;
-    if (!runtime_is_running(runtime)) {
-        return;
-    }
-    mybot_video_request_key_frame(&runtime->video);
+    queue_video_control(runtime, VIDEO_CONTROL_KEY_FRAME, 0);
 }
 
 static void rtc_on_video_target_bitrate_changed(uint32_t target_bps, void *user_data) {
     mybot_runtime_t *runtime = user_data;
-    if (!runtime_is_running(runtime)) {
-        return;
-    }
-    mybot_video_set_target_bitrate(&runtime->video, target_bps);
+    queue_video_control(runtime, VIDEO_CONTROL_BITRATE, target_bps);
 }
 #endif
 
@@ -487,7 +486,7 @@ static int dev_on_rtc_token_renewed(const char *token, void *user_data) {
     return mybot_agora_rtc_renew_token(token);
 }
 
-static void dev_on_conversation_start(const mybot_conversation_params_t *params, void *user_data) {
+static void dev_on_conversation_start(const mybot_device_conversation_t *params, void *user_data) {
     mybot_runtime_t *runtime = user_data;
     if (!runtime_is_running(runtime)) {
         mybot_device_lifecycle_notify_conversation_ended(&runtime->lifecycle);
@@ -518,6 +517,7 @@ static void dev_on_conversation_start(const mybot_conversation_params_t *params,
     callbacks.on_rtm_subscribe_result = rtc_on_rtm_subscribe_result;
     callbacks.on_rtm_subscribe_data = rtc_on_rtm_subscribe_data;
 #if MYBOT_ENABLE_VIDEO
+    aosl_atomic_inc(&runtime->video_generation);
     callbacks.on_video_key_frame_requested = rtc_on_video_key_frame_requested;
     callbacks.on_video_target_bitrate_changed = rtc_on_video_target_bitrate_changed;
 #endif
@@ -550,6 +550,7 @@ static void dev_on_conversation_stop(void *user_data) {
     runtime->rtc_channel[0] = '\0';
     runtime->rtc_agent_uid[0] = '\0';
 #if MYBOT_ENABLE_VIDEO
+    aosl_atomic_inc(&runtime->video_generation);
     if (mybot_video_stop(&runtime->video) < 0) {
         AOSL_LOG_ERR("failed to stop video source");
     }
