@@ -5,6 +5,7 @@
 #include "display/lvgl_view.h"
 #include "display/lvgl_assets.h"
 #include "network/wifi_control.h"
+#include "board_config.h"
 
 #include "sdkconfig.h"
 
@@ -48,6 +49,11 @@ struct Presentation {
 };
 
 #if CONFIG_MYBOT_LANGUAGE_ZH_CN
+#if defined(MYBOT_BOARD_HAS_TOUCH) && MYBOT_BOARD_HAS_TOUCH
+constexpr const char *kReadyPrompt = "轻触开始对话";
+#else
+constexpr const char *kReadyPrompt = "短按开始对话";
+#endif
 constexpr Presentation kScreens[] = {
     {"启动中", "启动", "正在初始化", LV_SYMBOL_POWER, kTheme.blue},
     {"Wi-Fi 配网", "配网", "请连接设备热点", LV_SYMBOL_WIFI, kTheme.amber},
@@ -55,7 +61,7 @@ constexpr Presentation kScreens[] = {
     {"连接服务中", "连接", "正在连接服务", LV_SYMBOL_REFRESH, kTheme.blue},
     {"等待配对", "配对", "正在获取配对码", LV_SYMBOL_SETTINGS, kTheme.amber},
     {"配对码", "配对", "在应用中输入配对码", LV_SYMBOL_SETTINGS, kTheme.amber},
-    {"准备就绪", "就绪", "轻触开始对话", LV_SYMBOL_OK, kTheme.green},
+    {"准备就绪", "就绪", kReadyPrompt, LV_SYMBOL_OK, kTheme.green},
     {"对话中", "对话", "声纹注册中", LV_SYMBOL_CALL, kTheme.blue},
     {"启动失败", "异常", "请重启后重试", LV_SYMBOL_WARNING, kTheme.red},
     {"正在退出", "退出", "正在结束服务", LV_SYMBOL_POWER, kTheme.muted},
@@ -68,6 +74,11 @@ constexpr const char *kPairedNotification = "配对成功";
 constexpr const char *kVoiceprintNotification = "声纹注册成功";
 constexpr const char *kNetworkNotification = "网络已恢复";
 #else
+#if defined(MYBOT_BOARD_HAS_TOUCH) && MYBOT_BOARD_HAS_TOUCH
+constexpr const char *kReadyPrompt = "Tap to start";
+#else
+constexpr const char *kReadyPrompt = "Press to start";
+#endif
 constexpr Presentation kScreens[] = {
     {"Starting", "Starting", "Please wait", LV_SYMBOL_POWER, kTheme.blue},
     {"Wi-Fi setup", "Setup", "Connect to device Wi-Fi", LV_SYMBOL_WIFI, kTheme.amber},
@@ -75,7 +86,7 @@ constexpr Presentation kScreens[] = {
     {"Connecting", "Connecting", "Connecting to services", LV_SYMBOL_REFRESH, kTheme.blue},
     {"Pairing", "Pairing", "Getting pairing code", LV_SYMBOL_SETTINGS, kTheme.amber},
     {"Pairing code", "Pairing", "Enter code in the app", LV_SYMBOL_SETTINGS, kTheme.amber},
-    {"Ready", "Ready", "Touch to start", LV_SYMBOL_OK, kTheme.green},
+    {"Ready", "Ready", kReadyPrompt, LV_SYMBOL_OK, kTheme.green},
     {"In conversation", "Talking", "VP registering", LV_SYMBOL_CALL, kTheme.blue},
     {"Startup failed", "Error", "Restart to retry", LV_SYMBOL_WARNING, kTheme.red},
     {"Stopping", "Stopping", "Closing services", LV_SYMBOL_POWER, kTheme.muted},

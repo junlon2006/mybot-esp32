@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #define MYBOT_BOARD_NAME "esp-vocat"
+#define MYBOT_BOARD_HAS_TOUCH 1
 
 /* The physical codec link and mybot both use 16 kHz signed 16-bit PCM. */
 #define MYBOT_AUDIO_SAMPLE_RATE 16000

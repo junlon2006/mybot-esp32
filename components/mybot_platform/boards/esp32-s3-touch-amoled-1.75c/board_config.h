@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #define MYBOT_BOARD_NAME "esp32-s3-touch-amoled-1.75c"
+#define MYBOT_BOARD_HAS_TOUCH 1
 #define MYBOT_AMOLED175_BOARD_VARIANT "c"
 #define MYBOT_AMOLED175_HAS_TCA9554 0
 
