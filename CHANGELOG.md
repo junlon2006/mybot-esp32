@@ -59,6 +59,7 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Direct pairing-code entry to the web console and scroll the instruction on narrow displays.
 - Select the device API region from the firmware language: zh-CN uses Shanghai (sh2), and en-US
   uses Singapore (sg3).
 - Sync the MyBot SDK snapshot to `83fbcb0` (1.2.0 plus post-release fixes), serializing video
