@@ -59,6 +59,8 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Select the device API region from the firmware language: zh-CN uses Shanghai (sh2), and en-US
+  uses Singapore (sg3).
 - Sync the MyBot SDK snapshot to `83fbcb0` (1.2.0 plus post-release fixes), serializing video
   control with shutdown, retaining announcements until RTC callbacks stop, and consolidating
   RTM-to-LCD indicator handling and device-service response parsing.

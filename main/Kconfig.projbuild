@@ -17,7 +17,8 @@ menu "mybot"
         default "zh-CN"
 
     config MYBOT_SERVER_BASE
-        string "Device API server base URL"
+        string
+        default "https://mybot.sg3.agoralab.co/api" if MYBOT_LANGUAGE_EN_US
         default "https://mybot.sh2.agoralab.co/api"
 
     choice MYBOT_AUDIO_PTIME
