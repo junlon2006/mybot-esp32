@@ -30,11 +30,11 @@ git diff --check
 ```
 
 每个板型或配置变体使用独立构建目录和 sdkconfig。[CI 工作流](.github/workflows/ci.yml)
-定义了 22 项固件构建：九个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、
+定义了 24 项固件构建：十个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、
 一个浅色主题构建，以及一个关闭会话动画的视频构建。全部使用随附 RTSA 支持的 60 ms
 音频帧；在提供匹配的 RTSA 包之前，20 ms 和 40 ms 配置会被拒绝。
 
-所有带屏板型只使用 LVGL，ReSpeaker Flex 保持无屏；不要新增启用 LVGL 的可选 preset 或旧
+所有带屏板型只使用 LVGL，AtomEchoS3R 与 ReSpeaker Flex 保持无屏；不要新增启用 LVGL 的可选 preset 或旧
 渲染器回退。职责边界见[板级移植](docs/BOARD_PORTING.zh-CN.md)和
 [平台 UI](docs/PLATFORM_UI.zh-CN.md)。
 

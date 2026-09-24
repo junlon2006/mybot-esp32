@@ -1,4 +1,5 @@
 set(MYBOT_SUPPORTED_BOARDS
+    "atom-echos3r"
     "esp-vocat"
     "esp32-s3-touch-amoled-1.75"
     "esp32-s3-touch-amoled-1.75c"
@@ -12,7 +13,9 @@ set(MYBOT_SUPPORTED_BOARDS
 set(_MYBOT_BOARDS_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
 function(mybot_resolve_board board)
-    if(board STREQUAL "esp-vocat")
+    if(board STREQUAL "atom-echos3r")
+        set(profile "${_MYBOT_BOARDS_ROOT}/atom-echos3r/board.cmake")
+    elseif(board STREQUAL "esp-vocat")
         set(profile "${_MYBOT_BOARDS_ROOT}/esp-vocat/board.cmake")
     elseif(board STREQUAL "esp32-s3-touch-amoled-1.75")
         set(profile "${_MYBOT_BOARDS_ROOT}/esp32-s3-touch-amoled-1.75/board.cmake")

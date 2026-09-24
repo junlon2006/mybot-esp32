@@ -41,6 +41,8 @@ Versioning and Conventional Commits.
   ES7210/AW88298 audio support.
 - M5Stack StickS3 Board profile with M5PM1 power sequencing, ES8311 audio, ST7789P3 status display,
   and main-button input.
+- M5Stack AtomEchoS3R headless Board profile with ES8311 audio and GPIO41 user-button input;
+  hardware button mapping and 16 kHz audio remain unverified.
 - Real-device CoreS3 provisioning, bidirectional voice, 1 fps camera uplink, and LVGL UI validation.
 - Agora RTM login and voice-print registration status displayed during active conversations.
 - RTM channel subscription support paired with Agora RTSA 1.10.1 build 1270872.
@@ -52,7 +54,7 @@ Versioning and Conventional Commits.
   AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
 - SenseCAP Watcher Board profile with ES8311/ES7243E audio, SPD2010 status display, rotary input,
   TCA9555 power sequencing, and a factory-data-preserving 32 MB partition layout.
-- Target firmware CI with 22 configurations: all nine board profiles in both languages,
+- Target firmware CI with 24 configurations: all ten board profiles in both languages,
   CoreS3 video in both languages, and light-theme/static-indicator variants, using 60 ms audio.
 
 ### Changed
@@ -74,7 +76,8 @@ Versioning and Conventional Commits.
 - Organize the platform as board profiles, platform registration, services, drivers, internal
   headers, and assets. Separate display panel lifecycle, LVGL adapters, and the shared view.
 - Make LVGL the sole renderer on display boards, selected automatically by the board profile.
-  ReSpeaker Flex remains headless; theme and activity-animation settings remain configurable.
+  AtomEchoS3R and ReSpeaker Flex remain headless; theme and activity-animation settings remain
+  configurable.
 - Set the ESP32 FreeRTOS tick rate to 1000 Hz so one operating-system tick is 1 ms.
 - Sync the vendored mybot SDK to Unreleased commit `27324e7`, adding RTM channel subscription for
   voice-print status.
@@ -131,6 +134,8 @@ Versioning and Conventional Commits.
   low-power behavior are not yet complete.
 - M5Stack StickS3 real-device validation, GPIO12, IMU, infrared, battery reporting, shutdown, and
   low-power behavior are not yet complete.
+- M5Stack AtomEchoS3R real-device validation, GPIO41 user-button mapping, and 16 kHz bidirectional
+  audio testing are not yet complete.
 
 ### Fixed
 

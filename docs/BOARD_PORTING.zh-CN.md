@@ -67,8 +67,9 @@ Wi-Fi、KV、按键、采集与播放是 SDK 必需能力；硬件音量、HTTPS
 `esp32-s3-touch-amoled-1.75` 与 `esp32-s3-touch-amoled-1.75c` 均使用安全的 16 MB Flash
 profile 与 8 MB Octal PSRAM；
 `m5stack-core-s3` 使用 16 MB Flash 与 Quad PSRAM；
-`respeaker-flex-xvf3800-circular4-xiao` 与 `m5stack-stick-s3` 使用 8 MB Flash 与 Octal
-PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与 Octal PSRAM。
+`respeaker-flex-xvf3800-circular4-xiao`、`m5stack-stick-s3` 与 `atom-echos3r` 使用
+8 MB Flash 与 Octal PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与
+Octal PSRAM。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -81,7 +82,7 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 
 随附 RTSA 包只支持 60 ms 音频帧。虽然 menuconfig 仍列出 20 ms 和 40 ms，但在提供匹配的
 RTSA 包前，SDK 构建封装会拒绝这些配置。[CI 工作流](../.github/workflows/ci.yml)当前有
-22 项固件构建：九个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
+24 项固件构建：十个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
 主题构建，以及一个关闭会话动画的视频构建。这是构建覆盖，不代表真机验收。
 
 ## 新增 Board
@@ -98,7 +99,7 @@ RTSA 包前，SDK 构建封装会拒绝这些配置。[CI 工作流](../.github/
 6. 保持 SDK 音频边界：16 kHz、单声道、signed 16-bit PCM，接口传帧数而不是字节数。
 7. 在 `components/mybot_platform/CMakeLists.txt` 选择显示能力：带屏板型使用
    `Kconfig.display` 启用 LVGL，无屏板型使用 `Kconfig.headless`。当前无屏选择覆盖
-   ReSpeaker Flex，新增无屏板型时需同步此选择。
+   AtomEchoS3R 与 ReSpeaker Flex，新增无屏板型时需同步此选择。
 8. 增加两种语言的隔离 CI 构建与尺寸报告，并记录真实设备的配网、HTTPS、RTC、双向音频、
    输入、显示、挂断与重复启停验证。
 

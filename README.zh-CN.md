@@ -12,7 +12,8 @@ mybot 外围的固件生命周期。
 
 当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、Espressif
 ESP-VoCat、Waveshare ESP32-S3 Touch AMOLED 1.75 与 1.75C、M5Stack CoreS3、M5Stack
-StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 SenseCAP Watcher。
+StickS3、M5Stack AtomEchoS3R、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，
+以及 SenseCAP Watcher。
 
 > 除非文件另有声明，本工程自维护代码使用 Apache-2.0。仓库内依赖和媒体资源有各自的
 > 许可条款；重新分发源码或固件前请阅读[许可证与依赖](#许可证与依赖)。
@@ -43,6 +44,7 @@ StickS3、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，以及 Sen
 | `esp32-s3-touch-amoled-1.75c` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 安全的 16 MB QIO Flash profile、8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 与 AW88298 | ILI9342 与 FT6336 触摸 | 16 MB QIO Flash、8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 与主按键 | 8 MB QIO Flash、8 MB Octal PSRAM |
+| `atom-echos3r` | ES8311 | GPIO41 用户按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 与 AIC3104 | XIAO Boot 与 XVF 板载按键；无显示 | 8 MB Flash、8 MB Octal PSRAM |
 | `sensecap-watcher` | ES8311 与 ES7243E | SPD2010 与旋转编码器 | 32 MB QIO Flash、Octal PSRAM |
 
@@ -91,6 +93,10 @@ idf.py -B build/m5stack-stick-s3 \
   -DMYBOT_BOARD=m5stack-stick-s3 \
   -DSDKCONFIG=build/m5stack-stick-s3/sdkconfig build
 
+idf.py -B build/atom-echos3r \
+  -DMYBOT_BOARD=atom-echos3r \
+  -DSDKCONFIG=build/atom-echos3r/sdkconfig build
+
 idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
   -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
   -DSDKCONFIG=build/respeaker-flex-xvf3800-circular4-xiao/sdkconfig build
@@ -102,7 +108,7 @@ idf.py -B build/sensecap-watcher \
 
 默认 profile 是 `zhengchen-1.54tft-ml307`，但建议始终显式选择 Board。Board defaults 会
 提供所需的 Flash、PSRAM 和分区配置。
-八种带屏 profile 自动使用 LVGL，ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
+八种带屏 profile 自动使用 LVGL，AtomEchoS3R 与 ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
 主题和状态活动动画仍可通过 menuconfig 配置。
 
 构建全部已支持的 profile，并自动启用带屏 LVGL 及 CoreS3 视频：
@@ -151,6 +157,8 @@ NVS 中没有 Wi-Fi 凭据时，设备创建 `mybot-xxxx` 配置 AP，其中 `xx
   进入配网。
 - CoreS3：短触屏幕开始/结束对话；长按屏幕 3 秒进入配网。
 - StickS3：短按主按键开始/结束对话；长按 3 秒进入配网。
+- AtomEchoS3R：短按 GPIO41 用户按键开始/结束对话；长按 3 秒进入配网。GPIO41 输入映射仍需
+  真机确认。
 - ReSpeaker Flex：短按 XIAO Boot 或 XVF 板载按键（GPI0/X1D09）开始/结束对话；长按任一
   按键 3 秒进入配网。
 - SenseCAP Watcher：旋转编码器调节音量，短按开始/结束对话，长按 3 秒进入配网。
@@ -299,6 +307,13 @@ M5PM1 G2 同时为显示屏和 codec 供电，在固件运行期间保持开启�
 功放。显示区域为 135 x 240，偏移为 (52, 40)。首版不使用 GPIO12、IMU、红外、电池状态、
 关机手势和低功耗能力。
 
+### M5Stack AtomEchoS3R
+
+此 ESP32-S3 profile 不带屏幕，不编入 LVGL；采用 ES8311 音频、8 MB Flash 分区与 8 MB
+Octal PSRAM。首次启动没有已保存的 Wi-Fi 凭据时，固件启动配置热点并播放对应语言的配网
+提示音；假定的 GPIO41 用户按键长按会先停止 mybot，再请求重新配网。按键极性及 16 kHz
+采集/播放质量尚未在真机验证。
+
 ### ReSpeaker Flex XVF3800 Circular-4 与 XIAO ESP32S3
 
 此 profile 面向搭配 XIAO ESP32S3 的
@@ -346,12 +361,12 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 共构建 22 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
+CI 共构建 24 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
 六项 CoreS3 配置覆盖中英文/视频组合、浅色主题及关闭状态动画。所有带屏板型构建均使用
 LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。此前 CoreS3 固件已完成配网、双向音频、
 摄像头上行及 LVGL UI 真机测试，视频开启和关闭时的音频播放也已验证。
 共享 LVGL 清理及配网热点名称/滚动改动仍需本轮真机回归。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
-硬件版本、M5Stack StickS3、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
+硬件版本、M5Stack StickS3、AtomEchoS3R、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。
 
 已知限制：
@@ -366,6 +381,7 @@ LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。此前 CoreS3 固件已完
 - CoreS3 摄像头上行需要显式开启；摄像头预览、视频下行、电池状态与自动休眠
   尚未接入。
 - StickS3 GPIO12、IMU、红外、电池状态、关机手势与低功耗尚未接入。
+- AtomEchoS3R 的 GPIO41 用户按键映射与 16 kHz 双向音频尚未通过真机验证。
 - ReSpeaker Flex 当前仅支持 Circular-4，并需要单独烧录 XVF3800 16 kHz I2S 固件；尚未
   支持 Linear-4、XVF3800 固件升级、LED 环状态显示与 LCD 输出。
 - SenseCAP Watcher 尚未支持摄像头、触摸、LED、电池状态、关机与低功耗；烧录时必须保留

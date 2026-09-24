@@ -12,8 +12,8 @@ capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are the Zhengchen
 1.54 TFT ML307 and Wi-Fi variants, Espressif ESP-VoCat, Waveshare ESP32-S3 Touch AMOLED 1.75 and
-1.75C, M5Stack CoreS3, M5Stack StickS3, ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3, and
-SenseCAP Watcher.
+1.75C, M5Stack CoreS3, M5Stack StickS3, M5Stack AtomEchoS3R, ReSpeaker Flex XVF3800
+Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
 > assets have separate terms. Read [License and dependencies](#license-and-dependencies) before
@@ -45,6 +45,7 @@ SenseCAP Watcher.
 | `esp32-s3-touch-amoled-1.75c` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | Safe 16 MB QIO Flash profile, 8 MB Octal PSRAM |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 and main button | 8 MB QIO Flash, 8 MB Octal PSRAM |
+| `atom-echos3r` | ES8311 | GPIO41 user button; no display | 8 MB Flash, 8 MB Octal PSRAM |
 | `respeaker-flex-xvf3800-circular4-xiao` | XVF3800 and AIC3104 | XIAO Boot and XVF onboard buttons; no display | 8 MB Flash, 8 MB Octal PSRAM |
 | `sensecap-watcher` | ES8311 and ES7243E | SPD2010 and rotary encoder | 32 MB QIO Flash, Octal PSRAM |
 
@@ -94,6 +95,10 @@ idf.py -B build/m5stack-stick-s3 \
   -DMYBOT_BOARD=m5stack-stick-s3 \
   -DSDKCONFIG=build/m5stack-stick-s3/sdkconfig build
 
+idf.py -B build/atom-echos3r \
+  -DMYBOT_BOARD=atom-echos3r \
+  -DSDKCONFIG=build/atom-echos3r/sdkconfig build
+
 idf.py -B build/respeaker-flex-xvf3800-circular4-xiao \
   -DMYBOT_BOARD=respeaker-flex-xvf3800-circular4-xiao \
   -DSDKCONFIG=build/respeaker-flex-xvf3800-circular4-xiao/sdkconfig build
@@ -105,8 +110,8 @@ idf.py -B build/sensecap-watcher \
 
 The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
 Board defaults supply the required Flash, PSRAM, and partition settings.
-All eight display profiles use LVGL automatically; ReSpeaker Flex remains headless. There is no
-renderer enable switch. Theme and activity-animation options remain in menuconfig.
+All eight display profiles use LVGL automatically; AtomEchoS3R and ReSpeaker Flex remain headless.
+There is no renderer enable switch. Theme and activity-animation options remain in menuconfig.
 
 To build all supported profiles with the automatic capabilities, use:
 
@@ -158,6 +163,8 @@ leaving provisioning stops the scrolling.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
 - StickS3: short-press the main button to start/stop a conversation; hold it for 3 seconds to
   provision.
+- AtomEchoS3R: short-press the GPIO41 user button to start/stop a conversation; hold it for
+  3 seconds to provision. The GPIO41 input mapping still requires real-device confirmation.
 - ReSpeaker Flex: short-press XIAO Boot or the XVF onboard button (GPI0/X1D09) to start/stop a
   conversation; hold either button for 3 seconds to provision.
 - SenseCAP Watcher: rotate the encoder to adjust volume, short-press it to start/stop a conversation,
@@ -320,6 +327,14 @@ the speaker amplifier only during playback. The display uses a 135 x 240 window 
 The initial profile leaves GPIO12, the IMU, infrared functions, battery reporting, shutdown gestures,
 and low-power behavior unused.
 
+### M5Stack AtomEchoS3R
+
+This ESP32-S3 profile has no display or LVGL runtime. It uses ES8311 audio, an 8 MB Flash layout,
+and 8 MB Octal PSRAM. First boot without saved Wi-Fi credentials starts the configuration AP and
+plays the localized provisioning prompt; holding the assumed GPIO41 user button requests
+reprovisioning after mybot stops. Physical button polarity and 16 kHz capture/playback quality have
+not yet been validated on the device.
+
 ### ReSpeaker Flex XVF3800 Circular-4 with XIAO ESP32S3
 
 This profile targets the
@@ -370,14 +385,14 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds 22 configurations covering all board profiles, both languages, and the bundled RTSA
+CI builds 24 configurations covering all board profiles, both languages, and the bundled RTSA
 60 ms cadence. Six CoreS3 configurations cover the language/video combinations, light theme,
 and disabled activity animations. All display-board builds use LVGL, as described in
 [Platform LVGL UI](docs/PLATFORM_UI.md). Earlier CoreS3 firmware has passed hardware tests for
 provisioning, bidirectional audio, camera uplink, and LVGL UI, including audio with video on and off.
 The shared LVGL cleanup and provisioning SSID/scrolling changes still need hardware regression.
 The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
-StickS3, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
+StickS3, AtomEchoS3R, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
 validation; a successful build is not a substitute for hardware validation on a release device.
 
 Known limitations:
@@ -395,6 +410,8 @@ Known limitations:
   video downlink, battery reporting, and automatic sleep are not wired up.
 - StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power
   operation are not wired up.
+- AtomEchoS3R's GPIO41 user-button mapping and 16 kHz bidirectional audio have not passed
+  real-device validation.
 - ReSpeaker Flex support is limited to Circular-4 and requires separately flashed XVF3800 16 kHz
   I2S firmware; Linear-4, XVF3800 firmware update, LED-ring status, and LCD output are not
   implemented.

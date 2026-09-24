@@ -25,7 +25,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] [CI 工作流](../.github/workflows/ci.yml)的 22 项固件构建全部通过：九个板型分别构建
+- [ ] [CI 工作流](../.github/workflows/ci.yml)的 24 项固件构建全部通过：十个板型分别构建
       中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色主题构建，以及一个关闭会话
       动画的视频构建。所有构建使用 60 ms 音频帧。
 - [ ] 确认随附 RTSA 仍会在配置阶段拒绝不支持的 20 ms 和 40 ms 设置。
@@ -37,7 +37,7 @@ git diff --check
       与重启持久化。
 - [ ] 带屏板型在实际面板验证唯一的 LVGL 渲染器，包括颜色、方向、配对码/声纹状态的
       可读性和背光。确认配网页面显示当前设备热点名，长文字可滚动，离开配网后停止滚动；
-      覆盖首次启动、按键配网和连接失败重试。ReSpeaker Flex 保持无屏，详见
+      覆盖首次启动、按键配网和连接失败重试。AtomEchoS3R 与 ReSpeaker Flex 保持无屏，详见
       [平台 UI](PLATFORM_UI.zh-CN.md)。
 - [ ] 对 CoreS3 视频，验证 GC0308 颜色/方向、服务端 JPEG 接收、最多 1 fps、带宽适配、
       内部 DMA 内存、音频/UI 并行、重复对话、推流中配网及停止成功后无回调，见
@@ -69,6 +69,9 @@ git diff --check
 - [ ] 对 M5Stack StickS3，验证 USB 与电池启动、M5PM1 G2/G3 时序、扬声器爆音/噪声、
       16 kHz 采集 slot、ST7789P3 偏移与颜色、60% PWM 背光，以及 mybot 停止期间 GPIO11
       长按配网。
+- [ ] 对 M5Stack AtomEchoS3R，确认检测到 8 MB Flash 与 8 MB Octal PSRAM，验证 GPIO41
+      按键极性和短/长按、首次配网热点及对应语言提示音、16 kHz 采集/播放的音调与噪声和全双工
+      质量、音量持久化及 mybot 停止/重启后的重复配网。确认无屏固件不编入 LVGL。
 
 ## 发布
 

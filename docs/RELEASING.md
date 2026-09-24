@@ -27,7 +27,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] All 22 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: nine boards
+- [ ] All 24 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: ten boards
       in both languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one
       CoreS3 video build with conversation animations disabled. All use 60 ms audio frames.
 - [ ] Confirm unsupported 20 ms and 40 ms settings still fail configuration with the bundled RTSA.
@@ -41,7 +41,7 @@ git diff --check
       orientation, readable pairing/voice-print status, and backlight. Check that provisioning
       displays the active device hotspot name, long text scrolls, and scrolling stops after leaving
       provisioning. Test first boot, button-triggered provisioning, and connection-failure retry.
-      ReSpeaker Flex remains headless. See [platform UI](PLATFORM_UI.md).
+      AtomEchoS3R and ReSpeaker Flex remain headless. See [platform UI](PLATFORM_UI.md).
 - [ ] For CoreS3 video, validate GC0308 colors/orientation, server JPEG reception, at most 1 fps,
       bandwidth adaptation, internal DMA memory, concurrent audio/UI, repeated conversations,
       provisioning while streaming, and no callback after successful stop. See
@@ -77,6 +77,10 @@ git diff --check
 - [ ] For M5Stack StickS3, test USB and battery boot, M5PM1 G2/G3 sequencing, speaker pop/noise,
       16 kHz capture slot routing, ST7789P3 offsets/colors, 60% PWM backlight, and GPIO11 provisioning
       while mybot is stopped.
+- [ ] For M5Stack AtomEchoS3R, confirm 8 MB Flash and 8 MB Octal PSRAM detection, GPIO41 button
+      polarity and short/long presses, first-boot Wi-Fi AP and localized prompt, 16 kHz capture and
+      playback pitch/noise and full-duplex quality, volume persistence, and repeated provisioning
+      after mybot stop/start. Confirm the headless build omits LVGL.
 
 ## Publish
 

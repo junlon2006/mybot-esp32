@@ -68,7 +68,8 @@ This is required even for Boards sharing the same ESP-IDF target. For example, t
 PSRAM at 80 MHz, `esp-vocat` uses 16 MB Flash and Octal PSRAM at 80 MHz, the
 `esp32-s3-touch-amoled-1.75` and `esp32-s3-touch-amoled-1.75c` profiles use a safe 16 MB Flash
 profile and 8 MB Octal PSRAM, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM, and
-`m5stack-stick-s3` and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash and Octal PSRAM.
+`m5stack-stick-s3`, `atom-echos3r`, and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash
+and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
 
 ```sh
@@ -82,7 +83,7 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 
 The bundled RTSA package supports only 60 ms audio frames. Although menuconfig lists 20 ms and
 40 ms, the SDK component wrapper rejects them without a matching RTSA package. The
-[CI workflow](../.github/workflows/ci.yml) currently has 22 firmware builds: nine boards in both
+[CI workflow](../.github/workflows/ci.yml) currently has 24 firmware builds: ten boards in both
 languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video
 build with conversation animations disabled. This is build coverage, not hardware certification.
 
@@ -101,7 +102,7 @@ build with conversation animations disabled. This is build coverage, not hardwar
    byte counts.
 7. Select the appropriate display capability in `components/mybot_platform/CMakeLists.txt`:
    `Kconfig.display` for LVGL or `Kconfig.headless` for a board without a panel. The current headless
-   selection covers ReSpeaker Flex; update it when adding another headless board.
+   selection covers AtomEchoS3R and ReSpeaker Flex; update it when adding another headless board.
 8. Add isolated CI builds for both languages and size reports, then record real-device provisioning,
    HTTPS, RTC, bidirectional audio, input, display, hangup, and repeated start/stop validation.
 

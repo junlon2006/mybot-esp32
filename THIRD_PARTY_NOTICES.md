@@ -125,7 +125,7 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
 
 - `components/mybot_platform/boards/m5stack-stick-s3/`
-- `components/mybot_platform/src/drivers/audio/sticks3_es8311_audio.c`
+- `components/mybot_platform/src/drivers/audio/es8311_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`
 
 The vendored M5PM1 production sources retain the upstream M5Stack MIT license in
