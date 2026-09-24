@@ -165,14 +165,13 @@ NVS 中没有 Wi-Fi 凭据时，设备创建 `mybot-xxxx` 配置 AP，其中 `xx
 
 请求配网时固件会先停止 mybot；Wi-Fi 重新连接并获取 IP 后自动再次启动。
 
-默认设备服务地址：
+设备服务地址随固件语言选择：
 
-```text
-https://mybot.sh2.agoralab.co/api
-```
+- 中文（`zh-CN`）：`https://mybot.sh2.agoralab.co/api`
+- 英文（`en-US`）：`https://mybot.sg3.agoralab.co/api`
 
-使用 `idf.py -B <build-dir> menuconfig` 的 `mybot` 菜单配置语言、服务地址、音频包长、
-Cloud AEC 与 AI QoS。
+使用 `idf.py -B <build-dir> menuconfig` 的 `mybot` 菜单配置语言、音频包长、Cloud AEC
+与 AI QoS。服务地址在重新配置时随语言更新；同时构建中英文版本时应分别使用独立 sdkconfig。
 
 CPU 和内存诊断可在 menuconfig 的 `mybot → Enable debug CPU and memory monitor` 中启用
 `CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR=y` 后重新编译，默认关闭。低优先级监控任务根据采样

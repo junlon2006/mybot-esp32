@@ -173,14 +173,14 @@ leaving provisioning stops the scrolling.
 A provisioning request stops mybot first. After Wi-Fi reconnects and obtains an IP address, the
 firmware starts mybot again.
 
-The default device-service endpoint is:
+The device-service endpoint follows the firmware language:
 
-```text
-https://mybot.sh2.agoralab.co/api
-```
+- Chinese (`zh-CN`): `https://mybot.sh2.agoralab.co/api`
+- English (`en-US`): `https://mybot.sg3.agoralab.co/api`
 
-Use `idf.py -B <build-dir> menuconfig` and the `mybot` menu to select the language, endpoint, audio
-packet duration, Cloud AEC, and AI QoS.
+Use `idf.py -B <build-dir> menuconfig` and the `mybot` menu to select the language, audio
+packet duration, Cloud AEC, and AI QoS. The endpoint follows the language on reconfiguration;
+use separate sdkconfigs when building both language variants.
 
 For CPU and heap diagnostics, enable `mybot → Enable debug CPU and memory monitor`
 (`CONFIG_MYBOT_DEBUG_RESOURCE_MONITOR=y`) in menuconfig and rebuild. It is disabled by default.
