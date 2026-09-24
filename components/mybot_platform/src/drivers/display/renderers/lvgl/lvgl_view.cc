@@ -60,7 +60,7 @@ constexpr Presentation kScreens[] = {
     {"网络已断开", "离线", "正在重新连接", LV_SYMBOL_WIFI, kTheme.red},
     {"连接服务中", "连接", "正在连接服务", LV_SYMBOL_REFRESH, kTheme.blue},
     {"等待配对", "配对", "正在获取配对码", LV_SYMBOL_SETTINGS, kTheme.amber},
-    {"配对码", "配对", "在应用中输入配对码", LV_SYMBOL_SETTINGS, kTheme.amber},
+    {"配对码", "配对", "在网页控制台输入配对码", LV_SYMBOL_SETTINGS, kTheme.amber},
     {"准备就绪", "就绪", kReadyPrompt, LV_SYMBOL_OK, kTheme.green},
     {"对话中", "对话", "声纹注册中", LV_SYMBOL_CALL, kTheme.blue},
     {"启动失败", "异常", "请重启后重试", LV_SYMBOL_WARNING, kTheme.red},
@@ -85,7 +85,7 @@ constexpr Presentation kScreens[] = {
     {"Wi-Fi disconnected", "Offline", "Reconnecting to Wi-Fi", LV_SYMBOL_WIFI, kTheme.red},
     {"Connecting", "Connecting", "Connecting to services", LV_SYMBOL_REFRESH, kTheme.blue},
     {"Pairing", "Pairing", "Getting pairing code", LV_SYMBOL_SETTINGS, kTheme.amber},
-    {"Pairing code", "Pairing", "Enter code in the app", LV_SYMBOL_SETTINGS, kTheme.amber},
+    {"Pairing code", "Pairing", "Enter code in web console", LV_SYMBOL_SETTINGS, kTheme.amber},
     {"Ready", "Ready", kReadyPrompt, LV_SYMBOL_OK, kTheme.green},
     {"In conversation", "Talking", "VP registering", LV_SYMBOL_CALL, kTheme.blue},
     {"Startup failed", "Error", "Restart to retry", LV_SYMBOL_WARNING, kTheme.red},
@@ -480,12 +480,14 @@ void mybot_lvgl_view_update(const mybot_lcd_content_t *content) {
         presentation.title = provisioning_ssid;
     }
     if (!s_view.has_content ||
-        provisioning != (s_view.previous.screen == MYBOT_LCD_SCREEN_WIFI_PROVISIONING)) {
-        /* LVGL starts a marquee only when the text exceeds the label width.
-         * Restore clipping on exit to remove the provisioning scroll animations. */
+        provisioning != (s_view.previous.screen == MYBOT_LCD_SCREEN_WIFI_PROVISIONING) ||
+        pairing_code != (s_view.previous.screen == MYBOT_LCD_SCREEN_PAIR_CODE)) {
+        /* Scroll only when text overflows; restore clipping on exit. */
         const auto mode = provisioning ? LV_LABEL_LONG_SCROLL_CIRCULAR : LV_LABEL_LONG_CLIP;
         lv_label_set_long_mode(s_view.title, mode);
-        lv_label_set_long_mode(s_view.notice, mode);
+        lv_label_set_long_mode(s_view.notice, provisioning || pairing_code
+                                                  ? LV_LABEL_LONG_SCROLL_CIRCULAR
+                                                  : LV_LABEL_LONG_CLIP);
         const lv_font_t *title_font = &mybot_lvgl_font_20;
 #if !CONFIG_MYBOT_LANGUAGE_ZH_CN
         if (view_width() < 240 && !provisioning) {

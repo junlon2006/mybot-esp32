@@ -35,6 +35,9 @@ Chinese/English connection hint below. Its title and hint scroll in a loop only 
 their labels; short text stays still, and scrolling stops on exit. This text scrolling remains
 available when `CONFIG_MYBOT_LVGL_UI_ANIMATIONS` disables state activity animation.
 
+The pairing-code screen directs users to enter the code in the web console. Its instruction
+scrolls only when wider than the footer label and stops scrolling on exit.
+
 On screens narrower than 240 pixels (currently StickS3), Chinese labels retain the 20 px bilingual
 font; English status, notification, and ordinary labels use 10 px text. The provisioning SSID
 uses 20 px in both languages and scrolls if needed. Pairing codes select a 32, 20, or 10 px font
