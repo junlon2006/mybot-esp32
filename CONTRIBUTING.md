@@ -32,12 +32,12 @@ git diff --check
 ```
 
 Use a separate build directory and sdkconfig for each board or configuration variant. The
-[CI workflow](.github/workflows/ci.yml) defines 22 firmware builds: nine boards in both languages,
+[CI workflow](.github/workflows/ci.yml) defines 24 firmware builds: ten boards in both languages,
 two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video build with
 conversation animations disabled. All use the bundled RTSA package's 60 ms audio frames; 20 ms
 and 40 ms configurations are rejected until a matching RTSA package is supplied.
 
-LVGL is the only renderer on display boards; ReSpeaker Flex is headless. Do not add an opt-in
+LVGL is the only renderer on display boards; AtomEchoS3R and ReSpeaker Flex are headless. Do not add an opt-in
 LVGL preset or a legacy-renderer fallback. See [board porting](docs/BOARD_PORTING.md) and
 [platform UI](docs/PLATFORM_UI.md) for the current boundaries.
 

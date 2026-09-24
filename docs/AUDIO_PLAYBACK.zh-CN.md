@@ -2,7 +2,7 @@
 
 [English](AUDIO_PLAYBACK.md) | [简体中文](AUDIO_PLAYBACK.zh-CN.md)
 
-当前 9 个 Board profile 通过 7 个板级音频驱动共用同一套 PCM 播放缓冲。SDK 边界保持
+当前 10 个 Board profile 通过 7 个板级音频驱动共用同一套 PCM 播放缓冲。SDK 边界保持
 16 kHz、单声道 signed-16 PCM，独立任务持续向 I2S 供数。公共实现位于
 [`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c)，
 各板级驱动提供原生 I2S sink。
@@ -37,7 +37,8 @@ SDK 和缓冲接口中的帧数始终表示**单声道 PCM 帧数**，不随 I2S
 | `zhengchen-1.54tft-ml307` | `raw_i2s_audio.c` | 32 位单声道，保留软件音量缩放 |
 | `zhengchen-1.54tft-wifi` | `raw_i2s_audio.c` | 32 位单声道，保留软件音量缩放 |
 | `m5stack-core-s3` | `cores3_codec_audio.c` | 16 位单声道，保留原 TDM 槽布局 |
-| `m5stack-stick-s3` | `sticks3_es8311_audio.c` | 16 位双声道，将单声道复制到两个槽 |
+| `m5stack-stick-s3` | `es8311_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
+| `atom-echos3r` | `es8311_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `sensecap-watcher` | `sensecap_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `esp-vocat` | `vocat_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `esp32-s3-touch-amoled-1.75` | `amoled175_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |

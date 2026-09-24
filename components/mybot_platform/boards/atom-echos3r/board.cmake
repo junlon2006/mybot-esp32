@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2025 Project Contributors
+# Copyright (c) 2026 Project Contributors
 
 set(MYBOT_BOARD_TARGET "esp32s3")
+set(MYBOT_BOARD_HEADLESS TRUE)
 set(MYBOT_BOARD_SDKCONFIG_DEFAULTS "${CMAKE_CURRENT_LIST_DIR}/sdkconfig.defaults")
 set(MYBOT_BOARD_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 set(MYBOT_BOARD_REQUIRED_CONFIGS
@@ -19,24 +20,17 @@ set(MYBOT_BOARD_FORBIDDEN_CONFIGS
 set(MYBOT_BOARD_PARTITION_TABLE "partitions/v2/8m.csv")
 
 get_filename_component(MYBOT_PLATFORM_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
-include("${MYBOT_PLATFORM_ROOT}/src/drivers/display/display.cmake")
 set(MYBOT_BOARD_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/board.c"
-    "${CMAKE_CURRENT_LIST_DIR}/sticks3_hardware.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/sticks3_input.c"
+    "${CMAKE_CURRENT_LIST_DIR}/atom_echos3r_hardware.c"
+    "${CMAKE_CURRENT_LIST_DIR}/atom_echos3r_input.c"
     "${MYBOT_PLATFORM_ROOT}/src/drivers/audio/es8311_codec_audio.c"
 )
-mybot_display_add_lvgl_sources(MYBOT_BOARD_SOURCES "st7789_lvgl_adapter.cc")
 set(MYBOT_BOARD_REQUIRES
     button
     esp_codec_dev
     esp_driver_gpio
     esp_driver_i2c
     esp_driver_i2s
-    esp_driver_ledc
-    esp_driver_spi
-    esp_lcd
-    esp_lvgl_port
-    m5pm1
     nvs_flash
 )

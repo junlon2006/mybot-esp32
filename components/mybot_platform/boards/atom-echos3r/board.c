@@ -1,17 +1,16 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2025 Project Contributors */
+/* Copyright (c) 2026 Project Contributors */
 #include "mybot_platform/board.h"
 
 #include <mybot/platform/mybot_platform.h>
 
-#include "platform/board_actions.h"
-#include "board_config.h"
-#include "display/board_backlight.h"
-#include "audio/es8311_board.h"
 #include "announcement/embedded_ogg_prompt.h"
+#include "atom_echos3r_hardware.h"
+#include "audio/es8311_board.h"
+#include "board_config.h"
 #include "esp_log.h"
-#include "sticks3_hardware.h"
 #include "network/wifi_control.h"
+#include "platform/board_actions.h"
 
 #include <stdbool.h>
 
@@ -22,40 +21,15 @@ const mybot_audio_playback_ops_t *mybot_es8311_audio_playback_ops(void);
 const mybot_audio_volume_ops_t *mybot_es8311_audio_volume_ops(void);
 const mybot_announce_ops_t *mybot_esp32s3_announce_ops(void);
 const mybot_https_ops_t *mybot_esp32s3_https_ops(void);
-const mybot_key_ops_t *mybot_sticks3_input_ops(void);
+const mybot_key_ops_t *mybot_atom_echos3r_input_ops(void);
 const mybot_kv_store_ops_t *mybot_esp32s3_kv_store_ops(void);
-const mybot_lcd_ops_t *mybot_sticks3_lcd_ops(void);
 const mybot_wifi_ops_t *mybot_esp32s3_wifi_ops(void);
-int mybot_sticks3_input_start(void);
+int mybot_atom_echos3r_input_start(void);
 
-void *mybot_es8311_board_i2c_bus_handle(void) {
-    return mybot_sticks3_i2c_bus_handle();
-}
-
-int mybot_es8311_board_set_speaker_power(bool enabled) {
-    return mybot_sticks3_set_speaker_power(enabled);
-}
-
-static const mybot_lcd_ops_t *s_lcd_ops;
-static void *s_lcd_context;
 static bool s_automatic_provisioning_started;
 
-static int board_show_screen(mybot_lcd_screen_t screen) {
-    if (!s_lcd_ops || !s_lcd_context) {
-        return -1;
-    }
-    const mybot_lcd_content_t content = {
-        .screen = screen,
-    };
-    return s_lcd_ops->render(s_lcd_context, &content);
-}
-
 static void board_on_provisioning(const char *trigger) {
-    if (board_show_screen(MYBOT_LCD_SCREEN_WIFI_PROVISIONING) < 0) {
-        ESP_LOGW(TAG, "event=display screen=wifi_provisioning trigger=%s result=error", trigger);
-    } else {
-        ESP_LOGI(TAG, "event=display screen=wifi_provisioning trigger=%s result=ok", trigger);
-    }
+    ESP_LOGI(TAG, "event=provisioning action=announce trigger=%s", trigger);
     (void)mybot_embedded_ogg_play_wifi_provisioning(mybot_es8311_audio_playback_ops(),
                                                     mybot_es8311_audio_volume_ops(), trigger);
 }
@@ -69,43 +43,18 @@ static void board_on_button_provisioning(void) {
     board_on_provisioning("button");
 }
 
-int mybot_board_set_display_backlight(unsigned percent) {
-    return mybot_sticks3_set_display_backlight(percent);
-}
-
-static void board_rollback_prepare(void) {
-    if (s_lcd_ops && s_lcd_context) {
-        s_lcd_ops->destroy(s_lcd_context);
-        s_lcd_context = NULL;
-    }
-    if (mybot_sticks3_hardware_deinit() < 0) {
-        ESP_LOGE(TAG, "event=board_prepare action=rollback result=error");
-    }
-}
-
 static int board_prepare(void) {
-    if (mybot_sticks3_hardware_init() < 0) {
+    if (mybot_atom_echos3r_hardware_init() < 0) {
         ESP_LOGE(TAG, "event=board_prepare component=hardware result=error");
         return -1;
     }
-
-    s_lcd_ops = mybot_sticks3_lcd_ops();
-    if (!s_lcd_ops || s_lcd_ops->init(&s_lcd_context) < 0) {
-        board_rollback_prepare();
-        ESP_LOGE(TAG, "event=board_prepare component=display result=error");
-        return -1;
-    }
-    if (board_show_screen(MYBOT_LCD_SCREEN_STARTING) < 0) {
-        board_rollback_prepare();
-        ESP_LOGE(TAG, "event=board_prepare component=display result=error reason=render");
-        return -1;
-    }
-    if (mybot_sticks3_input_start() < 0) {
-        board_rollback_prepare();
+    if (mybot_atom_echos3r_input_start() < 0) {
+        if (mybot_atom_echos3r_hardware_deinit() < 0) {
+            ESP_LOGE(TAG, "event=board_prepare action=rollback result=error");
+        }
         ESP_LOGE(TAG, "event=board_prepare component=input result=error");
         return -1;
     }
-
     ESP_LOGI(TAG, "event=board_prepare board=%s result=ok", MYBOT_BOARD_NAME);
     return 0;
 }
@@ -136,15 +85,23 @@ static int board_register_platform(void) {
     const mybot_platform_descriptor_t descriptor = {
         .wifi = mybot_esp32s3_wifi_ops(),
         .kv_store = mybot_esp32s3_kv_store_ops(),
-        .key = mybot_sticks3_input_ops(),
+        .key = mybot_atom_echos3r_input_ops(),
         .audio_capture = mybot_es8311_audio_capture_ops(),
         .audio_playback = mybot_es8311_audio_playback_ops(),
         .audio_volume = mybot_es8311_audio_volume_ops(),
         .announce = mybot_esp32s3_announce_ops(),
         .https = mybot_esp32s3_https_ops(),
-        .lcd = mybot_sticks3_lcd_ops(),
+        .lcd = NULL,
     };
     return mybot_platform_register(&descriptor);
+}
+
+void *mybot_es8311_board_i2c_bus_handle(void) {
+    return mybot_atom_echos3r_i2c_bus_handle();
+}
+
+int mybot_es8311_board_set_speaker_power(bool enabled) {
+    return mybot_atom_echos3r_set_speaker_power(enabled);
 }
 
 static const mybot_board_t s_board = {

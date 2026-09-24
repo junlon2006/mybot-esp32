@@ -20,8 +20,8 @@ audio path, camera path, and touch/key ownership do not change.
 | `esp32-s3-touch-amoled-1.75c` | CO5300, 466 × 466 | shared panel adapter | existing touch/key path |
 | `sensecap-watcher` | SPD2010, 412 × 412 | shared panel adapter | existing encoder path |
 
-The ReSpeaker Flex profile has no LCD and does not include LVGL. The ML307, Wi-Fi, and
-audio/video protocols are independent of the display backend.
+The AtomEchoS3R and ReSpeaker Flex profiles have no LCD and do not include LVGL. The ML307 and
+Wi-Fi variants, along with the audio/video protocols, are independent of the display backend.
 
 ## Shared behavior
 
@@ -67,8 +67,9 @@ not override values saved in an existing sdkconfig.
 ## Validation status
 
 The earlier CoreS3 LVGL UI passed real-device testing; the LVGL-only cleanup, provisioning SSID
-display/scrolling, and narrow-screen font changes still need hardware regression. CI covers the nine board profiles in both
-languages, CoreS3 video in both languages, and two theme/animation variants (22 configurations).
+display/scrolling, and narrow-screen font changes still need hardware regression. CI covers all
+ten board profiles in both languages, CoreS3 video in both languages, and two theme/animation
+variants (24 configurations).
 These are build checks only. No new board is claimed to have passed real-device color, touch, audio,
 provisioning, or teardown validation. Complete hardware testing must cover all workflow screens,
 orientation and colors, Chinese/English small-screen text, SSID and hint scrolling with activity

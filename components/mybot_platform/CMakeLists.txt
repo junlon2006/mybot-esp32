@@ -10,7 +10,7 @@ include("${MYBOT_BOARD_PROFILE}")
 # Pass a fixed Kconfig file to IDF so menuconfig/confserver use the same board
 # capability even when invoked separately from the CMake configure process.
 set(mybot_display_kconfig "${CMAKE_CURRENT_LIST_DIR}/Kconfig.display")
-if(MYBOT_BOARD STREQUAL "respeaker-flex-xvf3800-circular4-xiao")
+if(MYBOT_BOARD_HEADLESS)
     set(mybot_display_kconfig "${CMAKE_CURRENT_LIST_DIR}/Kconfig.headless")
 endif()
 
@@ -32,7 +32,7 @@ set(MYBOT_EMBEDDED_AUDIO_ASSETS
 )
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-    if(CONFIG_MYBOT_LVGL_UI AND MYBOT_BOARD STREQUAL "respeaker-flex-xvf3800-circular4-xiao")
+    if(CONFIG_MYBOT_LVGL_UI AND MYBOT_BOARD_HEADLESS)
         message(FATAL_ERROR "MYBOT_LVGL_UI requires a board with a display panel")
     endif()
     if(CONFIG_MYBOT_AUDIO_PLAYBACK_TEST AND NOT MYBOT_BOARD STREQUAL "m5stack-core-s3")

@@ -2,7 +2,7 @@
 /* Copyright (c) 2025 Project Contributors */
 #include "board_config.h"
 #include "audio/pcm_playback_buffer.h"
-#include "sticks3_hardware.h"
+#include "audio/es8311_board.h"
 
 #include <mybot/platform/mybot_audio.h>
 #include <api/aosl_atomic.h>
@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define AUDIO_CONTEXT_MAGIC 0x53334155U
+#define AUDIO_CONTEXT_MAGIC 0x45534155U
 #define AUDIO_IO_TIMEOUT_MS 50
 #define AUDIO_MAX_FRAMES 960
 #define AUDIO_DMA_CLEAR_MS 120
@@ -30,10 +30,10 @@
 #define AUDIO_CAPTURE_CHANNEL 0
 #define AUDIO_VOLUME_NVS_KEY "output_volume"
 #define AUDIO_VOLUME_NVS_NAMESPACE "audio"
-#define TAG "sticks3_audio"
+#define TAG "es8311_audio"
 
 #if MYBOT_AUDIO_SAMPLE_RATE != 16000
-#error "M5Stack StickS3 audio must expose 16 kHz PCM to mybot"
+#error "ES8311 audio must expose 16 kHz PCM to mybot"
 #endif
 
 #if MYBOT_AUDIO_DEFAULT_VOLUME < MYBOT_AUDIO_VOLUME_MIN ||                                         \
@@ -41,9 +41,9 @@
 #error "MYBOT_AUDIO_DEFAULT_VOLUME must be between 0 and 100"
 #endif
 
-#if MYBOT_STICKS3_HARDWARE_VOLUME_SCALE_PERCENT < 0 ||                                             \
-    MYBOT_STICKS3_HARDWARE_VOLUME_SCALE_PERCENT > 100
-#error "MYBOT_STICKS3_HARDWARE_VOLUME_SCALE_PERCENT must be between 0 and 100"
+#if MYBOT_ES8311_HARDWARE_VOLUME_SCALE_PERCENT < 0 ||                                              \
+    MYBOT_ES8311_HARDWARE_VOLUME_SCALE_PERCENT > 100
+#error "MYBOT_ES8311_HARDWARE_VOLUME_SCALE_PERCENT must be between 0 and 100"
 #endif
 
 typedef enum {
@@ -77,7 +77,7 @@ typedef struct {
     bool capture_started;
     bool playback_started;
     bool speaker_enabled;
-} sticks3_audio_shared_t;
+} es8311_audio_shared_t;
 
 typedef struct {
     nvs_handle_t handle;
@@ -87,7 +87,7 @@ typedef struct {
     int persisted_volume;
 } audio_volume_context_t;
 
-static sticks3_audio_shared_t s_audio;
+static es8311_audio_shared_t s_audio;
 static audio_volume_context_t s_volume_context;
 static int s_output_volume = MYBOT_AUDIO_DEFAULT_VOLUME;
 static StaticSemaphore_t s_audio_mutex_storage;
@@ -165,7 +165,7 @@ static int validate_format(int rate, int channels, int bits) {
 }
 
 static int hardware_volume_from_logical(int volume) {
-    return (volume * MYBOT_STICKS3_HARDWARE_VOLUME_SCALE_PERCENT + MYBOT_AUDIO_VOLUME_MAX / 2) /
+    return (volume * MYBOT_ES8311_HARDWARE_VOLUME_SCALE_PERCENT + MYBOT_AUDIO_VOLUME_MAX / 2) /
            MYBOT_AUDIO_VOLUME_MAX;
 }
 
@@ -206,7 +206,7 @@ static int set_speaker_power_locked(bool enabled) {
     if (s_audio.speaker_enabled == enabled) {
         return 0;
     }
-    if (mybot_sticks3_set_speaker_power(enabled) != 0) {
+    if (mybot_es8311_board_set_speaker_power(enabled) != 0) {
         ESP_LOGE(TAG, "event=audio_device component=speaker_power action=%s result=error",
                  enabled ? "enable" : "disable");
         return -1;
@@ -351,7 +351,7 @@ static int initialize_i2s_locked(void) {
 }
 
 static int initialize_codec_locked(void) {
-    void *i2c_bus = mybot_sticks3_i2c_bus_handle();
+    void *i2c_bus = mybot_es8311_board_i2c_bus_handle();
     if (!i2c_bus) {
         ESP_LOGE(TAG, "event=audio_device action=initialize result=error reason=i2c_bus");
         return -1;
@@ -363,8 +363,8 @@ static int initialize_codec_locked(void) {
     }
 
     audio_codec_i2c_cfg_t i2c_config = {
-        .port = MYBOT_STICKS3_I2C_PORT,
-        .addr = MYBOT_STICKS3_ES8311_ADDRESS,
+        .port = MYBOT_ES8311_I2C_PORT,
+        .addr = MYBOT_ES8311_I2C_ADDRESS,
         .bus_handle = i2c_bus,
     };
     s_audio.ctrl_if = audio_codec_new_i2c_ctrl(&i2c_config);
@@ -561,8 +561,7 @@ static int open_codec_locked(void) {
     s_audio.codec_open = true;
 
     int hardware_volume = hardware_volume_from_logical(s_output_volume);
-    if (esp_codec_dev_set_in_gain(s_audio.device, MYBOT_STICKS3_INPUT_GAIN_DB) !=
-            ESP_CODEC_DEV_OK ||
+    if (esp_codec_dev_set_in_gain(s_audio.device, MYBOT_ES8311_INPUT_GAIN_DB) != ESP_CODEC_DEV_OK ||
         esp_codec_dev_set_out_vol(s_audio.device, hardware_volume) != ESP_CODEC_DEV_OK) {
         ESP_LOGE(TAG, "event=audio_device component=es8311 action=configure result=error");
         (void)close_codec_locked();
@@ -1005,14 +1004,14 @@ static const mybot_audio_volume_ops_t s_volume_ops = {
     .destroy = volume_destroy,
 };
 
-const mybot_audio_capture_ops_t *mybot_sticks3_audio_capture_ops(void) {
+const mybot_audio_capture_ops_t *mybot_es8311_audio_capture_ops(void) {
     return &s_capture_ops;
 }
 
-const mybot_audio_playback_ops_t *mybot_sticks3_audio_playback_ops(void) {
+const mybot_audio_playback_ops_t *mybot_es8311_audio_playback_ops(void) {
     return &s_playback_ops;
 }
 
-const mybot_audio_volume_ops_t *mybot_sticks3_audio_volume_ops(void) {
+const mybot_audio_volume_ops_t *mybot_es8311_audio_volume_ops(void) {
     return &s_volume_ops;
 }

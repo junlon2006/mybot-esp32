@@ -2,7 +2,7 @@
 
 [English](AUDIO_PLAYBACK.md) | [简体中文](AUDIO_PLAYBACK.zh-CN.md)
 
-All nine board profiles use one PCM playback buffer through seven board audio drivers. This
+All ten board profiles use one PCM playback buffer through seven board audio drivers. This
 keeps the SDK boundary at 16 kHz, mono signed-16 PCM and moves continuous I2S feeding into an
 independent task. The shared implementation is
 [`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c);
@@ -41,7 +41,8 @@ the number or width of I2S slots. Native conversion occurs only in the worker's 
 | `zhengchen-1.54tft-ml307` | `raw_i2s_audio.c` | 32-bit mono; existing software volume scaling |
 | `zhengchen-1.54tft-wifi` | `raw_i2s_audio.c` | 32-bit mono; existing software volume scaling |
 | `m5stack-core-s3` | `cores3_codec_audio.c` | 16-bit mono in the existing TDM slot layout |
-| `m5stack-stick-s3` | `sticks3_es8311_audio.c` | 16-bit stereo; duplicate mono into both slots |
+| `m5stack-stick-s3` | `es8311_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
+| `atom-echos3r` | `es8311_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `sensecap-watcher` | `sensecap_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `esp-vocat` | `vocat_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `esp32-s3-touch-amoled-1.75` | `amoled175_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
