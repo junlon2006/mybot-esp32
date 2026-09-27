@@ -41,18 +41,35 @@ are not vendored into this repository.
 | Paths | Source | Pinned revision |
 | --- | --- | --- |
 | `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_view.cc`, `components/mybot_platform/src/internal/display/lvgl_view.h` | `github.com/junlon2006/xiaozhi-esp32`, `main/display/lcd_display.cc` and LVGL theme layout | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
-| `components/mybot_platform/src/drivers/display/adapters/lvgl/shared_lvgl_adapter.cc`, `components/mybot_platform/src/internal/display/display_panel.h` | Project-maintained shared adapter for CO5300, SPD2010, and ST77916 panels | Uses the board panel drivers; no new upstream source |
+| `components/mybot_platform/src/drivers/display/adapters/lvgl/shared_lvgl_adapter.cc`, `components/mybot_platform/src/internal/display/display_panel.h` | Project-maintained shared adapter for ST7789, CO5300, SPD2010, and ST77916 panels | Uses the board panel drivers; no new upstream source |
 | `components/mybot_platform/boards/respeaker-flex-xvf3800-circular4-xiao`, `components/mybot_platform/src/drivers/audio/xvf3800_audio.c`, `partitions/v2/8m.csv` | `github.com/qiuyanli1990/respeaker-flex-circle-Agora-mybot` | commit `b06024382eb104c998aead4841e1df647193065b` |
 | `components/mybot_platform/boards/sensecap-watcher`, `components/mybot_platform/src/drivers/audio/sensecap_codec_audio.c`, `components/mybot_platform/src/drivers/display/panels/spd2010/spd2010_panel.c`, `partitions/v2/32m-sensecap.csv` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
-| `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/es8311_codec_audio.c`, `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/es8311_codec_audio.c`, `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`, `components/mybot_platform/src/drivers/display/panels/st7789/st7789_panel.c` (panel lifecycle extracted from the existing local adapter) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/zhengchen-1.54tft-wifi/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/xingzhi-cube-1.54tft-wifi/board_config.h` (hardware mapping, SPI mode, RTC power hold, and reference speaker-rate verification only) | `github.com/junlon2006/xiaozhi-esp32`, `main/boards/xingzhi-cube-1.54tft-wifi` | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
+| `components/mybot_platform/boards/bread-compact-wifi-lcd/board_config.h` (fixed 240x320 ST7789/simplex-I2S hardware mapping and reference speaker-rate verification only) | `github.com/junlon2006/xiaozhi-esp32`, `main/boards/bread-compact-wifi-lcd` | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
+| `components/mybot_platform/boards/bread-compact-wifi-lcd/bread_input.c` | Existing local `components/mybot_platform/boards/atom-echos3r/atom_echos3r_input.c` MIT template | Project-local adaptation for Boot GPIO0; retains MIT copyright and permission notice |
 | `components/mybot_platform/boards/atom-echos3r/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
 | `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75-common`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c`, `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`, `components/mybot_platform/src/drivers/display/panels/co5300/co5300_panel.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
+| `components/mybot_platform/boards/esp32-s3-touch-amoled-2.16`, `components/mybot_platform/src/drivers/display/panels/co5300/co5300_480_panel.c` (independent variants of the existing 1.75 integration; hardware facts checked against the 2.16 reference) | `github.com/junlon2006/xiaozhi-esp32`, `main/boards/waveshare/esp32-s3-touch-amoled-2.16` | hardware reference commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`; local implementation derived from the existing `2b9b4e3` integration above |
 | `components/mybot_platform/boards/esp-vocat`, `components/mybot_platform/src/drivers/audio/vocat_codec_audio.c`, `components/mybot_platform/src/drivers/display/panels/st77916/st77916_panel.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/esp-vocat/board_config.h` (hardware mapping verification only) | `github.com/espressif/esp-brookesia` | commit `b22c488f50bafe53342c8e171081bd736396ef58` |
 
 Firmware integration differences are limited to the active ESP32-S3 build:
 
+- The Xingzhi Cube port reuses project audio/input/LVGL drivers and introduces no new vendored
+  dependency. Its Board lifecycle is project-maintained; the reference supplies hardware facts.
+  The 16 MB Flash and 80 MHz Octal PSRAM profile requires real-device capacity confirmation.
+- The Bread Compact Wi-Fi LCD port fixes the user-selected N16R8, 240x320 ST7789, and separate
+  I2S wiring. It reuses raw audio, the existing ST7789 panel, and shared LVGL; its independent
+  Boot-only input is adapted from the local MIT AtomEchoS3R input template. Board lifecycle and
+  build metadata are project-maintained Apache-2.0. Chinese and English build support has been
+  validated; real-device validation remains pending.
+- The AMOLED 2.16 profile owns independent MIT Board and CO5300 480-pixel panel variants derived
+  from the existing integration. It reuses AXP2101 configuration, codecs, CST9217, and shared LVGL
+  with independent identity and 480x480 zero-gap geometry.
+  Its conservative 16 MB Flash/Octal PSRAM defaults require physical capacity confirmation;
+  no new dependency or upstream application service is added.
 - LVGL and its ESP-IDF port are local, pinned dependencies included automatically for display
   boards and omitted for headless boards. The build omits examples, tests, and registry download metadata. The UI uses
   a static bilingual font subset and existing public LCD state; no upstream application services,

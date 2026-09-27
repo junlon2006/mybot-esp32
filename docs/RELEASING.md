@@ -27,7 +27,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] All 24 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: ten boards
+- [ ] All 30 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: thirteen boards
       in both languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one
       CoreS3 video build with conversation animations disabled. All use 60 ms audio frames.
 - [ ] Confirm unsupported 20 ms and 40 ms settings still fail configuration with the bundled RTSA.
@@ -53,6 +53,17 @@ git diff --check
       test GPIO2 power hold, ST7789 output, Boot and volume buttons, and verify GPIO11/GPIO12 remain
       unused. Validate 16 kHz capture/playback speed, pitch, stability, and full-duplex interaction
       against the hardware's 24 kHz speaker-output requirement.
+- [ ] For Xingzhi Cube, confirm physical Flash/PSRAM capacity, release RTC hold and GPIO21 power
+      sequencing, ST7789 mode-3 colors/orientation/zero offsets, GPIO13 60% PWM backlight, and
+      Boot0/volume-up40/volume-down39. Verify 16 kHz playback speed/pitch against the reference
+      24 kHz setting, bidirectional audio, prompt drain, volume persistence, repeated start/stop,
+      and provisioning while mybot is stopped.
+- [ ] For Bread Compact Wi-Fi LCD, match the fixed N16R8/240x320 wiring and confirm 16 MB Flash,
+      8 MB Octal PSRAM, ST7789 SPI3 mode-0 colors/orientation/inversion/zero offsets, GPIO42 PWM,
+      Boot0 short/long presses, default/persisted software volume, provisioning while mybot is
+      stopped, prompt drain, 16 kHz capture/playback speed/pitch against the reference 24 kHz output,
+      concurrent audio, failure cleanup, and repeated start/stop. Verify no volume-key, power-hold,
+      GPIO48 LED, or GPIO18 lamp output is configured.
 - [ ] For ESP-VoCat, test PCB V1.0 and V1.2 separately. Verify GPIO48 detection, revision-specific
       DIN/PA/LCD-reset pins and reset polarity, GPIO9 peripheral power, USB Serial/JTAG logging,
       detected Flash/PSRAM capacity, the ST77916 initialization/colors/round edges/backlight,
@@ -69,8 +80,13 @@ git diff --check
       8 MB PSRAM detection, MCLK GPIO16, LCD reset GPIO1, touch reset GPIO2, absence of TCA9554
       probing, primary-mic routing, full-duplex audio, PA noise, display/touch, and provisioning.
       Confirm the detected Flash capacity before expanding beyond the safe 16 MB partition layout.
+- [ ] For Waveshare AMOLED 2.16, use its own profile and verify physical Flash/PSRAM capacities,
+      AXP2101 USB/battery power sequencing, optional TCA9554 presence, MCLK42/LCD-reset39/touch-reset40,
+      480x480 CO5300 output with zero gap, even pixel boundaries, panel colors/orientation/brightness,
+      CST9217 press/release/hold, 16 kHz primary-mic and full-duplex audio against the reference
+      24 kHz setting, PA noise, volume persistence, and repeated provisioning/start/stop.
 - [ ] Verify an existing build directory rejects a change of `MYBOT_BOARD`, and keep separate
-      artifacts for both Waveshare AMOLED revisions. A clean build accepts either profile; it
+      artifacts for all three Waveshare AMOLED profiles. A clean build accepts any profile; it
       cannot detect the connected board's revision. Match the physical revision before flashing.
 - [ ] For SenseCAP Watcher, back up and checksum the 200 KiB `nvsfactory` region before first flash;
       verify normal flashing leaves it unchanged and never publish an `erase-flash` procedure.

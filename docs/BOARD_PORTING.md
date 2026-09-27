@@ -71,6 +71,12 @@ profile and 8 MB Octal PSRAM, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM,
 `m5stack-stick-s3`, `atom-echos3r`, and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash
 and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
+`xingzhi-cube-1.54tft-wifi` selects a 16 MB QIO Flash profile and Octal PSRAM at 80 MHz;
+its physical Flash/PSRAM capacities require confirmation on the release device.
+`esp32-s3-touch-amoled-2.16` also uses a conservative 16 MB QIO Flash profile and 80 MHz Octal
+PSRAM; confirm its physical capacities before release.
+`bread-compact-wifi-lcd` is a fixed ESP32-S3 N16R8 profile with 16 MB QIO Flash and 8 MB Octal
+PSRAM at 80 MHz; validate the module and detected capacities on the wired device.
 
 ```sh
 idf.py -B build/<board-id> \
@@ -83,7 +89,7 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 
 The bundled RTSA package supports only 60 ms audio frames. Although menuconfig lists 20 ms and
 40 ms, the SDK component wrapper rejects them without a matching RTSA package. The
-[CI workflow](../.github/workflows/ci.yml) currently has 24 firmware builds: ten boards in both
+[CI workflow](../.github/workflows/ci.yml) currently has 30 firmware builds: thirteen boards in both
 languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video
 build with conversation animations disabled. This is build coverage, not hardware certification.
 
@@ -147,6 +153,35 @@ full-duplex interaction. If 24 kHz output is required, add stateful 16-to-24 kHz
 the Board driver and keep the SDK contract unchanged. GPIO9 charge status, GPIO8 battery ADC,
 temperature monitoring, sleep, and low-power behavior remain outside the initial profile.
 
+The `xingzhi-cube-1.54tft-wifi` profile reuses the raw I2S audio, ST7789 panel/shared LVGL adapter,
+and GPIO input drivers. Its 240 x 240 panel uses MOSI10/SCLK9/CS14/DC8/RESET18, SPI3 mode 3 at
+40 MHz, and zero offsets. GPIO13 uses 5 kHz, 13-bit LEDC PWM at 60%; the display driver must not
+replace that LEDC output with plain GPIO control. Boot0, volume-up40, and volume-down39 remain
+Board-owned. Release RTC hold on GPIO21 and drive it high before initializing peripherals, then
+retain the power hold for the process lifetime.
+
+The Cube profile uses `partitions/v2/16m.csv`; physical Flash/PSRAM capacities remain unconfirmed.
+Separate microphone I2S1 (WS4/BCLK5/DIN6) and speaker I2S0 (DOUT7/BCLK15/WS16) use the SDK's
+16 kHz boundary with 32-bit mono left slots. The reference speaker rate is 24 kHz, so confirm
+playback speed/pitch and concurrent capture on real hardware; any required resampling belongs in
+the platform driver. Touch, video, battery/charging inputs, shutdown, sleep, and low-power behavior
+are outside the initial profile. A build or host test does not validate these hardware assumptions.
+
+The `bread-compact-wifi-lcd` profile fixes the panel to a 240 x 320 IPS ST7789 on SPI3 mode 0 at
+40 MHz, RGB order, color inversion enabled, and zero offsets. MOSI47/SCLK21/CS41/DC40/RESET45
+and GPIO42 LEDC backlight (5 kHz, 13-bit, 60% duty) are separate from the microphone I2S1
+(WS4/BCLK5/DIN6) and speaker I2S0 (DOUT7/BCLK15/WS16). It reuses `raw_i2s_audio.c`,
+`panels/st7789/st7789_panel.c`, and the shared LVGL adapter with `partitions/v2/16m.csv`.
+
+Board-owned `boards/bread-compact-wifi-lcd/bread_input.c` provides only Boot GPIO0, including
+provisioning while mybot is stopped. Software speaker volume is persisted in NVS and defaults to
+70. The profile has no GPIO power hold, volume keys, touch, camera, GPIO48 LED, or GPIO18 lamp
+output. Its SDK boundary is 16 kHz mono signed-16 PCM; the physical standard-I2S link uses 16 kHz
+32-bit mono left slots. The reference output rate is 24 kHz; add stateful platform resampling only
+after hardware tests establish it is required. Other panel sizes and shared-clock I2S wiring
+require separate profiles rather than runtime selection. Chinese and English build support for this
+fixed N16R8 profile has been validated with ESP-IDF v5.5.2; real-device validation remains pending.
+
 The `esp-vocat` profile supports PCB V1.0 and V1.2 under one compile-time Board because they share
 the same target, storage, partition, and component configuration. This is runtime hardware-revision
 detection, not runtime Board selection. Board preparation creates native I2C0 on GPIO2/GPIO1, drives
@@ -182,12 +217,25 @@ optional TCA9554 probe at `0x20`; 1.75C uses GPIO16, GPIO1, and GPIO2 respective
 TCA9554. These profiles must not be cross-flashed. A Board-owned I2C0 bus initializes AXP2101 power
 before CO5300, CST9217, and codec clients attach.
 
-Both defaults use 16 MB QIO Flash, 8 MB Octal PSRAM at 80 MHz, and `partitions/v2/16m.csv`. The
+The 1.75 and 1.75C defaults use 16 MB QIO Flash, 8 MB Octal PSRAM at 80 MHz, and `partitions/v2/16m.csv`. The
 1.75C product page describes 32 MB Flash while the reference firmware targets 16 MB and available
 hardware materials conflict. Keep the conservative address space until startup detection confirms
 the release hardware; only then add and validate a larger partition profile. RTC, IMU, TF card,
-battery reporting, and automatic sleep remain outside both initial profiles, and 1.75C does not
+battery reporting, and automatic sleep remain outside all three initial profiles, and 1.75C does not
 probe or depend on TCA9554.
+The 2.16 defaults keep the same 16 MB partition table and 80 MHz Octal PSRAM configuration, but
+its physical Flash/PSRAM capacities still need confirmation.
+Its independent `boards/esp32-s3-touch-amoled-2.16/board.c` owns Board lifecycle and uses
+`src/drivers/display/panels/co5300/co5300_480_panel.c`, an independent 480-pixel panel variant.
+Audio, touch/input drivers, and the shared LVGL view reuse the established integration. The
+GPIO42/GPIO39/GPIO40 MCLK/LCD-reset/touch-reset mapping matches the original 1.75 profile;
+TCA9554 probing is optional and physical presence is unconfirmed. Keep the 2.16 build separate
+from both 1.75 profiles and match the device before flashing.
+
+The 2.16 Board guards successful `prepare()` against repeated initialization. Rollback stops input
+before releasing display and hardware; an input or hardware cleanup failure retains pending state.
+A later `prepare()` retries cleanup before starting initialization again. This recovery is owned by
+the independent 2.16 Board implementation.
 
 Its ES7210 and ES8311 share one I2S0 clock domain. The initial implementation selects only the
 primary microphone and configures identical two-slot 16 kHz standard-I2S TX/RX, extracts the left
@@ -195,11 +243,17 @@ capture slot, duplicates mono playback into both slots, and keeps Cloud AEC enab
 operation must keep TX running to supply MCLK/BCLK/WS. The playback-reference input and local AEC
 are not exposed through the mybot audio contract.
 
-CO5300 QSPI rendering uses the shared LVGL view and a partial RGB565 DMA buffer with a (6, 0)
-panel gap. Every transfer region keeps even start/end pixel boundaries; no full-screen framebuffer
+CO5300 QSPI rendering uses the shared LVGL view and a partial RGB565 DMA buffer. The 1.75 and
+1.75C panels use 466 x 466 with a (6, 0) gap; 2.16 uses 480 x 480, a (0, 0) gap, and 40 MHz QSPI.
+Every transfer region keeps even start/end pixel boundaries on both axes; no full-screen framebuffer
 is allocated. CST9217 and Boot input remain Board-owned so either can request provisioning while mybot
 is stopped. Each profile is a build target only until power, audio-slot, display, and touch behavior
 are verified on its matching release device.
+The 2.16 reference uses 24 kHz audio; validate the inherited 16 kHz primary-mic and stereo physical
+I2S link on real hardware. Keep any required resampling in the platform driver and keep Cloud AEC.
+Camera, RTC, IMU, TF card, battery reporting, shutdown, and low-power behavior remain unsupported.
+Chinese and English firmware build support for 2.16 has been validated with ESP-IDF v5.5.2;
+real-device validation remains pending.
 
 The ReSpeaker Flex profile is an example of a hardware audio front end rather than a raw microphone
 codec. Its XVF3800 must run separately flashed Circular-4 16 kHz, two-channel I2S firmware and owns

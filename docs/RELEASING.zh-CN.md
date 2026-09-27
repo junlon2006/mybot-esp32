@@ -25,7 +25,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] [CI 工作流](../.github/workflows/ci.yml)的 24 项固件构建全部通过：十个板型分别构建
+- [ ] [CI 工作流](../.github/workflows/ci.yml)的 30 项固件构建全部通过：十三个板型分别构建
       中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色主题构建，以及一个关闭会话
       动画的视频构建。所有构建使用 60 ms 音频帧。
 - [ ] 确认随附 RTSA 仍会在配置阶段拒绝不支持的 20 ms 和 40 ms 设置。
@@ -48,6 +48,15 @@ git diff --check
 - [ ] 对征辰 Wi-Fi，通过启动日志确认 16 MB Flash 与实际 PSRAM 容量；验证 GPIO2 电源保持、
       ST7789、Boot 与音量按键，并确认 GPIO11/GPIO12 保持未使用。结合硬件的 24 kHz 扬声器
       输出要求，验证 16 kHz 采集/播放的速度、音调、稳定性与全双工交互。
+- [ ] 对行者 Cube，确认实际 Flash/PSRAM 容量、RTC hold 解除及 GPIO21 上电时序、ST7789
+      mode 3 的颜色/方向/零偏移、GPIO13 60% PWM 背光和 Boot0/音量加40/音量减39。结合参考
+      24 kHz 配置验证 16 kHz 播放速度/音调、双向音频、提示音排空、音量持久化、反复启停及
+      mybot 停止期间的配网。
+- [ ] 对 Bread Compact Wi-Fi LCD，匹配固定 N16R8/240x320 接线并确认 16 MB Flash、8 MB
+      Octal PSRAM，验证 ST7789 SPI3 mode 0 颜色/方向/反转/零偏移、GPIO42 PWM、Boot0 短长按、
+      默认和持久化软件音量、mybot 停止期间配网、提示音排空。结合参考 24 kHz 输出验证
+      16 kHz 采集/播放速度和音调、并行音频、失败清理及反复启停；确认没有配置音量键、
+      电源保持、GPIO48 LED 或 GPIO18 灯输出。
 - [ ] 对 ESP-VoCat，分别验证 PCB V1.0 与 V1.2。确认 GPIO48 探测、各版本 DIN/PA/LCD reset
       引脚与 reset 极性、GPIO9 外设电源、USB Serial/JTAG 日志、实际 Flash/PSRAM 容量、
       ST77916 初始化/颜色/圆屏边缘/背光、CST816S 按下/释放中断且启动不读取 ID、mybot 停止
@@ -61,7 +70,11 @@ git diff --check
       8 MB PSRAM、MCLK GPIO16、LCD reset GPIO1、触摸 reset GPIO2、不探测 TCA9554、主麦
       路由、全双工音频、PA 噪声、显示/触摸与配网。扩展安全的 16 MB 分区布局前，必须先确认
       启动日志检测到的 Flash 容量。
-- [ ] 确认已有构建目录拒绝切换 `MYBOT_BOARD`，并为两个 Waveshare AMOLED 版本保留独立
+- [ ] 对 Waveshare AMOLED 2.16，使用独立 profile，确认实际 Flash/PSRAM 容量、AXP2101
+      USB/电池上电时序、可选 TCA9554 搭载情况、MCLK42/LCD-reset39/touch-reset40、480x480
+      CO5300 零偏移和偶数像素边界、颜色/方向/亮度、CST9217 按下/释放/长按。结合参考
+      24 kHz 配置验证 16 kHz 主麦和全双工音频、PA 噪声、音量持久化及反复配网/启停。
+- [ ] 确认已有构建目录拒绝切换 `MYBOT_BOARD`，并为三个 Waveshare AMOLED profile 保留独立
       制品。全新构建目录可以使用任一 profile，无法识别连接设备的硬件版本；烧录前须核对
       实际硬件版本与固件是否匹配。
 - [ ] 对 SenseCAP Watcher，首次烧录前备份并校验 200 KiB `nvsfactory` 区域；确认正常烧录不

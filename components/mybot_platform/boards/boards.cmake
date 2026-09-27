@@ -1,12 +1,15 @@
 set(MYBOT_SUPPORTED_BOARDS
     "atom-echos3r"
+    "bread-compact-wifi-lcd"
     "esp-vocat"
     "esp32-s3-touch-amoled-1.75"
     "esp32-s3-touch-amoled-1.75c"
+    "esp32-s3-touch-amoled-2.16"
     "m5stack-core-s3"
     "m5stack-stick-s3"
     "respeaker-flex-xvf3800-circular4-xiao"
     "sensecap-watcher"
+    "xingzhi-cube-1.54tft-wifi"
     "zhengchen-1.54tft-ml307"
     "zhengchen-1.54tft-wifi"
 )
@@ -15,12 +18,16 @@ set(_MYBOT_BOARDS_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 function(mybot_resolve_board board)
     if(board STREQUAL "atom-echos3r")
         set(profile "${_MYBOT_BOARDS_ROOT}/atom-echos3r/board.cmake")
+    elseif(board STREQUAL "bread-compact-wifi-lcd")
+        set(profile "${_MYBOT_BOARDS_ROOT}/bread-compact-wifi-lcd/board.cmake")
     elseif(board STREQUAL "esp-vocat")
         set(profile "${_MYBOT_BOARDS_ROOT}/esp-vocat/board.cmake")
     elseif(board STREQUAL "esp32-s3-touch-amoled-1.75")
         set(profile "${_MYBOT_BOARDS_ROOT}/esp32-s3-touch-amoled-1.75/board.cmake")
     elseif(board STREQUAL "esp32-s3-touch-amoled-1.75c")
         set(profile "${_MYBOT_BOARDS_ROOT}/esp32-s3-touch-amoled-1.75c/board.cmake")
+    elseif(board STREQUAL "esp32-s3-touch-amoled-2.16")
+        set(profile "${_MYBOT_BOARDS_ROOT}/esp32-s3-touch-amoled-2.16/board.cmake")
     elseif(board STREQUAL "m5stack-core-s3")
         set(profile "${_MYBOT_BOARDS_ROOT}/m5stack-core-s3/board.cmake")
     elseif(board STREQUAL "m5stack-stick-s3")
@@ -30,6 +37,8 @@ function(mybot_resolve_board board)
             "${_MYBOT_BOARDS_ROOT}/respeaker-flex-xvf3800-circular4-xiao/board.cmake")
     elseif(board STREQUAL "sensecap-watcher")
         set(profile "${_MYBOT_BOARDS_ROOT}/sensecap-watcher/board.cmake")
+    elseif(board STREQUAL "xingzhi-cube-1.54tft-wifi")
+        set(profile "${_MYBOT_BOARDS_ROOT}/xingzhi-cube-1.54tft-wifi/board.cmake")
     elseif(board STREQUAL "zhengchen-1.54tft-ml307")
         set(profile "${_MYBOT_BOARDS_ROOT}/zhengchen-1.54tft-ml307/board.cmake")
     elseif(board STREQUAL "zhengchen-1.54tft-wifi")

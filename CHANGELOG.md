@@ -7,7 +7,7 @@ Versioning and Conventional Commits.
 
 ### Added
 
-- Shared LVGL status UI for all eight display-board profiles, with Chinese/English text,
+- Shared LVGL status UI for all eleven display-board profiles, with Chinese/English text,
   pairing codes, voiceprint status, and listening/thinking/speaking indicators.
 - LVGL light/dark themes, local state emoji, rounded status cards, persistent voiceprint
   indicators, and brief pairing/voiceprint/network notifications. Optional activity animations
@@ -24,10 +24,18 @@ Versioning and Conventional Commits.
 - ESP-IDF v5.5.2 project for the Zhengchen 1.54 TFT ESP32-S3 board.
 - Zhengchen 1.54 TFT Wi-Fi Board profile with shared I2S, ST7789, Boot, volume-button, and
   power-hold support while leaving the ML307 UART pins unused.
+- Xingzhi Cube 1.54 TFT Wi-Fi Board profile with separate microphone/speaker I2S, a 240x240
+  ST7789 display, 60% PWM backlight, RTC GPIO21 power hold, and Boot/volume buttons.
+- Bread Compact Wi-Fi LCD profile fixed to ESP32-S3 N16R8, a 240x320 ST7789 display,
+  GPIO42 PWM backlight, separate microphone/speaker I2S, and Boot-only input. Chinese and English
+  variants passed ESP-IDF v5.5.2 reconfigure/build/size/merge-bin validation.
 - Waveshare ESP32-S3 Touch AMOLED 1.75 Board profile with AXP2101 power sequencing, CO5300 QSPI
   display, CST9217 touch input, and ES7210/ES8311 audio.
 - Waveshare ESP32-S3 Touch AMOLED 1.75C Board profile with revision-specific audio MCLK, display
   reset, and touch-reset pins, sharing the established power, audio, display, and input drivers.
+- Waveshare ESP32-S3 Touch AMOLED 2.16 Board profile with a 480x480 CO5300 panel, zero display
+  gap, CST9217/Boot input, and shared AXP2101 and ES7210/ES8311 integration. Chinese and English
+  variants passed ESP-IDF v5.5.2 reconfigure/build/size/merge-bin validation.
 - Espressif ESP-VoCat Board profile with PCB V1.0/V1.2 runtime detection, ST77916 QSPI display,
   CST816S touch input, and ES7210/ES8311 full-duplex audio.
 - Pinned ST77916 2.0.2 and CST816S 1.1.1~1 production components.
@@ -54,7 +62,7 @@ Versioning and Conventional Commits.
   AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
 - SenseCAP Watcher Board profile with ES8311/ES7243E audio, SPD2010 status display, rotary input,
   TCA9555 power sequencing, and a factory-data-preserving 32 MB partition layout.
-- Target firmware CI with 24 configurations: all ten board profiles in both languages,
+- Target firmware CI with 30 configurations: all thirteen board profiles in both languages,
   CoreS3 video in both languages, and light-theme/static-indicator variants, using 60 ms audio.
 
 ### Changed
@@ -123,6 +131,12 @@ Versioning and Conventional Commits.
 - Zhengchen Wi-Fi real-device validation, physical PSRAM-capacity confirmation, 16 kHz playback
   validation, charge/battery inputs, temperature monitoring, and power management are not yet
   complete.
+- Xingzhi Cube real-device validation, physical Flash/PSRAM-capacity confirmation, 16 kHz
+  playback, display/power/button checks, battery/charging inputs, shutdown, sleep, and low-power
+  behavior are not yet complete.
+- Bread Compact Wi-Fi LCD real-device validation is pending. Its fixed
+  N16R8/ST7789/separate-I2S wiring, 16 kHz playback, panel/backlight/input, and detected capacities
+  require verification. Camera, touch, volume buttons, LED, lamp, and power management are unsupported.
 - ESP-VoCat real-device validation for both PCB revisions is not yet complete. Battery reporting,
   IMU, PCB capacitive controls, SD card, LED, camera expansion, local AEC, reference audio,
   shutdown, and low-power behavior are not supported by the initial profile.
@@ -130,6 +144,9 @@ Versioning and Conventional Commits.
   battery reporting, and low-power operation are not yet complete. The 1.75C profile does not
   support RTC, IMU, TF card, or TCA9554 and conservatively addresses 16 MB of Flash pending
   real-device capacity confirmation.
+- Waveshare AMOLED 2.16 real-device power/audio/display/touch testing, physical Flash/PSRAM
+  capacities, and optional TCA9554 presence remain unconfirmed. Video, playback-reference input,
+  local AEC, RTC, IMU, TF card, battery reporting, shutdown, and low-power behavior are unsupported.
 - ReSpeaker Flex requires separately flashed XVF3800 Circular-4 16 kHz I2S firmware; hardware
   validation, Linear-4 support, XVF firmware update, LED-ring status, and LCD output are not yet
   complete.
@@ -142,6 +159,8 @@ Versioning and Conventional Commits.
 
 ### Fixed
 
+- Keep AMOLED 2.16 preparation idempotent and retry pending input/hardware cleanup before a
+  new initialization attempt.
 - Register the nested runtime components so clean CI builds resolve `mybot_sdk`, AOSL, and RTSA.
 - Preserve board-controlled backlights, track ST7789 DMA completion correctly, and retain resources
   for cleanup retries. Align CO5300 and SPD2010 partial refreshes to panel transfer requirements.

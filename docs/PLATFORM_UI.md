@@ -13,15 +13,28 @@ audio path, camera path, and touch/key ownership do not change.
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | ST7789, 240 × 240 | shared ST7789 adapter | existing buttons |
 | `zhengchen-1.54tft-wifi` | ST7789, 240 × 240 | shared ST7789 adapter | existing buttons |
+| `xingzhi-cube-1.54tft-wifi` | ST7789, 240 × 240 | shared panel adapter | Boot and volume buttons |
+| `bread-compact-wifi-lcd` | ST7789, 240 × 320 | shared panel adapter | Boot only |
 | `m5stack-core-s3` | ILI9342, 320 × 240 | CoreS3 adapter | existing FT6336 gestures |
 | `m5stack-stick-s3` | ST7789P3, 135 × 240 | shared ST7789 adapter | existing main button |
 | `esp-vocat` | ST77916, 360 × 360 | shared panel adapter | existing CST816S/Boot path |
 | `esp32-s3-touch-amoled-1.75` | CO5300, 466 × 466 | shared panel adapter | existing touch/key path |
 | `esp32-s3-touch-amoled-1.75c` | CO5300, 466 × 466 | shared panel adapter | existing touch/key path |
+| `esp32-s3-touch-amoled-2.16` | CO5300 480 variant, 480 × 480 | shared panel adapter | CST9217 and Boot |
 | `sensecap-watcher` | SPD2010, 412 × 412 | shared panel adapter | existing encoder path |
 
 The AtomEchoS3R and ReSpeaker Flex profiles have no LCD and do not include LVGL. The ML307 and
 Wi-Fi variants, along with the audio/video protocols, are independent of the display backend.
+The Xingzhi Cube uses SPI3 mode 3 at 40 MHz, zero offsets, and GPIO13 LEDC backlight with
+5 kHz, 13-bit PWM at 60% duty.
+Its display and power behavior require real-device validation.
+Bread Compact Wi-Fi LCD uses SPI3 mode 0 at 40 MHz, zero offsets, RGB order with color inversion,
+and GPIO42 LEDC backlight at 5 kHz, 13-bit resolution, and 60% duty. It has one Boot input and
+uses the shared view at its portrait geometry. Chinese and English build support has been validated;
+real-device validation remains pending.
+AMOLED 2.16 uses a zero panel gap and 40 MHz QSPI. Its CO5300 transfer regions retain even pixel
+boundaries on both axes, and touch/panel orientation must be verified on the physical board.
+Chinese and English 2.16 build support has been validated; real-device testing remains pending.
 
 ## Shared behavior
 
@@ -48,8 +61,9 @@ Touch and button events remain in each board's input driver. The UI does not add
 gesture, alter provisioning, or change the audio/video lifecycle. The backend uses one partial
 RGB565 DMA stripe of 16 rows (`width × 16 × 2` bytes) and a dedicated LVGL task on Core 1 at
 priority 1. Objects and drawing scratch space use PSRAM; the DMA stripe uses internal memory.
-CoreS3's stripe is 10,240 bytes and StickS3's is 4,320 bytes, separate from task stacks and driver
-allocations. The panel adapter owns reset, offsets, color order, backlight, and teardown.
+CoreS3's stripe is 10,240 bytes, StickS3's is 4,320 bytes, and AMOLED 2.16's is 15,360 bytes,
+separate from task stacks and driver
+allocations. The hardware integration owns reset, offsets, color order, backlight, and teardown.
 
 ## Build examples
 
@@ -71,8 +85,8 @@ not override values saved in an existing sdkconfig.
 
 The earlier CoreS3 LVGL UI passed real-device testing; the LVGL-only cleanup, provisioning SSID
 display/scrolling, and narrow-screen font changes still need hardware regression. CI covers all
-ten board profiles in both languages, CoreS3 video in both languages, and two theme/animation
-variants (24 configurations).
+thirteen board profiles in both languages, CoreS3 video in both languages, and two theme/animation
+variants (30 configurations).
 These are build checks only. No new board is claimed to have passed real-device color, touch, audio,
 provisioning, or teardown validation. Complete hardware testing must cover all workflow screens,
 orientation and colors, Chinese/English small-screen text, SSID and hint scrolling with activity

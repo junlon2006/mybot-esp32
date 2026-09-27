@@ -18,7 +18,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang-format
       - name: Format check
         run: |
-          find main components/mybot_platform tests/atom_echos3r -type f \
+          find main components/mybot_platform tests/atom_echos3r \
+            tests/st7789_lifecycle tests/co5300_lifecycle tests/bread_compact_wifi_lcd -type f \
             \( -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' \) \
             -exec clang-format --dry-run --Werror {} +
       - name: Whitespace check
@@ -36,7 +37,8 @@ jobs:
           git diff --check "$range"
       - name: SPDX check
         run: |
-          find main components/mybot_platform tests/atom_echos3r -type f \
+          find main components/mybot_platform tests/atom_echos3r \
+            tests/st7789_lifecycle tests/co5300_lifecycle tests/bread_compact_wifi_lcd -type f \
             \( -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' \) \
             -print0 | while IFS= read -r -d '' file; do
               head -n 5 "$file" | grep -q 'SPDX-License-Identifier:' || {
@@ -46,6 +48,12 @@ jobs:
             done
       - name: AtomEchoS3R host lifecycle tests
         run: sh tests/atom_echos3r/run.sh
+      - name: ST7789 and Xingzhi Cube host lifecycle tests
+        run: sh tests/st7789_lifecycle/run.sh
+      - name: CO5300 host lifecycle tests
+        run: sh tests/co5300_lifecycle/run.sh
+      - name: Bread Compact Wi-Fi LCD host lifecycle tests
+        run: sh tests/bread_compact_wifi_lcd/run.sh
       - name: Validate commit messages
         run: |
           set -e
@@ -91,6 +99,22 @@ jobs:
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: xingzhi-cube-1.54tft-wifi
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: xingzhi-cube-1.54tft-wifi
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: bread-compact-wifi-lcd
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: bread-compact-wifi-lcd
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
           - board: esp-vocat
             language: zh-CN
             ptime: 60
@@ -112,6 +136,14 @@ jobs:
             ptime: 60
             defaults: ci/ptime60.defaults
           - board: esp32-s3-touch-amoled-1.75c
+            language: en-US
+            ptime: 60
+            defaults: ci/ptime60.defaults;ci/en-us.defaults
+          - board: esp32-s3-touch-amoled-2.16
+            language: zh-CN
+            ptime: 60
+            defaults: ci/ptime60.defaults
+          - board: esp32-s3-touch-amoled-2.16
             language: en-US
             ptime: 60
             defaults: ci/ptime60.defaults;ci/en-us.defaults
