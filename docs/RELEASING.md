@@ -27,7 +27,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] All 28 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: twelve boards
+- [ ] All 30 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: thirteen boards
       in both languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one
       CoreS3 video build with conversation animations disabled. All use 60 ms audio frames.
 - [ ] Confirm unsupported 20 ms and 40 ms settings still fail configuration with the bundled RTSA.
@@ -58,6 +58,12 @@ git diff --check
       Boot0/volume-up40/volume-down39. Verify 16 kHz playback speed/pitch against the reference
       24 kHz setting, bidirectional audio, prompt drain, volume persistence, repeated start/stop,
       and provisioning while mybot is stopped.
+- [ ] For Bread Compact Wi-Fi LCD, match the fixed N16R8/240x320 wiring and confirm 16 MB Flash,
+      8 MB Octal PSRAM, ST7789 SPI3 mode-0 colors/orientation/inversion/zero offsets, GPIO42 PWM,
+      Boot0 short/long presses, default/persisted software volume, provisioning while mybot is
+      stopped, prompt drain, 16 kHz capture/playback speed/pitch against the reference 24 kHz output,
+      concurrent audio, failure cleanup, and repeated start/stop. Verify no volume-key, power-hold,
+      GPIO48 LED, or GPIO18 lamp output is configured.
 - [ ] For ESP-VoCat, test PCB V1.0 and V1.2 separately. Verify GPIO48 detection, revision-specific
       DIN/PA/LCD-reset pins and reset polarity, GPIO9 peripheral power, USB Serial/JTAG logging,
       detected Flash/PSRAM capacity, the ST77916 initialization/colors/round edges/backlight,

@@ -10,7 +10,7 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、行者 Cube
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、Bread Compact Wi-Fi LCD、行者 Cube
 1.54 TFT Wi-Fi、Espressif ESP-VoCat、Waveshare ESP32-S3 Touch AMOLED 1.75、1.75C 与 2.16、M5Stack CoreS3、M5Stack
 StickS3、M5Stack AtomEchoS3R、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，
 以及 SenseCAP Watcher。
@@ -40,6 +40,7 @@ StickS3、M5Stack AtomEchoS3R、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 C
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、80 MHz Octal PSRAM |
 | `xingzhi-cube-1.54tft-wifi` | 独立麦克风/扬声器 I2S | ST7789、Boot 与音量按键 | 16 MB QIO Flash profile、80 MHz Octal PSRAM；实际容量待核对 |
+| `bread-compact-wifi-lcd` | 独立麦克风/扬声器 I2S | 240x320 ST7789 与 Boot；无音量键 | ESP32-S3 N16R8 profile：16 MB QIO Flash、80 MHz 8 MB Octal PSRAM |
 | `esp-vocat` | ES7210 与 ES8311 | ST77916、CST816S 触摸与 Boot | 16 MB QIO Flash、80 MHz Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75c` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 安全的 16 MB QIO Flash profile、8 MB Octal PSRAM |
@@ -78,6 +79,10 @@ idf.py -B build/zhengchen-1.54tft-wifi \
 idf.py -B build/xingzhi-cube-1.54tft-wifi \
   -DMYBOT_BOARD=xingzhi-cube-1.54tft-wifi \
   -DSDKCONFIG=build/xingzhi-cube-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/bread-compact-wifi-lcd \
+  -DMYBOT_BOARD=bread-compact-wifi-lcd \
+  -DSDKCONFIG=build/bread-compact-wifi-lcd/sdkconfig build
 
 idf.py -B build/esp-vocat \
   -DMYBOT_BOARD=esp-vocat \
@@ -118,7 +123,7 @@ idf.py -B build/sensecap-watcher \
 
 默认 profile 是 `zhengchen-1.54tft-ml307`，但建议始终显式选择 Board。Board defaults 会
 提供所需的 Flash、PSRAM 和分区配置。
-十种带屏 profile 自动使用 LVGL，AtomEchoS3R 与 ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
+十一种带屏 profile 自动使用 LVGL，AtomEchoS3R 与 ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
 主题和状态活动动画仍可通过 menuconfig 配置。
 
 构建全部已支持的 profile，并自动启用带屏 LVGL 及 CoreS3 视频：
@@ -164,6 +169,8 @@ NVS 中没有 Wi-Fi 凭据时，设备创建 `mybot-xxxx` 配置 AP，其中 `xx
   持久化扬声器音量。
 - 行者 Cube：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并持久化
   扬声器音量。
+- Bread Compact Wi-Fi LCD：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网。该 profile
+  只有一个按键，启动时从 NVS 恢复软件扬声器音量（没有保存值时默认 70）。
 - ESP-VoCat：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒进入配网。
 - Waveshare AMOLED 1.75、1.75C 与 2.16：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒
   进入配网。
@@ -249,6 +256,31 @@ SDK 音频边界保持 16 kHz 单声道 signed-16 PCM；独立 RX/TX I2S 外设�
 
 首版没有触摸或摄像头路径；电池 ADC、充电状态、关机、休眠和低功耗不在范围内。
 显示方向/颜色、PWM 背光、电源时序与按键映射也需要真机验证。
+
+### Bread Compact Wi-Fi LCD
+
+该固定接线 profile 选择 ESP32-S3 N16R8 模组、240 x 320 IPS ST7789 面板和独立麦克风/
+扬声器 I2S。烧录前必须核对接线及面板版本。
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| 麦克风 I2S1 RX | WS GPIO4、BCLK GPIO5、DIN GPIO6 |
+| 扬声器 I2S0 TX | DOUT GPIO7、BCLK GPIO15、WS GPIO16 |
+| 输入 | Boot GPIO0；无音量键或触摸 |
+| ST7789 | MOSI GPIO47、SCLK GPIO21、CS GPIO41、DC GPIO40、RESET GPIO45 |
+| 显示 | 240 x 320 RGB565、SPI3 mode 0 / 40 MHz、(0, 0) 偏移、RGB 顺序、启用颜色反转 |
+| 背光 | GPIO42 LEDC PWM，5 kHz / 13-bit / 60% 占空比 |
+| 存储 | 16 MB QIO Flash、80 MHz 8 MB Octal PSRAM、`partitions/v2/16m.csv` |
+
+Board 负责背光初始化和 Boot 输入，使用共享 ST7789 面板及 LVGL 界面，没有 GPIO 电源保持
+输出。SDK 边界仍为 16 kHz 单声道 signed-16 PCM；raw I2S 驱动使用 16 kHz 单声道 32-bit
+left slot 和共享播放缓冲。参考扬声器配置为 24 kHz，播放速度、音调、稳定性及并行采集需
+真机验证；仅在硬件测试确认必要后增加有状态采样率转换，并保持 SDK 边界不变。
+
+中英文版本已通过 ESP-IDF v5.5.2 的 `reconfigure`、`build`、`size` 与 `merge-bin`，真机验证
+仍未完成。需在实际接线设备确认 Flash/PSRAM 容量、颜色/方向、
+背光、Boot 行为、配网、全双工音频、音量持久化及反复启停。摄像头、触摸、状态 LED、灯
+输出和电池/电源管理不在该 profile 范围内。
 
 ### Espressif ESP-VoCat
 
@@ -405,11 +437,17 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 共构建 28 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
+CI 共构建 30 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
 六项 CoreS3 配置覆盖中英文/视频组合、浅色主题及关闭状态动画。所有带屏板型构建均使用
-LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。此前 CoreS3 固件已完成配网、双向音频、
+LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。
+
+行者 Cube、Waveshare AMOLED 2.16 和 Bread Compact Wi-Fi LCD 三个移植均已通过中英文
+ESP-IDF v5.5.2 的 `reconfigure`、`build`、`size` 与 `merge-bin` 验证。这是软件构建结果，
+三个板型的真机验证仍未完成。Bread 的 N16R8 是固定固件 profile 的名称，不是实测模组容量。
+
+此前 CoreS3 固件已完成配网、双向音频、
 摄像头上行及 LVGL UI 真机测试，视频开启和关闭时的音频播放也已验证。
-共享 LVGL 清理及配网热点名称/滚动改动仍需本轮真机回归。征辰 Wi-Fi、行者 Cube、ESP-VoCat、三个 Waveshare AMOLED
+共享 LVGL 清理及配网热点名称/滚动改动仍需本轮真机回归。征辰 Wi-Fi、行者 Cube、Bread Compact Wi-Fi LCD、ESP-VoCat、三个 Waveshare AMOLED
 profile、M5Stack StickS3、AtomEchoS3R、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。
 
@@ -420,6 +458,8 @@ profile、M5Stack StickS3、AtomEchoS3R、ReSpeaker Flex 与 SenseCAP Watcher pr
   PSRAM 容量尚未确认。
 - 行者 Cube 的实际 Flash/PSRAM 容量与 16 kHz 音频尚未确认；电量、充电状态、关机、
   休眠和低功耗尚未接入。
+- Bread Compact Wi-Fi LCD 固定使用上述 N16R8、240x320 ST7789 与分离 I2S 接线，仍待
+  真机验证；摄像头、触摸、音量键、LED、灯及电池/电源管理尚未接入。
 - ESP-VoCat 尚未接入电量、IMU、PCB 电容控制、SD 卡、LED、摄像头扩展、本地 AEC、参考
   音频、关机与低功耗；PCB V1.0 还有固件无法修复的已知硬件供电稳定性问题。
 - Waveshare AMOLED 1.75、1.75C 与 2.16 尚未接入播放参考通道、本地 AEC、电池状态与低功耗；

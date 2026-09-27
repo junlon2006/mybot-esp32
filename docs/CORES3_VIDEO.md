@@ -26,7 +26,7 @@ idf.py -B build/cores3-video -p <PORT> flash monitor
 
 For an existing CoreS3 build, enable `mybot → Enable CoreS3 camera JPEG uplink (1 fps)` in
 menuconfig for that build directory. `CONFIG_MYBOT_ENABLE_VIDEO` defaults to `n`. Other boards
-reject the enabled configuration, including `xingzhi-cube-1.54tft-wifi` and
+reject the enabled configuration, including `bread-compact-wifi-lcd`, `xingzhi-cube-1.54tft-wifi`, and
 `esp32-s3-touch-amoled-2.16`, which have no camera path.
 CoreS3-SE has no GC0308 and is not a supported video target.
 Keep the audio packet duration at the supported 60 ms. A fresh build uses Chinese; append

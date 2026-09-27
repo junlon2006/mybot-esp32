@@ -7,7 +7,7 @@ Versioning and Conventional Commits.
 
 ### Added
 
-- Shared LVGL status UI for all ten display-board profiles, with Chinese/English text,
+- Shared LVGL status UI for all eleven display-board profiles, with Chinese/English text,
   pairing codes, voiceprint status, and listening/thinking/speaking indicators.
 - LVGL light/dark themes, local state emoji, rounded status cards, persistent voiceprint
   indicators, and brief pairing/voiceprint/network notifications. Optional activity animations
@@ -26,6 +26,9 @@ Versioning and Conventional Commits.
   power-hold support while leaving the ML307 UART pins unused.
 - Xingzhi Cube 1.54 TFT Wi-Fi Board profile with separate microphone/speaker I2S, a 240x240
   ST7789 display, 60% PWM backlight, RTC GPIO21 power hold, and Boot/volume buttons.
+- Bread Compact Wi-Fi LCD profile fixed to ESP32-S3 N16R8, a 240x320 ST7789 display,
+  GPIO42 PWM backlight, separate microphone/speaker I2S, and Boot-only input. Chinese and English
+  variants passed ESP-IDF v5.5.2 reconfigure/build/size/merge-bin validation.
 - Waveshare ESP32-S3 Touch AMOLED 1.75 Board profile with AXP2101 power sequencing, CO5300 QSPI
   display, CST9217 touch input, and ES7210/ES8311 audio.
 - Waveshare ESP32-S3 Touch AMOLED 1.75C Board profile with revision-specific audio MCLK, display
@@ -59,7 +62,7 @@ Versioning and Conventional Commits.
   AIC3104 output initialization, XIAO Boot input, and XVF onboard-button polling.
 - SenseCAP Watcher Board profile with ES8311/ES7243E audio, SPD2010 status display, rotary input,
   TCA9555 power sequencing, and a factory-data-preserving 32 MB partition layout.
-- Target firmware CI with 28 configurations: all twelve board profiles in both languages,
+- Target firmware CI with 30 configurations: all thirteen board profiles in both languages,
   CoreS3 video in both languages, and light-theme/static-indicator variants, using 60 ms audio.
 
 ### Changed
@@ -131,6 +134,9 @@ Versioning and Conventional Commits.
 - Xingzhi Cube real-device validation, physical Flash/PSRAM-capacity confirmation, 16 kHz
   playback, display/power/button checks, battery/charging inputs, shutdown, sleep, and low-power
   behavior are not yet complete.
+- Bread Compact Wi-Fi LCD real-device validation is pending. Its fixed
+  N16R8/ST7789/separate-I2S wiring, 16 kHz playback, panel/backlight/input, and detected capacities
+  require verification. Camera, touch, volume buttons, LED, lamp, and power management are unsupported.
 - ESP-VoCat real-device validation for both PCB revisions is not yet complete. Battery reporting,
   IMU, PCB capacitive controls, SD card, LED, camera expansion, local AEC, reference audio,
   shutdown, and low-power behavior are not supported by the initial profile.

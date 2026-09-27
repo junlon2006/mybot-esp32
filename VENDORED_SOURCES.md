@@ -47,6 +47,8 @@ are not vendored into this repository.
 | `components/mybot_platform/boards/m5stack-stick-s3`, `components/mybot_platform/src/drivers/audio/es8311_codec_audio.c`, `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`, `components/mybot_platform/src/drivers/display/panels/st7789/st7789_panel.c` (panel lifecycle extracted from the existing local adapter) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/zhengchen-1.54tft-wifi/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/xingzhi-cube-1.54tft-wifi/board_config.h` (hardware mapping, SPI mode, RTC power hold, and reference speaker-rate verification only) | `github.com/junlon2006/xiaozhi-esp32`, `main/boards/xingzhi-cube-1.54tft-wifi` | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
+| `components/mybot_platform/boards/bread-compact-wifi-lcd/board_config.h` (fixed 240x320 ST7789/simplex-I2S hardware mapping and reference speaker-rate verification only) | `github.com/junlon2006/xiaozhi-esp32`, `main/boards/bread-compact-wifi-lcd` | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
+| `components/mybot_platform/boards/bread-compact-wifi-lcd/bread_input.c` | Existing local `components/mybot_platform/boards/atom-echos3r/atom_echos3r_input.c` MIT template | Project-local adaptation for Boot GPIO0; retains MIT copyright and permission notice |
 | `components/mybot_platform/boards/atom-echos3r/board_config.h` (hardware mapping verification only) | `github.com/junlon2006/xiaozhi-esp32` | commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d` |
 | `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75-common`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75`, `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c`, `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`, `components/mybot_platform/src/drivers/display/panels/co5300/co5300_panel.c` | `github.com/junlon2006/xiaozhi-esp32` | commit `2b9b4e3bf93c76fdfca1249ce0f7ed0bf546aaa0` |
 | `components/mybot_platform/boards/esp32-s3-touch-amoled-2.16`, `components/mybot_platform/src/drivers/display/panels/co5300/co5300_480_panel.c` (independent variants of the existing 1.75 integration; hardware facts checked against the 2.16 reference) | `github.com/junlon2006/xiaozhi-esp32`, `main/boards/waveshare/esp32-s3-touch-amoled-2.16` | hardware reference commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`; local implementation derived from the existing `2b9b4e3` integration above |
@@ -58,6 +60,11 @@ Firmware integration differences are limited to the active ESP32-S3 build:
 - The Xingzhi Cube port reuses project audio/input/LVGL drivers and introduces no new vendored
   dependency. Its Board lifecycle is project-maintained; the reference supplies hardware facts.
   The 16 MB Flash and 80 MHz Octal PSRAM profile requires real-device capacity confirmation.
+- The Bread Compact Wi-Fi LCD port fixes the user-selected N16R8, 240x320 ST7789, and separate
+  I2S wiring. It reuses raw audio, the existing ST7789 panel, and shared LVGL; its independent
+  Boot-only input is adapted from the local MIT AtomEchoS3R input template. Board lifecycle and
+  build metadata are project-maintained Apache-2.0. Chinese and English build support has been
+  validated; real-device validation remains pending.
 - The AMOLED 2.16 profile owns independent MIT Board and CO5300 480-pixel panel variants derived
   from the existing integration. It reuses AXP2101 configuration, codecs, CST9217, and shared LVGL
   with independent identity and 480x480 zero-gap geometry.

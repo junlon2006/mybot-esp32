@@ -18,14 +18,16 @@
 使用 LVGL，不存在可切换的旧 UI 后端；AtomEchoS3R 与 ReSpeaker Flex 没有显示屏。配网问题请注明发生在
 首次启动、长按触发，还是使用已保存凭据重新连接时。
 
-当前支持征辰 1.54 TFT ML307 与 Wi-Fi profile、行者 Cube 1.54 TFT Wi-Fi、ESP-VoCat、Waveshare ESP32-S3 Touch
+当前支持征辰 1.54 TFT ML307 与 Wi-Fi profile、行者 Cube 1.54 TFT Wi-Fi、Bread Compact Wi-Fi LCD、ESP-VoCat、Waveshare ESP32-S3 Touch
 AMOLED 1.75、1.75C 与 2.16 profile、M5Stack CoreS3、M5Stack StickS3、M5Stack AtomEchoS3R，以及搭配 XIAO ESP32S3
 的 ReSpeaker Flex XVF3800 Circular-4 和 SenseCAP Watcher 的 Wi-Fi 固件路径。
-[CI 工作流](.github/workflows/ci.yml)覆盖十二个 profile 的中英文构建，以及额外的 CoreS3 视频和
+[CI 工作流](.github/workflows/ci.yml)覆盖十三个 profile 的中英文构建，以及额外的 CoreS3 视频和
 UI 变体。构建覆盖不代表某个固件版本或硬件批次已经通过真机验证。ESP-VoCat 问题必须注明
 PCB V1.0 或 V1.2，并附带运行时探测日志。三个 AMOLED profile 必须
 使用匹配的 profile，禁止交叉烧录。在实现并验证兼容网络路径之前，ML307/4G 相关问题按特性
 请求处理。
+Bread Compact Wi-Fi LCD 问题需注明 N16R8 模组、240x320 ST7789 版本和实际接线；其他
+面板或 I2S 选择不在此固定 profile 范围内。中英文构建支持已验证，真机测试仍未完成。
 
 随附 RTSA 包支持 60 ms 音频帧。选择 20 ms 或 40 ms 导致配置被拒绝时，需要提供匹配的
 RTSA 包，而不是修改板级驱动。

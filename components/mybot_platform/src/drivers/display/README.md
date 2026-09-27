@@ -23,6 +23,10 @@ The new ST7789 panel reads SPI mode and offsets from the board profile and deleg
 the board. Xingzhi Cube uses this panel with the shared adapter: SPI3 mode 3, a 240 x 240 display
 with no offset, and LEDC backlight at 5 kHz, 13-bit resolution, and 60% duty. Existing Zhengchen and
 StickS3 profiles retain `st7789_lvgl_adapter.cc` and their own hardware configuration.
+Bread Compact Wi-Fi LCD reuses the same ST7789 panel and shared adapter with its independent
+240 x 320 geometry, zero offset, SPI3 mode 0, RGB order with color inversion, and GPIO42 LEDC
+backlight at 5 kHz, 13-bit resolution, and 60% duty. Chinese and English build support has been
+validated; real-device validation remains pending.
 The independent `co5300/co5300_480_panel.c` variant is reserved for AMOLED 2.16's 480 x 480,
 zero-gap geometry. The 1.75 profiles retain `co5300/co5300_panel.c` and their 466 x 466, (6, 0)
 geometry. Both variants use the shared LVGL panel adapter and even pixel boundaries on both axes;

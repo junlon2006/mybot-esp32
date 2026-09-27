@@ -2,7 +2,7 @@
 
 [English](AUDIO_PLAYBACK.md) | [简体中文](AUDIO_PLAYBACK.zh-CN.md)
 
-All twelve board profiles use one PCM playback buffer through seven board audio drivers. This
+All thirteen board profiles use one PCM playback buffer through seven board audio drivers. This
 keeps the SDK boundary at 16 kHz, mono signed-16 PCM and moves continuous I2S feeding into an
 independent task. The shared implementation is
 [`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c);
@@ -41,6 +41,7 @@ the number or width of I2S slots. Native conversion occurs only in the worker's 
 | `zhengchen-1.54tft-ml307` | `raw_i2s_audio.c` | 32-bit mono; existing software volume scaling |
 | `zhengchen-1.54tft-wifi` | `raw_i2s_audio.c` | 32-bit mono; existing software volume scaling |
 | `xingzhi-cube-1.54tft-wifi` | `raw_i2s_audio.c` | 32-bit mono; software volume scaling |
+| `bread-compact-wifi-lcd` | `raw_i2s_audio.c` | 32-bit mono; software volume scaling |
 | `m5stack-core-s3` | `cores3_codec_audio.c` | 16-bit mono in the existing TDM slot layout |
 | `m5stack-stick-s3` | `es8311_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `atom-echos3r` | `es8311_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
@@ -63,7 +64,7 @@ If that wait fails, resources remain allocated for cleanup retry. Restart resets
 prebuffer state, so audio from a previous conversation cannot remain in the software queue.
 
 Codec-based boards mute or close the output before allowing old DMA data to clear. TX clocks
-remain active when capture still needs them. Zhengchen, Xingzhi Cube, and XVF3800 disable the
+remain active when capture still needs them. Zhengchen, Xingzhi Cube, Bread, and XVF3800 disable the
 playback channel and preload silence into DMA before reusing it. The board-specific power, clock, and volume
 behavior remains in each driver.
 

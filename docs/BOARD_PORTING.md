@@ -75,6 +75,8 @@ and Octal PSRAM.
 its physical Flash/PSRAM capacities require confirmation on the release device.
 `esp32-s3-touch-amoled-2.16` also uses a conservative 16 MB QIO Flash profile and 80 MHz Octal
 PSRAM; confirm its physical capacities before release.
+`bread-compact-wifi-lcd` is a fixed ESP32-S3 N16R8 profile with 16 MB QIO Flash and 8 MB Octal
+PSRAM at 80 MHz; validate the module and detected capacities on the wired device.
 
 ```sh
 idf.py -B build/<board-id> \
@@ -87,7 +89,7 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 
 The bundled RTSA package supports only 60 ms audio frames. Although menuconfig lists 20 ms and
 40 ms, the SDK component wrapper rejects them without a matching RTSA package. The
-[CI workflow](../.github/workflows/ci.yml) currently has 28 firmware builds: twelve boards in both
+[CI workflow](../.github/workflows/ci.yml) currently has 30 firmware builds: thirteen boards in both
 languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video
 build with conversation animations disabled. This is build coverage, not hardware certification.
 
@@ -164,6 +166,21 @@ Separate microphone I2S1 (WS4/BCLK5/DIN6) and speaker I2S0 (DOUT7/BCLK15/WS16) u
 playback speed/pitch and concurrent capture on real hardware; any required resampling belongs in
 the platform driver. Touch, video, battery/charging inputs, shutdown, sleep, and low-power behavior
 are outside the initial profile. A build or host test does not validate these hardware assumptions.
+
+The `bread-compact-wifi-lcd` profile fixes the panel to a 240 x 320 IPS ST7789 on SPI3 mode 0 at
+40 MHz, RGB order, color inversion enabled, and zero offsets. MOSI47/SCLK21/CS41/DC40/RESET45
+and GPIO42 LEDC backlight (5 kHz, 13-bit, 60% duty) are separate from the microphone I2S1
+(WS4/BCLK5/DIN6) and speaker I2S0 (DOUT7/BCLK15/WS16). It reuses `raw_i2s_audio.c`,
+`panels/st7789/st7789_panel.c`, and the shared LVGL adapter with `partitions/v2/16m.csv`.
+
+Board-owned `boards/bread-compact-wifi-lcd/bread_input.c` provides only Boot GPIO0, including
+provisioning while mybot is stopped. Software speaker volume is persisted in NVS and defaults to
+70. The profile has no GPIO power hold, volume keys, touch, camera, GPIO48 LED, or GPIO18 lamp
+output. Its SDK boundary is 16 kHz mono signed-16 PCM; the physical standard-I2S link uses 16 kHz
+32-bit mono left slots. The reference output rate is 24 kHz; add stateful platform resampling only
+after hardware tests establish it is required. Other panel sizes and shared-clock I2S wiring
+require separate profiles rather than runtime selection. Chinese and English build support for this
+fixed N16R8 profile has been validated with ESP-IDF v5.5.2; real-device validation remains pending.
 
 The `esp-vocat` profile supports PCB V1.0 and V1.2 under one compile-time Board because they share
 the same target, storage, partition, and component configuration. This is runtime hardware-revision

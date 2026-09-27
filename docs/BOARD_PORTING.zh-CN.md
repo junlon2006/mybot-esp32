@@ -74,6 +74,8 @@ Octal PSRAM。
 实际 Flash/PSRAM 容量必须在发布设备上核对。
 `esp32-s3-touch-amoled-2.16` 同样采用保守的 16 MB QIO Flash profile 与 80 MHz Octal PSRAM；
 发布前确认实际容量。
+`bread-compact-wifi-lcd` 固定为 ESP32-S3 N16R8 profile，16 MB QIO Flash、80 MHz 8 MB
+Octal PSRAM；需在实际接线设备验证模组和检测到的容量。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -86,7 +88,7 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 
 随附 RTSA 包只支持 60 ms 音频帧。虽然 menuconfig 仍列出 20 ms 和 40 ms，但在提供匹配的
 RTSA 包前，SDK 构建封装会拒绝这些配置。[CI 工作流](../.github/workflows/ci.yml)当前有
-28 项固件构建：十二个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
+30 项固件构建：十三个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
 主题构建，以及一个关闭会话动画的视频构建。这是构建覆盖，不代表真机验收。
 
 ## 新增 Board
@@ -152,6 +154,20 @@ Cube 使用 `partitions/v2/16m.csv`；实际 Flash/PSRAM 容量尚未确认。�
 32-bit mono left slot。参考扬声器配置为 24 kHz，需在真机确认播放速度/音调及并行采集；
 如需重采样，应放在平台驱动内。触摸、视频、电池/充电输入、关机、休眠和低功耗不在首版
 范围内；构建或主机测试不能验证这些硬件假设。
+
+`bread-compact-wifi-lcd` 将面板固定为 240 x 320 IPS ST7789、SPI3 mode 0 / 40 MHz、RGB
+顺序、启用颜色反转和零偏移。MOSI47/SCLK21/CS41/DC40/RESET45、GPIO42 LEDC 背光
+（5 kHz、13-bit、60% 占空比）与麦克风 I2S1（WS4/BCLK5/DIN6）和扬声器 I2S0
+（DOUT7/BCLK15/WS16）独立。复用 `raw_i2s_audio.c`、`panels/st7789/st7789_panel.c`、
+共享 LVGL 适配器与 `partitions/v2/16m.csv`。
+
+Board 常驻的 `boards/bread-compact-wifi-lcd/bread_input.c` 只提供 Boot GPIO0，支持 mybot
+停止期间长按配网。软件扬声器音量通过 NVS 持久化，默认 70。profile 没有 GPIO 电源保持、
+音量键、触摸、摄像头、GPIO48 LED 或 GPIO18 灯输出。SDK 边界为 16 kHz 单声道 signed-16
+PCM，物理标准 I2S 使用 16 kHz、32-bit mono left slot。参考输出为 24 kHz，仅在真机验证
+确认必要后增加平台内有状态重采样。其他面板尺寸和共享时钟 I2S 接线应采用独立 profile，
+而非运行时切换。该固定 N16R8 profile 的中英文构建支持已在 ESP-IDF v5.5.2 验证，真机
+验证仍未完成。
 
 `esp-vocat` 在一个编译期 Board profile 中支持 PCB V1.0 与 V1.2，因为两个版本使用相同的
 target、存储、分区与 component 配置。这属于运行时硬件版本探测，不是运行时 Board 选择。

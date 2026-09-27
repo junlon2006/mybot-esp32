@@ -14,6 +14,7 @@ audio path, camera path, and touch/key ownership do not change.
 | `zhengchen-1.54tft-ml307` | ST7789, 240 × 240 | shared ST7789 adapter | existing buttons |
 | `zhengchen-1.54tft-wifi` | ST7789, 240 × 240 | shared ST7789 adapter | existing buttons |
 | `xingzhi-cube-1.54tft-wifi` | ST7789, 240 × 240 | shared panel adapter | Boot and volume buttons |
+| `bread-compact-wifi-lcd` | ST7789, 240 × 320 | shared panel adapter | Boot only |
 | `m5stack-core-s3` | ILI9342, 320 × 240 | CoreS3 adapter | existing FT6336 gestures |
 | `m5stack-stick-s3` | ST7789P3, 135 × 240 | shared ST7789 adapter | existing main button |
 | `esp-vocat` | ST77916, 360 × 360 | shared panel adapter | existing CST816S/Boot path |
@@ -27,6 +28,10 @@ Wi-Fi variants, along with the audio/video protocols, are independent of the dis
 The Xingzhi Cube uses SPI3 mode 3 at 40 MHz, zero offsets, and GPIO13 LEDC backlight with
 5 kHz, 13-bit PWM at 60% duty.
 Its display and power behavior require real-device validation.
+Bread Compact Wi-Fi LCD uses SPI3 mode 0 at 40 MHz, zero offsets, RGB order with color inversion,
+and GPIO42 LEDC backlight at 5 kHz, 13-bit resolution, and 60% duty. It has one Boot input and
+uses the shared view at its portrait geometry. Chinese and English build support has been validated;
+real-device validation remains pending.
 AMOLED 2.16 uses a zero panel gap and 40 MHz QSPI. Its CO5300 transfer regions retain even pixel
 boundaries on both axes, and touch/panel orientation must be verified on the physical board.
 Chinese and English 2.16 build support has been validated; real-device testing remains pending.
@@ -80,8 +85,8 @@ not override values saved in an existing sdkconfig.
 
 The earlier CoreS3 LVGL UI passed real-device testing; the LVGL-only cleanup, provisioning SSID
 display/scrolling, and narrow-screen font changes still need hardware regression. CI covers all
-twelve board profiles in both languages, CoreS3 video in both languages, and two theme/animation
-variants (28 configurations).
+thirteen board profiles in both languages, CoreS3 video in both languages, and two theme/animation
+variants (30 configurations).
 These are build checks only. No new board is claimed to have passed real-device color, touch, audio,
 provisioning, or teardown validation. Complete hardware testing must cover all workflow screens,
 orientation and colors, Chinese/English small-screen text, SSID and hint scrolling with activity

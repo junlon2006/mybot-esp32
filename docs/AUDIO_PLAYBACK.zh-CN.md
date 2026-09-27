@@ -2,7 +2,7 @@
 
 [English](AUDIO_PLAYBACK.md) | [简体中文](AUDIO_PLAYBACK.zh-CN.md)
 
-当前 12 个 Board profile 通过 7 个板级音频驱动共用同一套 PCM 播放缓冲。SDK 边界保持
+当前 13 个 Board profile 通过 7 个板级音频驱动共用同一套 PCM 播放缓冲。SDK 边界保持
 16 kHz、单声道 signed-16 PCM，独立任务持续向 I2S 供数。公共实现位于
 [`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c)，
 各板级驱动提供原生 I2S sink。
@@ -37,6 +37,7 @@ SDK 和缓冲接口中的帧数始终表示**单声道 PCM 帧数**，不随 I2S
 | `zhengchen-1.54tft-ml307` | `raw_i2s_audio.c` | 32 位单声道，保留软件音量缩放 |
 | `zhengchen-1.54tft-wifi` | `raw_i2s_audio.c` | 32 位单声道，保留软件音量缩放 |
 | `xingzhi-cube-1.54tft-wifi` | `raw_i2s_audio.c` | 32 位单声道，软件音量缩放 |
+| `bread-compact-wifi-lcd` | `raw_i2s_audio.c` | 32 位单声道，软件音量缩放 |
 | `m5stack-core-s3` | `cores3_codec_audio.c` | 16 位单声道，保留原 TDM 槽布局 |
 | `m5stack-stick-s3` | `es8311_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `atom-echos3r` | `es8311_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
@@ -58,7 +59,7 @@ SDK 和缓冲接口中的帧数始终表示**单声道 PCM 帧数**，不随 I2S
 对话音频残留在软件队列中。
 
 使用 codec 的板型先静音或关闭输出，再等待旧 DMA 数据清除；如果采集仍需要 TX 时钟，
-则保留该时钟。征辰、行者 Cube 和 XVF3800 停用播放通道并向 DMA 预装静音后再复用。电源、时钟、
+则保留该时钟。征辰、行者 Cube、Bread 和 XVF3800 停用播放通道并向 DMA 预装静音后再复用。电源、时钟、
 音量行为仍由板级驱动维护。
 
 配网提示音及离线测试停止前使用单独的排空操作，等待 FIFO 和硬件尾音完成。

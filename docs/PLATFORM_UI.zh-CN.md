@@ -14,6 +14,7 @@ SDK LCD 接口、音频、摄像头及触摸/按键归属均不改变。
 | `zhengchen-1.54tft-ml307` | ST7789，240 × 240 | 通用 ST7789 | 原有按键 |
 | `zhengchen-1.54tft-wifi` | ST7789，240 × 240 | 通用 ST7789 | 原有按键 |
 | `xingzhi-cube-1.54tft-wifi` | ST7789，240 × 240 | 通用面板适配器 | Boot 与音量按键 |
+| `bread-compact-wifi-lcd` | ST7789，240 × 320 | 通用面板适配器 | 仅 Boot |
 | `m5stack-core-s3` | ILI9342，320 × 240 | CoreS3 适配器 | 原有 FT6336 手势 |
 | `m5stack-stick-s3` | ST7789P3，135 × 240 | 通用 ST7789 | 原有主按键 |
 | `esp-vocat` | ST77916，360 × 360 | 通用面板适配器 | 原有 CST816S/Boot 路径 |
@@ -27,6 +28,9 @@ AtomEchoS3R 与 ReSpeaker Flex 没有 LCD，不编入 LVGL。ML307、Wi-Fi 及�
 行者 Cube 使用 SPI3 mode 3 / 40 MHz、零偏移与 GPIO13 LEDC 背光，PWM 为 5 kHz、13-bit、
 60% 占空比；显示和电源行为仍需
 真机验证。
+Bread Compact Wi-Fi LCD 使用 SPI3 mode 0 / 40 MHz、零偏移、RGB 顺序和颜色反转，以及
+GPIO42 LEDC 背光（5 kHz、13-bit、60% 占空比）。仅有一个 Boot 输入，共享界面按竖屏尺寸
+布局；中英文构建支持已验证，真机验证仍未完成。
 AMOLED 2.16 使用零 panel gap 与 40 MHz QSPI；CO5300 传输区域两个方向均保持偶数像素
 边界，触摸和面板方向必须在实际板卡上验证。
 2.16 中英文构建支持已验证，真机测试仍未完成。
@@ -75,8 +79,8 @@ idf.py -B build/esp-vocat-lvgl \
 
 此前的 CoreS3 LVGL UI 已通过真机测试，仅保留 LVGL 的清理、配网热点名称/滚动和窄屏字体
 改动仍需真机回归。
-CI 覆盖十二种板型的中英文、CoreS3 视频中英文，以及两种
-主题/动画变体，共 28 种配置。这些是构建检查，不代表任何新增板型已经通过真机颜色、
+CI 覆盖十三种板型的中英文、CoreS3 视频中英文，以及两种
+主题/动画变体，共 30 种配置。这些是构建检查，不代表任何新增板型已经通过真机颜色、
 触摸、音频、配网或销毁验证。真机验收需覆盖所有流程页、方向与颜色、小屏中英文、
 关闭状态动画时的热点名称/提示滚动、触摸/按键、Wi-Fi 恢复、反复 mybot 停止/启动、
 全双工音频及 CPU/内存测量。

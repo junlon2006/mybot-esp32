@@ -41,6 +41,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | M5Stack StickS3-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | Waveshare AMOLED 1.75/1.75C-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | Waveshare AMOLED 2.16 profile/panel (`1d5eeb2` hardware reference) | MIT | Paths listed under MIT Attributions |
+| Bread Compact Wi-Fi LCD input (local AtomEchoS3R template) | MIT | `components/mybot_platform/boards/bread-compact-wifi-lcd/bread_input.c` |
 | ESP-VoCat-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
@@ -169,6 +170,12 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 - `components/mybot_platform/src/drivers/audio/vocat_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/panels/st77916/st77916_panel.c`
 
+The Bread Compact Wi-Fi LCD Boot input is adapted from the existing local MIT AtomEchoS3R input
+implementation at `components/mybot_platform/boards/atom-echos3r/atom_echos3r_input.c`. Its
+copyright and MIT SPDX identifier are retained in
+`components/mybot_platform/boards/bread-compact-wifi-lcd/bread_input.c`; the complete permission
+notice is retained in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`.
+
 ## Vendored SDK Notice
 
 The original mybot SDK license and third-party notice are retained unchanged under
@@ -186,3 +193,10 @@ were checked against `github.com/junlon2006/xiaozhi-esp32`,
 Apache-2.0 code. The port adds no vendored component or upstream application service; reused
 drivers retain their existing file-level SPDX and copyright notices. The reference's complete MIT
 copyright and permission text is retained in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`.
+
+The Bread Compact Wi-Fi LCD fixed ST7789 240x320 and separate-I2S pin mapping and 24 kHz
+reference speaker rate were checked against `github.com/junlon2006/xiaozhi-esp32`,
+`main/boards/bread-compact-wifi-lcd`, at commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`.
+The N16R8 memory profile is the selected firmware hardware contract and still requires real-device
+confirmation. Its Board lifecycle, pin header, and build metadata are project-maintained Apache-2.0;
+reused drivers and the adapted Boot input retain their existing MIT notices.
