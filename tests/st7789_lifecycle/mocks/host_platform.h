@@ -35,6 +35,7 @@ esp_err_t rtc_gpio_hold_dis(gpio_num_t gpio);
 esp_err_t rtc_gpio_deinit(gpio_num_t gpio);
 #define GPIO_NUM_NC -1
 #define GPIO_NUM_0 0
+#define GPIO_NUM_1 1
 #define GPIO_NUM_2 2
 #define GPIO_NUM_4 4
 #define GPIO_NUM_5 5
@@ -43,16 +44,20 @@ esp_err_t rtc_gpio_deinit(gpio_num_t gpio);
 #define GPIO_NUM_8 8
 #define GPIO_NUM_9 9
 #define GPIO_NUM_10 10
+#define GPIO_NUM_12 12
 #define GPIO_NUM_13 13
 #define GPIO_NUM_14 14
 #define GPIO_NUM_15 15
 #define GPIO_NUM_16 16
 #define GPIO_NUM_18 18
 #define GPIO_NUM_21 21
+#define GPIO_NUM_38 38
 #define GPIO_NUM_39 39
 #define GPIO_NUM_40 40
+#define SPI2_HOST 2
 #define SPI3_HOST 3
 #define SPI_DMA_CH_AUTO 0
+#define SPICOMMON_BUSFLAG_QUAD 1
 #define ESP_INTR_CPU_AFFINITY_AUTO -1
 #define LCD_RGB_ELEMENT_ORDER_RGB 0
 #define LCD_RGB_ELEMENT_ORDER_BGR 1
@@ -85,17 +90,30 @@ esp_err_t ledc_set_duty(int speed_mode, int channel, uint32_t duty);
 esp_err_t ledc_update_duty(int speed_mode, int channel);
 typedef int esp_lcd_spi_bus_handle_t;
 typedef struct {
-    int mosi_io_num;
-    int miso_io_num;
+    union {
+        int mosi_io_num;
+        int data0_io_num;
+    };
+    union {
+        int miso_io_num;
+        int data1_io_num;
+    };
     int sclk_io_num;
-    int quadwp_io_num;
-    int quadhd_io_num;
+    union {
+        int quadwp_io_num;
+        int data2_io_num;
+    };
+    union {
+        int quadhd_io_num;
+        int data3_io_num;
+    };
     int data4_io_num;
     int data5_io_num;
     int data6_io_num;
     int data7_io_num;
     int isr_cpu_id;
     int max_transfer_sz;
+    unsigned int flags;
 } spi_bus_config_t;
 esp_err_t spi_bus_initialize(int host, const spi_bus_config_t *config, int dma);
 esp_err_t spi_bus_free(int host);
@@ -118,6 +136,9 @@ typedef struct {
     size_t trans_queue_depth;
     int lcd_cmd_bits;
     int lcd_param_bits;
+    struct {
+        bool quad_mode;
+    } flags;
     esp_lcd_panel_io_color_trans_done_cb_t on_color_trans_done;
     void *user_ctx;
 } esp_lcd_panel_io_spi_config_t;
@@ -125,6 +146,7 @@ typedef struct {
     int reset_gpio_num;
     int rgb_ele_order;
     int bits_per_pixel;
+    void *vendor_config;
 } esp_lcd_panel_dev_config_t;
 esp_err_t esp_lcd_new_panel_io_spi(esp_lcd_spi_bus_handle_t host,
                                    const esp_lcd_panel_io_spi_config_t *config,

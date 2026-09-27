@@ -72,6 +72,8 @@ profile 与 8 MB Octal PSRAM；
 Octal PSRAM。
 `xingzhi-cube-1.54tft-wifi` 选择 16 MB QIO Flash profile 与 80 MHz Octal PSRAM；
 实际 Flash/PSRAM 容量必须在发布设备上核对。
+`esp32-s3-touch-amoled-2.16` 同样采用保守的 16 MB QIO Flash profile 与 80 MHz Octal PSRAM；
+发布前确认实际容量。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -84,7 +86,7 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 
 随附 RTSA 包只支持 60 ms 音频帧。虽然 menuconfig 仍列出 20 ms 和 40 ms，但在提供匹配的
 RTSA 包前，SDK 构建封装会拒绝这些配置。[CI 工作流](../.github/workflows/ci.yml)当前有
-26 项固件构建：十一个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
+28 项固件构建：十二个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
 主题构建，以及一个关闭会话动画的视频构建。这是构建覆盖，不代表真机验收。
 
 ## 新增 Board
@@ -178,20 +180,35 @@ GPIO42、LCD reset GPIO39、触摸 reset GPIO40，并可选探测 `0x20` 的 TCA
 GPIO16、GPIO1 与 GPIO2，且绝不探测 TCA9554。两个 profile 禁止交叉烧录。Board 常驻 I2C0
 总线先完成 AXP2101 上电，再由 CO5300、CST9217 与 codec 客户端挂接。
 
-两个 defaults 均使用 16 MB QIO Flash、80 MHz 8 MB Octal PSRAM 与
+1.75 与 1.75C defaults 均使用 16 MB QIO Flash、80 MHz 8 MB Octal PSRAM 与
 `partitions/v2/16m.csv`。1.75C 当前产品页描述 32 MB Flash，而参考固件使用 16 MB，现有硬件
 资料也存在冲突；应保留保守地址空间，待启动日志确认发布硬件后再新增并验证更大分区 profile。
-RTC、IMU、TF 卡、电池状态与自动休眠均不在两个首版 profile 范围，1.75C 不探测也不依赖
+RTC、IMU、TF 卡、电池状态与自动休眠均不在三个首版 profile 范围，1.75C 不探测也不依赖
 TCA9554。
+2.16 defaults 保持相同的 16 MB 分区表与 80 MHz Octal PSRAM 配置，但实际 Flash/PSRAM
+容量仍需核对。
+独立的 `boards/esp32-s3-touch-amoled-2.16/board.c` 管理生命周期，并使用
+`src/drivers/display/panels/co5300/co5300_480_panel.c` 的独立 480 像素面板变体；音频、
+触摸/输入驱动及共享 LVGL 界面复用现有集成。MCLK/LCD-reset/touch-reset 使用原始 1.75
+的 GPIO42/GPIO39/GPIO40 映射；TCA9554 为可选探测，实物是否搭载尚未确认。2.16 必须使用
+独立构建，烧录前核对实际板型，不得与两个 1.75 profile 交叉烧录。
+
+2.16 Board 在 `prepare()` 成功后通过状态保护避免重复初始化。回滚先停止输入，再释放显示
+与硬件；输入或硬件清理失败时保留待清理状态，下一次 `prepare()` 先重试清理，再重新初始化。
+该恢复逻辑归独立的 2.16 Board 实现所有。
 
 ES7210 与 ES8311 共用 I2S0 时钟域。首版只选择主麦，TX/RX 统一配置为两槽 16 kHz 标准
 I2S；采集提取左 slot，播放将单声道复制到两个 slot，并保持 Cloud AEC。仅采集时也必须保持
 TX 运行以提供 MCLK/BCLK/WS。播放参考输入与本地 AEC 不通过 mybot 音频接口暴露。
 
-CO5300 QSPI 使用共享 LVGL 界面、RGB565 局部 DMA 缓冲和 (6, 0) panel gap，每次传输保持
-偶数像素边界，不分配完整 framebuffer。CST9217 与 Boot 输入由 Board 常驻持有，使
+CO5300 QSPI 使用共享 LVGL 界面与 RGB565 局部 DMA 缓冲。1.75 与 1.75C 为 466 x 466、
+(6, 0) panel gap；2.16 为 480 x 480、(0, 0) gap 与 40 MHz QSPI。每次传输两个方向均保持
+偶数像素起止边界，不分配完整 framebuffer。CST9217 与 Boot 输入由 Board 常驻持有，使
 mybot 停止期间任一输入仍能请求配网。在各自匹配的发布硬件完成电源、音频 slot、显示和触摸
-验证前，两个 profile 均仅属于构建支持。
+验证前，三个 profile 均仅属于构建支持。
+2.16 参考音频为 24 kHz，继承的 16 kHz 主麦和双声道物理 I2S 需要真机验证；如需重采样，
+应留在平台驱动内，并保持 Cloud AEC。摄像头、RTC、IMU、TF 卡、电量、关机与低功耗尚未支持。
+2.16 中英文固件构建支持已在 ESP-IDF v5.5.2 验证，真机验证仍未完成。
 
 ReSpeaker Flex profile 是硬件音频前端而非原始麦克风 codec 的示例。XVF3800 必须预先单独
 烧录 Circular-4 16 kHz 双通道 I2S 固件，并负责 AEC、波束成形、AGC 与降噪。ESP32-S3

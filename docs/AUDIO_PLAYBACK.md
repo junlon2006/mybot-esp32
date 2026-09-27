@@ -2,7 +2,7 @@
 
 [English](AUDIO_PLAYBACK.md) | [简体中文](AUDIO_PLAYBACK.zh-CN.md)
 
-All eleven board profiles use one PCM playback buffer through seven board audio drivers. This
+All twelve board profiles use one PCM playback buffer through seven board audio drivers. This
 keeps the SDK boundary at 16 kHz, mono signed-16 PCM and moves continuous I2S feeding into an
 independent task. The shared implementation is
 [`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c);
@@ -48,6 +48,7 @@ the number or width of I2S slots. Native conversion occurs only in the worker's 
 | `esp-vocat` | `vocat_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `esp32-s3-touch-amoled-1.75` | `amoled175_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `esp32-s3-touch-amoled-1.75c` | `amoled175_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
+| `esp32-s3-touch-amoled-2.16` | `amoled175_codec_audio.c` | 16-bit stereo; duplicate mono into both slots |
 | `respeaker-flex-xvf3800-circular4-xiao` | `xvf3800_audio.c` | 32-bit stereo; existing volume scaling and slot alignment |
 
 Writes retry unwritten frames after a short write or timeout, preserving order. Invalid byte

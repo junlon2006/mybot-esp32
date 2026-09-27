@@ -32,7 +32,7 @@ git diff --check
 ```
 
 Use a separate build directory and sdkconfig for each board or configuration variant. The
-[CI workflow](.github/workflows/ci.yml) defines 26 firmware builds: eleven boards in both languages,
+[CI workflow](.github/workflows/ci.yml) defines 28 firmware builds: twelve boards in both languages,
 two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video build with
 conversation animations disabled. All use the bundled RTSA package's 60 ms audio frames; 20 ms
 and 40 ms configurations are rejected until a matching RTSA package is supplied.

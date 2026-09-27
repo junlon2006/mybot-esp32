@@ -12,7 +12,7 @@ capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are the Zhengchen
 1.54 TFT ML307 and Wi-Fi variants, Xingzhi Cube 1.54 TFT Wi-Fi, Espressif ESP-VoCat,
-Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C, M5Stack CoreS3, M5Stack StickS3,
+Waveshare ESP32-S3 Touch AMOLED 1.75, 1.75C, and 2.16, M5Stack CoreS3, M5Stack StickS3,
 M5Stack AtomEchoS3R, ReSpeaker Flex XVF3800
 Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 
@@ -45,6 +45,7 @@ Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 | `esp-vocat` | ES7210 and ES8311 | ST77916, CST816S touch and Boot | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
 | `esp32-s3-touch-amoled-1.75` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75c` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | Safe 16 MB QIO Flash profile, 8 MB Octal PSRAM |
+| `esp32-s3-touch-amoled-2.16` | ES7210 and ES8311 | 480x480 CO5300 AMOLED, CST9217 touch and Boot | 16 MB QIO Flash profile, Octal PSRAM at 80 MHz; physical capacities unconfirmed |
 | `m5stack-core-s3` | ES7210 and AW88298 | ILI9342 and FT6336 touch | 16 MB QIO Flash, 8 MB Quad PSRAM |
 | `m5stack-stick-s3` | ES8311 | ST7789P3 and main button | 8 MB QIO Flash, 8 MB Octal PSRAM |
 | `atom-echos3r` | ES8311 | GPIO41 user button; no display | 8 MB Flash, 8 MB Octal PSRAM |
@@ -93,6 +94,10 @@ idf.py -B build/esp32-s3-touch-amoled-1.75c \
   -DMYBOT_BOARD=esp32-s3-touch-amoled-1.75c \
   -DSDKCONFIG=build/esp32-s3-touch-amoled-1.75c/sdkconfig build
 
+idf.py -B build/esp32-s3-touch-amoled-2.16 \
+  -DMYBOT_BOARD=esp32-s3-touch-amoled-2.16 \
+  -DSDKCONFIG=build/esp32-s3-touch-amoled-2.16/sdkconfig build
+
 idf.py -B build/m5stack-core-s3 \
   -DMYBOT_BOARD=m5stack-core-s3 \
   -DSDKCONFIG=build/m5stack-core-s3/sdkconfig build
@@ -116,7 +121,7 @@ idf.py -B build/sensecap-watcher \
 
 The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
 Board defaults supply the required Flash, PSRAM, and partition settings.
-All nine display profiles use LVGL automatically; AtomEchoS3R and ReSpeaker Flex remain headless.
+All ten display profiles use LVGL automatically; AtomEchoS3R and ReSpeaker Flex remain headless.
 There is no renderer enable switch. Theme and activity-animation options remain in menuconfig.
 
 To build all supported profiles with the automatic capabilities, use:
@@ -166,7 +171,7 @@ leaving provisioning stops the scrolling.
   The volume buttons adjust and persist speaker volume.
 - ESP-VoCat: tap the display or short-press Boot to start/stop a conversation; hold either input for
   3 seconds to provision.
-- Waveshare AMOLED 1.75 and 1.75C: tap the display or short-press Boot to start/stop a conversation;
+- Waveshare AMOLED 1.75, 1.75C, and 2.16: tap the display or short-press Boot to start/stop a conversation;
   hold either input for 3 seconds to provision.
 - CoreS3: short-touch the screen to start/stop a conversation; hold for 3 seconds to provision.
 - StickS3: short-press the main button to start/stop a conversation; hold it for 3 seconds to
@@ -287,7 +292,7 @@ behavior are outside the initial profile. Current production material identifies
 module, but release hardware must confirm detected PSRAM capacity and both PCB pin maps from startup
 logs.
 
-### Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C
+### Waveshare ESP32-S3 Touch AMOLED 1.75, 1.75C, and 2.16
 
 | Capability | Pins/configuration |
 | --- | --- |
@@ -300,10 +305,21 @@ logs.
 | --- | --- | --- | --- | --- |
 | `esp32-s3-touch-amoled-1.75` | GPIO42 | GPIO39 | GPIO40 | Optional probe at `0x20` |
 | `esp32-s3-touch-amoled-1.75c` | GPIO16 | GPIO1 | GPIO2 | Not probed or required |
+| `esp32-s3-touch-amoled-2.16` | GPIO42 | GPIO39 | GPIO40 | Optional probe at `0x20`; hardware presence unconfirmed |
 
-Both profiles use a 466 x 466 CO5300 panel with a (6, 0) display offset and share the power, audio,
-display, and input implementations. They are separate firmware targets because the three
-variant-specific pins are not interchangeable. Do not flash one profile onto the other revision.
+The 1.75 and 1.75C profiles use a 466 x 466 CO5300 panel with a (6, 0) display offset; 2.16 uses
+480 x 480 and (0, 0). The 1.75 revisions share their Board lifecycle and panel; 2.16 owns its Board
+lifecycle and 480-pixel panel variant, reusing the established audio, input, and LVGL view. Each is a
+separate firmware target; match the physical board before flashing because pins and geometry differ.
+
+The 2.16 panel uses 40 MHz QSPI with partial RGB565 DMA updates and even start/end pixel boundaries
+on both axes. Its defaults conservatively select 16 MB QIO Flash, 80 MHz Octal PSRAM, and
+`partitions/v2/16m.csv`; physical Flash/PSRAM capacities remain unconfirmed. TCA9554 is optional
+and its presence must be checked on the release hardware. Power sequencing, panel orientation/colors,
+CST9217 input, and 16 kHz bidirectional audio require real-device validation. The reference audio
+setting is 24 kHz; any required rate conversion belongs in the platform driver.
+The 2.16 Chinese and English variants passed ESP-IDF v5.5.2 `reconfigure`, `build`, `size`, and
+`merge-bin`. Real-device validation remains pending.
 
 The 1.75C defaults deliberately use 16 MB QIO Flash, 8 MB Octal PSRAM at 80 MHz, and
 `partitions/v2/16m.csv`. Its current product page describes 32 MB Flash while the reference firmware
@@ -419,13 +435,13 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds 26 configurations covering all board profiles, both languages, and the bundled RTSA
+CI builds 28 configurations covering all board profiles, both languages, and the bundled RTSA
 60 ms cadence. Six CoreS3 configurations cover the language/video combinations, light theme,
 and disabled activity animations. All display-board builds use LVGL, as described in
 [Platform LVGL UI](docs/PLATFORM_UI.md). Earlier CoreS3 firmware has passed hardware tests for
 provisioning, bidirectional audio, camera uplink, and LVGL UI, including audio with video on and off.
 The shared LVGL cleanup and provisioning SSID/scrolling changes still need hardware regression.
-The Zhengchen Wi-Fi, Xingzhi Cube, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
+The Zhengchen Wi-Fi, Xingzhi Cube, ESP-VoCat, all three Waveshare AMOLED profiles, M5Stack
 StickS3, AtomEchoS3R, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
 validation; a successful build is not a substitute for hardware validation on a release device.
 
@@ -439,9 +455,11 @@ Known limitations:
 - ESP-VoCat battery reporting, IMU, PCB capacitive controls, SD card, LED, camera expansion, local
   AEC, reference audio, shutdown, and low-power operation are not wired up. PCB V1.0 also has a
   known hardware power-integrity issue that firmware cannot correct.
-- Waveshare AMOLED 1.75 and 1.75C do not yet expose the playback reference channel, local AEC,
+- Waveshare AMOLED 1.75, 1.75C, and 2.16 do not yet expose the playback reference channel, local AEC,
   battery reporting, or low-power operation. RTC, IMU, TF card, and TCA9554 are not supported on
   the 1.75C profile.
+- Waveshare AMOLED 2.16 Flash/PSRAM capacities and optional TCA9554 presence remain unconfirmed;
+  RTC, IMU, TF card, battery reporting, shutdown, and low-power behavior are not wired up.
 - CoreS3 camera uplink requires explicit enablement. Camera preview,
   video downlink, battery reporting, and automatic sleep are not wired up.
 - StickS3 GPIO12, IMU, infrared functions, battery reporting, shutdown gestures, and low-power

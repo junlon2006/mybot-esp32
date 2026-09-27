@@ -27,7 +27,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] All 26 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: eleven boards
+- [ ] All 28 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: twelve boards
       in both languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one
       CoreS3 video build with conversation animations disabled. All use 60 ms audio frames.
 - [ ] Confirm unsupported 20 ms and 40 ms settings still fail configuration with the bundled RTSA.
@@ -74,8 +74,13 @@ git diff --check
       8 MB PSRAM detection, MCLK GPIO16, LCD reset GPIO1, touch reset GPIO2, absence of TCA9554
       probing, primary-mic routing, full-duplex audio, PA noise, display/touch, and provisioning.
       Confirm the detected Flash capacity before expanding beyond the safe 16 MB partition layout.
+- [ ] For Waveshare AMOLED 2.16, use its own profile and verify physical Flash/PSRAM capacities,
+      AXP2101 USB/battery power sequencing, optional TCA9554 presence, MCLK42/LCD-reset39/touch-reset40,
+      480x480 CO5300 output with zero gap, even pixel boundaries, panel colors/orientation/brightness,
+      CST9217 press/release/hold, 16 kHz primary-mic and full-duplex audio against the reference
+      24 kHz setting, PA noise, volume persistence, and repeated provisioning/start/stop.
 - [ ] Verify an existing build directory rejects a change of `MYBOT_BOARD`, and keep separate
-      artifacts for both Waveshare AMOLED revisions. A clean build accepts either profile; it
+      artifacts for all three Waveshare AMOLED profiles. A clean build accepts any profile; it
       cannot detect the connected board's revision. Match the physical revision before flashing.
 - [ ] For SenseCAP Watcher, back up and checksum the 200 KiB `nvsfactory` region before first flash;
       verify normal flashing leaves it unchanged and never publish an `erase-flash` procedure.

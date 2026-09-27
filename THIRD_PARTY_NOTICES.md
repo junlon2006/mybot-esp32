@@ -40,6 +40,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | M5Stack StickS3-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | Waveshare AMOLED 1.75/1.75C-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
+| Waveshare AMOLED 2.16 profile/panel (`1d5eeb2` hardware reference) | MIT | Paths listed under MIT Attributions |
 | ESP-VoCat-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
 | ESP-IDF | Apache-2.0 plus component-specific terms | External development SDK |
 
@@ -147,6 +148,16 @@ the complete copyright and permission notice is retained in
 - `components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c/`
 - `components/mybot_platform/src/drivers/audio/amoled175_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/panels/co5300/co5300_panel.c`
+
+The Waveshare AMOLED 2.16 profile owns independent Board and 480-pixel panel variants derived
+from this MIT integration, reusing its audio/input drivers and the shared LVGL view. Its pin mapping
+and 480x480 zero-gap panel geometry were checked against
+`github.com/junlon2006/xiaozhi-esp32`, `main/boards/waveshare/esp32-s3-touch-amoled-2.16`, at
+commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`. The new profile retains the MIT SPDX identifier
+and the complete notice in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`:
+
+- `components/mybot_platform/boards/esp32-s3-touch-amoled-2.16/`
+- `components/mybot_platform/src/drivers/display/panels/co5300/co5300_480_panel.c`
 
 The ESP-VoCat PCB detection, hardware mapping, ST77916 initialization, CST816S input behavior, and
 codec routing are derived in part from the MIT-licensed `github.com/junlon2006/xiaozhi-esp32`

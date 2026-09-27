@@ -2,7 +2,7 @@
 
 [English](AUDIO_PLAYBACK.md) | [简体中文](AUDIO_PLAYBACK.zh-CN.md)
 
-当前 11 个 Board profile 通过 7 个板级音频驱动共用同一套 PCM 播放缓冲。SDK 边界保持
+当前 12 个 Board profile 通过 7 个板级音频驱动共用同一套 PCM 播放缓冲。SDK 边界保持
 16 kHz、单声道 signed-16 PCM，独立任务持续向 I2S 供数。公共实现位于
 [`pcm_playback_buffer.c`](../components/mybot_platform/src/services/audio/pcm_playback_buffer.c)，
 各板级驱动提供原生 I2S sink。
@@ -44,6 +44,7 @@ SDK 和缓冲接口中的帧数始终表示**单声道 PCM 帧数**，不随 I2S
 | `esp-vocat` | `vocat_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `esp32-s3-touch-amoled-1.75` | `amoled175_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `esp32-s3-touch-amoled-1.75c` | `amoled175_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
+| `esp32-s3-touch-amoled-2.16` | `amoled175_codec_audio.c` | 16 位双声道，将单声道复制到两个槽 |
 | `respeaker-flex-xvf3800-circular4-xiao` | `xvf3800_audio.c` | 32 位双声道，保留音量缩放及槽内对齐 |
 
 短写或超时后继续重试剩余帧，保持 PCM 顺序。返回非法字节数、非超时驱动错误，或连续
