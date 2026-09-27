@@ -10,8 +10,8 @@
 负责板级初始化、Wi-Fi 配网、持久化存储、安全 HTTPS、音频采集与播放、输入、显示，以及
 mybot 外围的固件生命周期。
 
-当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、Espressif
-ESP-VoCat、Waveshare ESP32-S3 Touch AMOLED 1.75 与 1.75C、M5Stack CoreS3、M5Stack
+当前开发基线为 **ESP-IDF v5.5.2**，支持征辰 1.54 TFT ML307 与 Wi-Fi 版本、行者 Cube
+1.54 TFT Wi-Fi、Espressif ESP-VoCat、Waveshare ESP32-S3 Touch AMOLED 1.75 与 1.75C、M5Stack CoreS3、M5Stack
 StickS3、M5Stack AtomEchoS3R、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 Circular-4，
 以及 SenseCAP Watcher。
 
@@ -39,6 +39,7 @@ StickS3、M5Stack AtomEchoS3R、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 C
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、80 MHz Octal PSRAM |
+| `xingzhi-cube-1.54tft-wifi` | 独立麦克风/扬声器 I2S | ST7789、Boot 与音量按键 | 16 MB QIO Flash profile、80 MHz Octal PSRAM；实际容量待核对 |
 | `esp-vocat` | ES7210 与 ES8311 | ST77916、CST816S 触摸与 Boot | 16 MB QIO Flash、80 MHz Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 16 MB QIO Flash、8 MB Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75c` | ES7210 与 ES8311 | CO5300 AMOLED、CST9217 触摸与 Boot | 安全的 16 MB QIO Flash profile、8 MB Octal PSRAM |
@@ -72,6 +73,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/zhengchen-1.54tft-wifi \
   -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
   -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/xingzhi-cube-1.54tft-wifi \
+  -DMYBOT_BOARD=xingzhi-cube-1.54tft-wifi \
+  -DSDKCONFIG=build/xingzhi-cube-1.54tft-wifi/sdkconfig build
 
 idf.py -B build/esp-vocat \
   -DMYBOT_BOARD=esp-vocat \
@@ -108,7 +113,7 @@ idf.py -B build/sensecap-watcher \
 
 默认 profile 是 `zhengchen-1.54tft-ml307`，但建议始终显式选择 Board。Board defaults 会
 提供所需的 Flash、PSRAM 和分区配置。
-八种带屏 profile 自动使用 LVGL，AtomEchoS3R 与 ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
+九种带屏 profile 自动使用 LVGL，AtomEchoS3R 与 ReSpeaker Flex 保持无屏；不提供渲染器启用开关。
 主题和状态活动动画仍可通过 menuconfig 配置。
 
 构建全部已支持的 profile，并自动启用带屏 LVGL 及 CoreS3 视频：
@@ -152,6 +157,8 @@ NVS 中没有 Wi-Fi 凭据时，设备创建 `mybot-xxxx` 配置 AP，其中 `xx
 
 - 征辰 ML307 与 Wi-Fi：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并
   持久化扬声器音量。
+- 行者 Cube：短按 Boot 开始/结束对话；长按 Boot 3 秒进入配网；音量按键调节并持久化
+  扬声器音量。
 - ESP-VoCat：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒进入配网。
 - Waveshare AMOLED 1.75 与 1.75C：短触屏幕或短按 Boot 开始/结束对话；长触或长按 3 秒
   进入配网。
@@ -214,6 +221,29 @@ slot。板卡原始扬声器配置使用 24 kHz 输出，因此必须通过真�
 
 首版 Wi-Fi profile 不包含 GPIO9 充电状态、GPIO8 电池 ADC、温度监测、自动休眠和低功耗
 能力。
+
+### 行者 Cube 1.54 TFT Wi-Fi
+
+| 能力 | 引脚/配置 |
+| --- | --- |
+| 麦克风 I2S1 RX | WS GPIO4、BCLK GPIO5、DIN GPIO6 |
+| 扬声器 I2S0 TX | DOUT GPIO7、BCLK GPIO15、WS GPIO16 |
+| 按键 | Boot GPIO0、音量加 GPIO40、音量减 GPIO39 |
+| ST7789 | MOSI GPIO10、SCLK GPIO9、CS GPIO14、DC GPIO8、RESET GPIO18 |
+| 显示 | 240 x 240 RGB565、SPI3 mode 3 / 40 MHz、(0, 0) 偏移 |
+| 背光/电源保持 | GPIO13 LEDC PWM，5 kHz / 13-bit / 60% 占空比；RTC GPIO21 高电平 |
+
+Board prepare 先解除残留 RTC hold，再将 GPIO21 拉高，之后才初始化外设。电源保持覆盖固件
+整个进程生命周期。profile 采用 16 MB QIO Flash、80 MHz Octal PSRAM 与
+`partitions/v2/16m.csv`；给发布设备烧录前必须通过启动日志确认实际 Flash 与 PSRAM 容量。
+
+SDK 音频边界保持 16 kHz 单声道 signed-16 PCM；独立 RX/TX I2S 外设使用 16 kHz 单声道
+32-bit left slot，并复用共享播放缓冲。参考扬声器配置使用 24 kHz，因此播放速度、音调、
+稳定性、采集与全双工交互均需真机验证。如果硬件需要 24 kHz 输出，应在平台音频驱动内
+加入有状态重采样，保持 SDK 16 kHz 边界不变。
+
+首版没有触摸或摄像头路径；电池 ADC、充电状态、关机、休眠和低功耗不在范围内。
+显示方向/颜色、PWM 背光、电源时序与按键映射也需要真机验证。
 
 ### Espressif ESP-VoCat
 
@@ -360,11 +390,11 @@ main/                        固件入口与工程 Kconfig
 
 ## 验证与限制
 
-CI 共构建 24 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
+CI 共构建 26 项配置，覆盖全部 Board profile、两种语言，以及随附 RTSA 的 60 ms 音频包长；
 六项 CoreS3 配置覆盖中英文/视频组合、浅色主题及关闭状态动画。所有带屏板型构建均使用
 LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。此前 CoreS3 固件已完成配网、双向音频、
 摄像头上行及 LVGL UI 真机测试，视频开启和关闭时的音频播放也已验证。
-共享 LVGL 清理及配网热点名称/滚动改动仍需本轮真机回归。征辰 Wi-Fi、ESP-VoCat、两个 Waveshare AMOLED 1.75
+共享 LVGL 清理及配网热点名称/滚动改动仍需本轮真机回归。征辰 Wi-Fi、行者 Cube、ESP-VoCat、两个 Waveshare AMOLED 1.75
 硬件版本、M5Stack StickS3、AtomEchoS3R、ReSpeaker Flex 与 SenseCAP Watcher profile 尚未完成真机验证；
 编译成功不能替代发布硬件上的真实设备验证。
 
@@ -373,6 +403,8 @@ LVGL，详见[平台 UI](docs/PLATFORM_UI.zh-CN.md)。此前 CoreS3 固件已完
 - ML307/4G 网络与本地唤醒词尚未接入。
 - 征辰板充电状态、电池 ADC、温度监测、自动休眠与低功耗尚未接入；Wi-Fi profile 的实际
   PSRAM 容量尚未确认。
+- 行者 Cube 的实际 Flash/PSRAM 容量与 16 kHz 音频尚未确认；电量、充电状态、关机、
+  休眠和低功耗尚未接入。
 - ESP-VoCat 尚未接入电量、IMU、PCB 电容控制、SD 卡、LED、摄像头扩展、本地 AEC、参考
   音频、关机与低功耗；PCB V1.0 还有固件无法修复的已知硬件供电稳定性问题。
 - Waveshare AMOLED 1.75 与 1.75C 尚未接入播放参考通道、本地 AEC、电池状态与低功耗；

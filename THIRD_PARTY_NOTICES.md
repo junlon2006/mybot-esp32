@@ -127,6 +127,10 @@ covered by its MIT terms; the complete copyright and permission notice is retain
 - `components/mybot_platform/boards/m5stack-stick-s3/`
 - `components/mybot_platform/src/drivers/audio/es8311_codec_audio.c`
 - `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`
+- `components/mybot_platform/src/drivers/display/panels/st7789/st7789_panel.c`
+
+The ST7789 panel lifecycle was extracted from the existing local adapter and retains its MIT
+SPDX identifier, copyright, and permission notice.
 
 The vendored M5PM1 production sources retain the upstream M5Stack MIT license in
 `components/m5pm1/LICENSE`.
@@ -161,3 +165,13 @@ The original mybot SDK license and third-party notice are retained unchanged und
 as part of the immutable SDK snapshot and does not redefine this firmware's dependency set.
 
 Every component license file and file-level SPDX/copyright notice remains in force.
+
+## Hardware References
+
+The Xingzhi Cube pin mapping, ST7789 SPI mode, RTC GPIO21 power hold, and reference speaker rate
+were checked against `github.com/junlon2006/xiaozhi-esp32`,
+`main/boards/xingzhi-cube-1.54tft-wifi`, at commit
+`1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`. The new Board lifecycle is project-maintained
+Apache-2.0 code. The port adds no vendored component or upstream application service; reused
+drivers retain their existing file-level SPDX and copyright notices. The reference's complete MIT
+copyright and permission text is retained in `components/mybot_platform/assets/LICENSE.xiaozhi-esp32`.

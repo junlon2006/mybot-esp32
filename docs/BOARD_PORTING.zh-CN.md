@@ -70,6 +70,8 @@ profile 与 8 MB Octal PSRAM；
 `respeaker-flex-xvf3800-circular4-xiao`、`m5stack-stick-s3` 与 `atom-echos3r` 使用
 8 MB Flash 与 Octal PSRAM。`sensecap-watcher` 使用带 32-bit 地址支持的 32 MB Flash 与
 Octal PSRAM。
+`xingzhi-cube-1.54tft-wifi` 选择 16 MB QIO Flash profile 与 80 MHz Octal PSRAM；
+实际 Flash/PSRAM 容量必须在发布设备上核对。
 
 ```sh
 idf.py -B build/<board-id> \
@@ -82,7 +84,7 @@ Board defaults 管理 Flash、PSRAM 与分区设置；产品公共设置放在 `
 
 随附 RTSA 包只支持 60 ms 音频帧。虽然 menuconfig 仍列出 20 ms 和 40 ms，但在提供匹配的
 RTSA 包前，SDK 构建封装会拒绝这些配置。[CI 工作流](../.github/workflows/ci.yml)当前有
-24 项固件构建：十个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
+26 项固件构建：十一个板型分别构建中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色
 主题构建，以及一个关闭会话动画的视频构建。这是构建覆盖，不代表真机验收。
 
 ## 新增 Board
@@ -136,6 +138,18 @@ SDK 会分别初始化和销毁采集与播放；配网提示音也可能在 SDK
 速度、音调、稳定性、采集与全双工交互。如果必须使用 24 kHz 输出，应在 Board driver 内加入
 有状态的 16 kHz 到 24 kHz 重采样，并保持 SDK 契约不变。GPIO9 充电状态、GPIO8 电池 ADC、
 温度监测、休眠和低功耗不在首版范围。
+
+`xingzhi-cube-1.54tft-wifi` 复用 raw I2S 音频、ST7789 面板/共享 LVGL 适配器与 GPIO 输入驱动。
+240 x 240 面板使用 MOSI10/SCLK9/CS14/DC8/RESET18、SPI3 mode 3 / 40 MHz 与零偏移。
+GPIO13 背光使用 5 kHz、13-bit、60% 占空比的 LEDC PWM，显示驱动不得改成普通 GPIO 输出。
+Boot0、音量加40、音量减39由 Board 常驻持有。初始化外设前先解除 GPIO21 的 RTC hold
+并拉高，之后在整个进程生命周期保持供电。
+
+Cube 使用 `partitions/v2/16m.csv`；实际 Flash/PSRAM 容量尚未确认。独立麦克风 I2S1
+（WS4/BCLK5/DIN6）和扬声器 I2S0（DOUT7/BCLK15/WS16）使用 SDK 的 16 kHz 边界与
+32-bit mono left slot。参考扬声器配置为 24 kHz，需在真机确认播放速度/音调及并行采集；
+如需重采样，应放在平台驱动内。触摸、视频、电池/充电输入、关机、休眠和低功耗不在首版
+范围内；构建或主机测试不能验证这些硬件假设。
 
 `esp-vocat` 在一个编译期 Board profile 中支持 PCB V1.0 与 V1.2，因为两个版本使用相同的
 target、存储、分区与 component 配置。这属于运行时硬件版本探测，不是运行时 Board 选择。

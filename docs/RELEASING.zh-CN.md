@@ -25,7 +25,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] [CI 工作流](../.github/workflows/ci.yml)的 24 项固件构建全部通过：十个板型分别构建
+- [ ] [CI 工作流](../.github/workflows/ci.yml)的 26 项固件构建全部通过：十一个板型分别构建
       中英文版本，另加 CoreS3 两种语言的视频构建、一个浅色主题构建，以及一个关闭会话
       动画的视频构建。所有构建使用 60 ms 音频帧。
 - [ ] 确认随附 RTSA 仍会在配置阶段拒绝不支持的 20 ms 和 40 ms 设置。
@@ -48,6 +48,10 @@ git diff --check
 - [ ] 对征辰 Wi-Fi，通过启动日志确认 16 MB Flash 与实际 PSRAM 容量；验证 GPIO2 电源保持、
       ST7789、Boot 与音量按键，并确认 GPIO11/GPIO12 保持未使用。结合硬件的 24 kHz 扬声器
       输出要求，验证 16 kHz 采集/播放的速度、音调、稳定性与全双工交互。
+- [ ] 对行者 Cube，确认实际 Flash/PSRAM 容量、RTC hold 解除及 GPIO21 上电时序、ST7789
+      mode 3 的颜色/方向/零偏移、GPIO13 60% PWM 背光和 Boot0/音量加40/音量减39。结合参考
+      24 kHz 配置验证 16 kHz 播放速度/音调、双向音频、提示音排空、音量持久化、反复启停及
+      mybot 停止期间的配网。
 - [ ] 对 ESP-VoCat，分别验证 PCB V1.0 与 V1.2。确认 GPIO48 探测、各版本 DIN/PA/LCD reset
       引脚与 reset 极性、GPIO9 外设电源、USB Serial/JTAG 日志、实际 Flash/PSRAM 容量、
       ST77916 初始化/颜色/圆屏边缘/背光、CST816S 按下/释放中断且启动不读取 ID、mybot 停止

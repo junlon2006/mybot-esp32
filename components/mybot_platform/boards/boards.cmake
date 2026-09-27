@@ -7,6 +7,7 @@ set(MYBOT_SUPPORTED_BOARDS
     "m5stack-stick-s3"
     "respeaker-flex-xvf3800-circular4-xiao"
     "sensecap-watcher"
+    "xingzhi-cube-1.54tft-wifi"
     "zhengchen-1.54tft-ml307"
     "zhengchen-1.54tft-wifi"
 )
@@ -30,6 +31,8 @@ function(mybot_resolve_board board)
             "${_MYBOT_BOARDS_ROOT}/respeaker-flex-xvf3800-circular4-xiao/board.cmake")
     elseif(board STREQUAL "sensecap-watcher")
         set(profile "${_MYBOT_BOARDS_ROOT}/sensecap-watcher/board.cmake")
+    elseif(board STREQUAL "xingzhi-cube-1.54tft-wifi")
+        set(profile "${_MYBOT_BOARDS_ROOT}/xingzhi-cube-1.54tft-wifi/board.cmake")
     elseif(board STREQUAL "zhengchen-1.54tft-ml307")
         set(profile "${_MYBOT_BOARDS_ROOT}/zhengchen-1.54tft-ml307/board.cmake")
     elseif(board STREQUAL "zhengchen-1.54tft-wifi")

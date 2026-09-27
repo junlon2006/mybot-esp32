@@ -71,6 +71,8 @@ profile and 8 MB Octal PSRAM, `m5stack-core-s3` uses 16 MB Flash and Quad PSRAM,
 `m5stack-stick-s3`, `atom-echos3r`, and `respeaker-flex-xvf3800-circular4-xiao` use 8 MB Flash
 and Octal PSRAM.
 `sensecap-watcher` uses 32 MB Flash with 32-bit addressing and Octal PSRAM.
+`xingzhi-cube-1.54tft-wifi` selects a 16 MB QIO Flash profile and Octal PSRAM at 80 MHz;
+its physical Flash/PSRAM capacities require confirmation on the release device.
 
 ```sh
 idf.py -B build/<board-id> \
@@ -83,7 +85,7 @@ Board defaults own Flash, PSRAM, and partition settings. Product-wide settings r
 
 The bundled RTSA package supports only 60 ms audio frames. Although menuconfig lists 20 ms and
 40 ms, the SDK component wrapper rejects them without a matching RTSA package. The
-[CI workflow](../.github/workflows/ci.yml) currently has 24 firmware builds: ten boards in both
+[CI workflow](../.github/workflows/ci.yml) currently has 26 firmware builds: eleven boards in both
 languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one CoreS3 video
 build with conversation animations disabled. This is build coverage, not hardware certification.
 
@@ -146,6 +148,20 @@ output, so real-device acceptance must cover playback speed, pitch, stability, c
 full-duplex interaction. If 24 kHz output is required, add stateful 16-to-24 kHz resampling inside
 the Board driver and keep the SDK contract unchanged. GPIO9 charge status, GPIO8 battery ADC,
 temperature monitoring, sleep, and low-power behavior remain outside the initial profile.
+
+The `xingzhi-cube-1.54tft-wifi` profile reuses the raw I2S audio, ST7789 panel/shared LVGL adapter,
+and GPIO input drivers. Its 240 x 240 panel uses MOSI10/SCLK9/CS14/DC8/RESET18, SPI3 mode 3 at
+40 MHz, and zero offsets. GPIO13 uses 5 kHz, 13-bit LEDC PWM at 60%; the display driver must not
+replace that LEDC output with plain GPIO control. Boot0, volume-up40, and volume-down39 remain
+Board-owned. Release RTC hold on GPIO21 and drive it high before initializing peripherals, then
+retain the power hold for the process lifetime.
+
+The Cube profile uses `partitions/v2/16m.csv`; physical Flash/PSRAM capacities remain unconfirmed.
+Separate microphone I2S1 (WS4/BCLK5/DIN6) and speaker I2S0 (DOUT7/BCLK15/WS16) use the SDK's
+16 kHz boundary with 32-bit mono left slots. The reference speaker rate is 24 kHz, so confirm
+playback speed/pitch and concurrent capture on real hardware; any required resampling belongs in
+the platform driver. Touch, video, battery/charging inputs, shutdown, sleep, and low-power behavior
+are outside the initial profile. A build or host test does not validate these hardware assumptions.
 
 The `esp-vocat` profile supports PCB V1.0 and V1.2 under one compile-time Board because they share
 the same target, storage, partition, and component configuration. This is runtime hardware-revision

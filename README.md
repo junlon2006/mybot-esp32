@@ -11,8 +11,9 @@ initialization, Wi-Fi provisioning, persistent storage, secure HTTPS transport, 
 capture/playback, input, display, and the firmware lifecycle around mybot.
 
 The current development baseline is **ESP-IDF v5.5.2**. Supported board profiles are the Zhengchen
-1.54 TFT ML307 and Wi-Fi variants, Espressif ESP-VoCat, Waveshare ESP32-S3 Touch AMOLED 1.75 and
-1.75C, M5Stack CoreS3, M5Stack StickS3, M5Stack AtomEchoS3R, ReSpeaker Flex XVF3800
+1.54 TFT ML307 and Wi-Fi variants, Xingzhi Cube 1.54 TFT Wi-Fi, Espressif ESP-VoCat,
+Waveshare ESP32-S3 Touch AMOLED 1.75 and 1.75C, M5Stack CoreS3, M5Stack StickS3,
+M5Stack AtomEchoS3R, ReSpeaker Flex XVF3800
 Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 
 > Project-maintained code is Apache-2.0 unless a file says otherwise. Bundled dependencies and media
@@ -40,6 +41,7 @@ Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `zhengchen-1.54tft-wifi` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
+| `xingzhi-cube-1.54tft-wifi` | Separate microphone/speaker I2S | ST7789, Boot and volume buttons | 16 MB QIO Flash profile, Octal PSRAM at 80 MHz; physical capacities unconfirmed |
 | `esp-vocat` | ES7210 and ES8311 | ST77916, CST816S touch and Boot | 16 MB QIO Flash, Octal PSRAM at 80 MHz |
 | `esp32-s3-touch-amoled-1.75` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | 16 MB QIO Flash, 8 MB Octal PSRAM |
 | `esp32-s3-touch-amoled-1.75c` | ES7210 and ES8311 | CO5300 AMOLED, CST9217 touch and Boot | Safe 16 MB QIO Flash profile, 8 MB Octal PSRAM |
@@ -74,6 +76,10 @@ idf.py -B build/zhengchen-1.54tft-ml307 \
 idf.py -B build/zhengchen-1.54tft-wifi \
   -DMYBOT_BOARD=zhengchen-1.54tft-wifi \
   -DSDKCONFIG=build/zhengchen-1.54tft-wifi/sdkconfig build
+
+idf.py -B build/xingzhi-cube-1.54tft-wifi \
+  -DMYBOT_BOARD=xingzhi-cube-1.54tft-wifi \
+  -DSDKCONFIG=build/xingzhi-cube-1.54tft-wifi/sdkconfig build
 
 idf.py -B build/esp-vocat \
   -DMYBOT_BOARD=esp-vocat \
@@ -110,7 +116,7 @@ idf.py -B build/sensecap-watcher \
 
 The default profile is `zhengchen-1.54tft-ml307`, but explicit board selection is recommended.
 Board defaults supply the required Flash, PSRAM, and partition settings.
-All eight display profiles use LVGL automatically; AtomEchoS3R and ReSpeaker Flex remain headless.
+All nine display profiles use LVGL automatically; AtomEchoS3R and ReSpeaker Flex remain headless.
 There is no renderer enable switch. Theme and activity-animation options remain in menuconfig.
 
 To build all supported profiles with the automatic capabilities, use:
@@ -156,6 +162,8 @@ leaving provisioning stops the scrolling.
 
 - Zhengchen ML307 and Wi-Fi: short-press Boot to start/stop a conversation; hold Boot for 3 seconds
   to provision. The volume buttons adjust and persist speaker volume.
+- Xingzhi Cube: short-press Boot to start/stop a conversation; hold Boot for 3 seconds to provision.
+  The volume buttons adjust and persist speaker volume.
 - ESP-VoCat: tap the display or short-press Boot to start/stop a conversation; hold either input for
   3 seconds to provision.
 - Waveshare AMOLED 1.75 and 1.75C: tap the display or short-press Boot to start/stop a conversation;
@@ -226,6 +234,32 @@ inside the Board audio driver.
 
 GPIO9 charge status, GPIO8 battery ADC, temperature monitoring, automatic sleep, and low-power
 behavior are not part of the initial Wi-Fi profile.
+
+### Xingzhi Cube 1.54 TFT Wi-Fi
+
+| Capability | Pins/configuration |
+| --- | --- |
+| Microphone I2S1 RX | WS GPIO4, BCLK GPIO5, DIN GPIO6 |
+| Speaker I2S0 TX | DOUT GPIO7, BCLK GPIO15, WS GPIO16 |
+| Buttons | Boot GPIO0, volume up GPIO40, volume down GPIO39 |
+| ST7789 | MOSI GPIO10, SCLK GPIO9, CS GPIO14, DC GPIO8, RESET GPIO18 |
+| Display | 240 x 240 RGB565, SPI3 mode 3 at 40 MHz, (0, 0) offset |
+| Backlight / power hold | GPIO13 LEDC PWM, 5 kHz / 13-bit / 60% duty; RTC GPIO21 high |
+
+Board preparation releases a retained RTC hold and drives GPIO21 high before peripherals start.
+The power hold remains active for the firmware process lifetime. The profile uses 16 MB QIO Flash,
+80 MHz Octal PSRAM, and `partitions/v2/16m.csv`; confirm the physical Flash and PSRAM capacities
+from startup logs before flashing a release device.
+
+The SDK audio boundary is 16 kHz mono signed-16 PCM; separate RX/TX I2S peripherals use 16 kHz
+mono 32-bit left-slot words and the shared buffered playback driver. The reference speaker setting
+uses 24 kHz, so playback speed, pitch, stability, capture, and full-duplex interaction require
+real-device testing. If 24 kHz output is necessary, implement stateful resampling in the platform
+audio driver while keeping the SDK boundary at 16 kHz.
+
+This initial profile has no touch or camera path. Battery ADC, charging status, shutdown, sleep,
+and low-power behavior are outside its scope. Display orientation/colors, PWM backlight, power
+sequencing, and the button mapping also require real-device validation.
 
 ### Espressif ESP-VoCat
 
@@ -385,13 +419,13 @@ main/                        Firmware entry point and project Kconfig
 
 ## Validation and Limitations
 
-CI builds 24 configurations covering all board profiles, both languages, and the bundled RTSA
+CI builds 26 configurations covering all board profiles, both languages, and the bundled RTSA
 60 ms cadence. Six CoreS3 configurations cover the language/video combinations, light theme,
 and disabled activity animations. All display-board builds use LVGL, as described in
 [Platform LVGL UI](docs/PLATFORM_UI.md). Earlier CoreS3 firmware has passed hardware tests for
 provisioning, bidirectional audio, camera uplink, and LVGL UI, including audio with video on and off.
 The shared LVGL cleanup and provisioning SSID/scrolling changes still need hardware regression.
-The Zhengchen Wi-Fi, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
+The Zhengchen Wi-Fi, Xingzhi Cube, ESP-VoCat, both Waveshare AMOLED 1.75 revisions, M5Stack
 StickS3, AtomEchoS3R, ReSpeaker Flex, and SenseCAP Watcher profiles have not yet completed real-device
 validation; a successful build is not a substitute for hardware validation on a release device.
 
@@ -400,6 +434,8 @@ Known limitations:
 - ML307/4G networking and local wake words are not wired up.
 - Zhengchen charge status, battery ADC, temperature monitoring, automatic sleep, and low-power
   operation are not wired up. The Wi-Fi profile's physical PSRAM capacity is not yet confirmed.
+- Xingzhi Cube physical Flash/PSRAM capacities and 16 kHz audio are unconfirmed. Battery reporting,
+  charge status, shutdown, sleep, and low-power behavior are not wired up.
 - ESP-VoCat battery reporting, IMU, PCB capacitive controls, SD card, LED, camera expansion, local
   AEC, reference audio, shutdown, and low-power operation are not wired up. PCB V1.0 also has a
   known hardware power-integrity issue that firmware cannot correct.

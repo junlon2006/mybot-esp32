@@ -27,7 +27,7 @@ idf.py -B build/release size
 git diff --check
 ```
 
-- [ ] All 24 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: ten boards
+- [ ] All 26 firmware builds in the [CI workflow](../.github/workflows/ci.yml) pass: eleven boards
       in both languages, two additional CoreS3 video builds, one CoreS3 light-theme build, and one
       CoreS3 video build with conversation animations disabled. All use 60 ms audio frames.
 - [ ] Confirm unsupported 20 ms and 40 ms settings still fail configuration with the bundled RTSA.
@@ -53,6 +53,11 @@ git diff --check
       test GPIO2 power hold, ST7789 output, Boot and volume buttons, and verify GPIO11/GPIO12 remain
       unused. Validate 16 kHz capture/playback speed, pitch, stability, and full-duplex interaction
       against the hardware's 24 kHz speaker-output requirement.
+- [ ] For Xingzhi Cube, confirm physical Flash/PSRAM capacity, release RTC hold and GPIO21 power
+      sequencing, ST7789 mode-3 colors/orientation/zero offsets, GPIO13 60% PWM backlight, and
+      Boot0/volume-up40/volume-down39. Verify 16 kHz playback speed/pitch against the reference
+      24 kHz setting, bidirectional audio, prompt drain, volume persistence, repeated start/stop,
+      and provisioning while mybot is stopped.
 - [ ] For ESP-VoCat, test PCB V1.0 and V1.2 separately. Verify GPIO48 detection, revision-specific
       DIN/PA/LCD-reset pins and reset polarity, GPIO9 peripheral power, USB Serial/JTAG logging,
       detected Flash/PSRAM capacity, the ST77916 initialization/colors/round edges/backlight,

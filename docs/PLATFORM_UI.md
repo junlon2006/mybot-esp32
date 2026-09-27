@@ -13,6 +13,7 @@ audio path, camera path, and touch/key ownership do not change.
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | ST7789, 240 × 240 | shared ST7789 adapter | existing buttons |
 | `zhengchen-1.54tft-wifi` | ST7789, 240 × 240 | shared ST7789 adapter | existing buttons |
+| `xingzhi-cube-1.54tft-wifi` | ST7789, 240 × 240 | shared panel adapter | Boot and volume buttons |
 | `m5stack-core-s3` | ILI9342, 320 × 240 | CoreS3 adapter | existing FT6336 gestures |
 | `m5stack-stick-s3` | ST7789P3, 135 × 240 | shared ST7789 adapter | existing main button |
 | `esp-vocat` | ST77916, 360 × 360 | shared panel adapter | existing CST816S/Boot path |
@@ -22,6 +23,9 @@ audio path, camera path, and touch/key ownership do not change.
 
 The AtomEchoS3R and ReSpeaker Flex profiles have no LCD and do not include LVGL. The ML307 and
 Wi-Fi variants, along with the audio/video protocols, are independent of the display backend.
+The Xingzhi Cube uses SPI3 mode 3 at 40 MHz, zero offsets, and GPIO13 LEDC backlight with
+5 kHz, 13-bit PWM at 60% duty.
+Its display and power behavior require real-device validation.
 
 ## Shared behavior
 
@@ -49,7 +53,7 @@ gesture, alter provisioning, or change the audio/video lifecycle. The backend us
 RGB565 DMA stripe of 16 rows (`width × 16 × 2` bytes) and a dedicated LVGL task on Core 1 at
 priority 1. Objects and drawing scratch space use PSRAM; the DMA stripe uses internal memory.
 CoreS3's stripe is 10,240 bytes and StickS3's is 4,320 bytes, separate from task stacks and driver
-allocations. The panel adapter owns reset, offsets, color order, backlight, and teardown.
+allocations. The hardware integration owns reset, offsets, color order, backlight, and teardown.
 
 ## Build examples
 
@@ -71,8 +75,8 @@ not override values saved in an existing sdkconfig.
 
 The earlier CoreS3 LVGL UI passed real-device testing; the LVGL-only cleanup, provisioning SSID
 display/scrolling, and narrow-screen font changes still need hardware regression. CI covers all
-ten board profiles in both languages, CoreS3 video in both languages, and two theme/animation
-variants (24 configurations).
+eleven board profiles in both languages, CoreS3 video in both languages, and two theme/animation
+variants (26 configurations).
 These are build checks only. No new board is claimed to have passed real-device color, touch, audio,
 provisioning, or teardown validation. Complete hardware testing must cover all workflow screens,
 orientation and colors, Chinese/English small-screen text, SSID and hint scrolling with activity

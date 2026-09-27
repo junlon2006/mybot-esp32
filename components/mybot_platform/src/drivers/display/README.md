@@ -14,8 +14,12 @@ For the provisioning title it copies the active SoftAP name through the Wi-Fi se
 snapshot getter. The getter does not acquire the provisioning-operation lock or call the display.
 LVGL scrolls overflowing provisioning labels and stops their animations when leaving that screen.
 
-LVGL is the only renderer for all display boards; the ReSpeaker Flex profile remains headless.
+LVGL is the only renderer for all display boards; AtomEchoS3R and ReSpeaker Flex remain headless.
 `CONFIG_MYBOT_LVGL_UI` is derived from the selected board and is not a user-facing switch.
 New panel work should put hardware lifecycle in `panels/` and use an adapter under `adapters/`
-when LVGL needs controller-specific handles. CO5300, SPD2010, and ST77916 implement the shared
+when LVGL needs controller-specific handles. ST7789, CO5300, SPD2010, and ST77916 implement the shared
 `mybot_display_panel_open()` / `mybot_display_panel_close()` interface directly in `panels/`.
+The new ST7789 panel reads SPI mode and offsets from the board profile and delegates backlight to
+the board. Xingzhi Cube uses this panel with the shared adapter: SPI3 mode 3, a 240 x 240 display
+with no offset, and LEDC backlight at 5 kHz, 13-bit resolution, and 60% duty. Existing Zhengchen and
+StickS3 profiles retain `st7789_lvgl_adapter.cc` and their own hardware configuration.

@@ -23,7 +23,8 @@ idf.py -B build/cores3-video -p <PORT> flash monitor
 ```
 
 已有 CoreS3 构建可在对应目录的 menuconfig 中开启 `mybot → Enable CoreS3 camera JPEG
-uplink (1 fps)`。`CONFIG_MYBOT_ENABLE_VIDEO` 默认关闭；其他板型开启时会报配置错误。
+uplink (1 fps)`。`CONFIG_MYBOT_ENABLE_VIDEO` 默认关闭；其他板型开启时会报配置错误，
+包括没有摄像头路径的 `xingzhi-cube-1.54tft-wifi` profile。
 CoreS3-SE 没有 GC0308，不属于视频支持范围。音频帧长保持当前支持的 60 ms。
 全新构建默认中文；英文版本在新的构建目录中给 defaults 列表追加 `;ci/en-us.defaults`。
 所有 CoreS3 构建均使用 LVGL，不需要单独开启 UI。
