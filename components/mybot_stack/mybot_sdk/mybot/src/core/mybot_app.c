@@ -151,11 +151,10 @@ static bool rtm_data_get_lcd_indicator(const void *data, size_t len,
     memcpy(message, data, len);
     message[len] = '\0';
 
+    bool matched = false;
     mybot_json_t *root = mybot_json_parse(message);
     if (!root || root->type != MYBOT_JSON_OBJECT) {
-        mybot_json_delete(root);
-        aosl_hal_free(message);
-        return false;
+        goto done;
     }
 
     const char *object = mybot_json_get_string(json_get_exact_object_item(root, "object"));
@@ -164,9 +163,8 @@ static bool rtm_data_get_lcd_indicator(const void *data, size_t len,
         strcmp(status, k_rtm_vp_status_success) == 0) {
         *indicator = MYBOT_LCD_INDICATOR_VP_REGISTERED;
         *active = true;
-        mybot_json_delete(root);
-        aosl_hal_free(message);
-        return true;
+        matched = true;
+        goto done;
     }
 
     const char *event_type = mybot_json_get_string(json_get_exact_object_item(root, "event_type"));
@@ -174,9 +172,7 @@ static bool rtm_data_get_lcd_indicator(const void *data, size_t len,
     const mybot_json_t *value = payload ? json_get_exact_object_item(payload, "value") : NULL;
     if (!event_type || !value ||
         (value->type != MYBOT_JSON_TRUE && value->type != MYBOT_JSON_FALSE)) {
-        mybot_json_delete(root);
-        aosl_hal_free(message);
-        return false;
+        goto done;
     }
 
     if (strcmp(event_type, k_rtm_state_listening) == 0) {
@@ -186,15 +182,16 @@ static bool rtm_data_get_lcd_indicator(const void *data, size_t len,
     } else if (strcmp(event_type, k_rtm_state_speaking) == 0) {
         *indicator = MYBOT_LCD_INDICATOR_SPEAKING;
     } else {
-        mybot_json_delete(root);
-        aosl_hal_free(message);
-        return false;
+        goto done;
     }
 
     *active = value->type == MYBOT_JSON_TRUE;
+    matched = true;
+
+done:
     mybot_json_delete(root);
     aosl_hal_free(message);
-    return true;
+    return matched;
 }
 
 static void handle_lcd_indicator(const aosl_ts_t *queued_ts, aosl_refobj_t robj, uintptr_t argc,
@@ -340,7 +337,11 @@ static void queue_video_control(mybot_runtime_t *runtime, video_control_event_t 
     if (aosl_mpq_queue(runtime->control_mpq, AOSL_MPQ_INVALID, AOSL_REF_INVALID,
                        "handle_video_control", handle_video_control, 4, (uintptr_t)runtime,
                        generation, (uintptr_t)event, (uintptr_t)target_bps) < 0) {
-        AOSL_LOG_WRN("failed to queue video control event (%d)", (int)event);
+        if (event == VIDEO_CONTROL_START) {
+            fail_control_queue(runtime, "video start");
+        } else {
+            AOSL_LOG_WRN("failed to queue video control event (%d)", (int)event);
+        }
     }
 }
 #endif
@@ -933,24 +934,6 @@ static bool platform_requirements_are_met(const mybot_config_t *cfg) {
     return true;
 }
 
-static bool server_scheme_is_supported(const char *server_base) {
-    if (strncmp(server_base, "https://", 8) == 0) {
-#if MYBOT_ENABLE_HTTPS
-        return true;
-#else
-        return false;
-#endif
-    }
-    if (strncmp(server_base, "http://", 7) == 0) {
-#if MYBOT_ALLOW_INSECURE_HTTP
-        return true;
-#else
-        return false;
-#endif
-    }
-    return false;
-}
-
 static void control_stop_runtime(mybot_runtime_t *runtime) {
     if (runtime_get_state(runtime) == MYBOT_STATE_STOPPED) {
         return;
@@ -1033,15 +1016,6 @@ fail:
     runtime_publish_exit(runtime);
 }
 
-static void handle_control_stop(const aosl_ts_t *queued_ts, aosl_refobj_t robj, uintptr_t argc,
-                                uintptr_t argv[]) {
-    (void)queued_ts;
-    (void)robj;
-    if (argc == 1) {
-        control_stop_runtime((mybot_runtime_t *)argv[0]);
-    }
-}
-
 static void control_worker_fini(void *arg) {
     control_stop_runtime(arg);
 }
@@ -1073,12 +1047,6 @@ int mybot_start(const mybot_config_t *cfg) {
         lifecycle_unlock();
         return -1;
     }
-    if (!server_scheme_is_supported(cfg->server_base)) {
-        AOSL_LOG_ERR("application start rejected: unsupported server URL scheme");
-        lifecycle_unlock();
-        return -1;
-    }
-
     if (!platform_requirements_are_met(cfg)) {
         lifecycle_unlock();
         return -1;
@@ -1096,9 +1064,10 @@ int mybot_start(const mybot_config_t *cfg) {
     }
     aosl_atomic_set(&runtime->aosl_ref_held, true);
 
-    runtime->control_mpq = aosl_mpq_create_flags(AOSL_MPQ_FLAG_SIGP_EVENT, AOSL_THRD_PRI_NORMAL,
-                                                 CONTROL_MPQ_STACK_SIZE, 1000, "control_mpq", NULL,
-                                                 control_worker_fini, runtime);
+    /* Callbacks must not wait for space while this worker synchronously waits for RTC. */
+    runtime->control_mpq = aosl_mpq_create_flags(AOSL_MPQ_FLAG_SIGP_EVENT | AOSL_MPQ_FLAG_NONBLOCK,
+                                                 AOSL_THRD_PRI_NORMAL, CONTROL_MPQ_STACK_SIZE, 1000,
+                                                 "control_mpq", NULL, control_worker_fini, runtime);
     if (aosl_mpq_invalid(runtime->control_mpq)) {
         AOSL_LOG_ERR("failed to create application control queue");
         goto fail;
@@ -1116,12 +1085,7 @@ int mybot_start(const mybot_config_t *cfg) {
 
 fail:
     runtime_publish_exit(runtime);
-    if (!aosl_mpq_invalid(runtime->control_mpq)) {
-        if (aosl_mpq_call(runtime->control_mpq, AOSL_REF_INVALID, "handle_control_stop",
-                          handle_control_stop, 1, (uintptr_t)runtime) < 0) {
-            AOSL_LOG_ERR("failed to run application control cleanup");
-        }
-    }
+    /* Queue destruction runs cleanup on the control worker, even when its queue is full. */
     if (destroy_control_queue(runtime)) {
         aosl_dtor();
         aosl_atomic_set(&runtime->aosl_ref_held, false);
@@ -1147,12 +1111,7 @@ void mybot_stop(void) {
     }
 
     runtime_publish_exit(runtime);
-    if (!aosl_mpq_invalid(runtime->control_mpq)) {
-        if (aosl_mpq_call(runtime->control_mpq, AOSL_REF_INVALID, "handle_control_stop",
-                          handle_control_stop, 1, (uintptr_t)runtime) < 0) {
-            AOSL_LOG_ERR("failed to run application control shutdown");
-        }
-    }
+    /* Cleanup belongs to the control finalizer; it needs no separate queue admission. */
     if (destroy_control_queue(runtime)) {
         aosl_dtor();
         aosl_atomic_set(&runtime->aosl_ref_held, false);

@@ -88,6 +88,13 @@ static int clamp_poll_interval(int seconds) {
     return seconds;
 }
 
+static int next_retry_delay_ticks(int current, int initial, int maximum) {
+    if (current == 0) {
+        return initial;
+    }
+    return current < maximum / 2 ? current * 2 : maximum;
+}
+
 static int persist_device_auth(mybot_device_lifecycle_t *lifecycle) {
     mybot_device_auth_record_t *record =
         (mybot_device_auth_record_t *)aosl_hal_malloc(sizeof(*record));
@@ -176,13 +183,9 @@ static void action_create_pair_code(mybot_device_lifecycle_t *lifecycle) {
         return;
     }
     if (ret != 0) {
-        if (lifecycle->pair_retry_delay_ticks == 0) {
-            lifecycle->pair_retry_delay_ticks = MYBOT_PAIR_RETRY_INITIAL_TICKS;
-        } else if (lifecycle->pair_retry_delay_ticks < MYBOT_PAIR_RETRY_MAX_TICKS / 2) {
-            lifecycle->pair_retry_delay_ticks *= 2;
-        } else {
-            lifecycle->pair_retry_delay_ticks = MYBOT_PAIR_RETRY_MAX_TICKS;
-        }
+        lifecycle->pair_retry_delay_ticks =
+            next_retry_delay_ticks(lifecycle->pair_retry_delay_ticks,
+                                   MYBOT_PAIR_RETRY_INITIAL_TICKS, MYBOT_PAIR_RETRY_MAX_TICKS);
         lifecycle->pair_retry_ticks_remaining = lifecycle->pair_retry_delay_ticks;
         AOSL_LOG_ERR("pair-code request failed, retrying in %d seconds",
                      lifecycle->pair_retry_delay_ticks / 10);
@@ -371,13 +374,9 @@ static void clear_rtc_token_renewal(mybot_device_lifecycle_t *lifecycle) {
 }
 
 static void schedule_rtc_token_retry(mybot_device_lifecycle_t *lifecycle) {
-    if (lifecycle->rtc_token_retry_delay_ticks == 0) {
-        lifecycle->rtc_token_retry_delay_ticks = MYBOT_RTC_TOKEN_RETRY_INITIAL_TICKS;
-    } else if (lifecycle->rtc_token_retry_delay_ticks < MYBOT_RTC_TOKEN_RETRY_MAX_TICKS / 2) {
-        lifecycle->rtc_token_retry_delay_ticks *= 2;
-    } else {
-        lifecycle->rtc_token_retry_delay_ticks = MYBOT_RTC_TOKEN_RETRY_MAX_TICKS;
-    }
+    lifecycle->rtc_token_retry_delay_ticks = next_retry_delay_ticks(
+        lifecycle->rtc_token_retry_delay_ticks, MYBOT_RTC_TOKEN_RETRY_INITIAL_TICKS,
+        MYBOT_RTC_TOKEN_RETRY_MAX_TICKS);
     lifecycle->rtc_token_retry_ticks_remaining = lifecycle->rtc_token_retry_delay_ticks;
     AOSL_LOG_WRN("RTC-token renewal failed, retrying in %d ms",
                  lifecycle->rtc_token_retry_delay_ticks * 100);
@@ -473,9 +472,13 @@ static void action_stop_conversation(mybot_device_lifecycle_t *lifecycle, const 
         return;
     }
 
+    const mybot_stop_request_t request =
+        (reason && strcmp(reason, MYBOT_CONVERSATION_STOP_REASON_DEVICE_HANGUP) == 0)
+            ? MYBOT_STOP_REQUEST_DEVICE_HANGUP
+            : MYBOT_STOP_REQUEST_ERROR;
     if (lifecycle->stop_retry_ticks_remaining > 0) {
         lifecycle->stop_retry_ticks_remaining--;
-        aosl_atomic_set(&lifecycle->stop_request, MYBOT_STOP_REQUEST_ERROR);
+        aosl_atomic_set(&lifecycle->stop_request, request);
         return;
     }
 
@@ -507,11 +510,7 @@ static void action_stop_conversation(mybot_device_lifecycle_t *lifecycle, const 
             lifecycle->stop_retry_ticks_remaining = MYBOT_STOP_RETRY_DELAY_TICKS;
             /* Re-arm the control mailbox so the next eligible tick performs
              * the retry after the delay. */
-            aosl_atomic_set(
-                &lifecycle->stop_request,
-                (reason && strcmp(reason, MYBOT_CONVERSATION_STOP_REASON_DEVICE_HANGUP) == 0)
-                    ? MYBOT_STOP_REQUEST_DEVICE_HANGUP
-                    : MYBOT_STOP_REQUEST_ERROR);
+            aosl_atomic_set(&lifecycle->stop_request, request);
             AOSL_LOG_WRN("stop conversation transient failure (%d), retry %u/%u", ret,
                          lifecycle->stop_retry_attempts, MYBOT_STOP_RETRY_MAX_ATTEMPTS);
             return;
@@ -652,10 +651,18 @@ void mybot_device_lifecycle_tick(mybot_device_lifecycle_t *lifecycle) {
      * conversation is active, end it first so the RTC connection is torn down
      * before the device is rebound. */
     if (lifecycle->pairing_requested) {
-        lifecycle->pairing_requested = false;
+        /* Pending start requests belong to the previous binding. */
+        lifecycle->conversation_requested = false;
         if (current_state(lifecycle) == MYBOT_DEVICE_STATE_IN_CONVERSATION) {
             action_stop_conversation(lifecycle, MYBOT_CONVERSATION_STOP_REASON_USER_REQUESTED);
+            /* Re-pairing discards the old credential, so its stop retries cannot continue. */
+            if (current_state(lifecycle) == MYBOT_DEVICE_STATE_IN_CONVERSATION) {
+                AOSL_LOG_WRN("re-pair completing conversation locally after deferred stop");
+                complete_conversation_locally(lifecycle);
+            }
         }
+        /* Auth rejection during stop may request pairing again; this flow consumes it too. */
+        lifecycle->pairing_requested = false;
         clear_device_auth(lifecycle);
         lifecycle->conversation_id[0] = '\0';
         set_state(lifecycle, MYBOT_DEVICE_STATE_PAIRING);

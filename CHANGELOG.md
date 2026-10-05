@@ -67,6 +67,9 @@ Versioning and Conventional Commits.
 
 ### Changed
 
+- Sync the MyBot SDK snapshot to `0643978` (1.2.0 plus post-release fixes), preventing control
+  queue stalls, clearing pending starts on re-pairing, discarding stale announcement PCM, and
+  hardening HTTP and JSON boundaries. The RTC queue limit increases from 64 to 1000 pending calls.
 - Direct pairing-code entry to the web console and scroll the instruction on narrow displays.
 - Select the device API region from the firmware language: zh-CN uses Shanghai (sh2), and en-US
   uses Singapore (sg3).

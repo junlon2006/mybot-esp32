@@ -225,6 +225,7 @@ static int parse_url(const char *url, url_parts_t *parts) {
 }
 
 static aosl_fd_t tcp_connect(const char *host, int port, uint64_t deadline);
+static int parse_content_length(const char *value, const char *end, size_t *out_length);
 
 /* Return true once a response with a complete Content-Length body is in the
  * receive buffer. This avoids waiting for a peer to close the connection
@@ -252,25 +253,10 @@ static bool response_content_length_complete(const char *buf, size_t len) {
         }
         size_t line_len = (size_t)(line_end - line);
         if (line_len >= 15 && ascii_case_equal_n(line, "Content-Length:", 15)) {
-            const char *p = line + 15;
-            size_t value = 0;
-            bool digits = false;
-            while (p < line_end && (*p == ' ' || *p == '\t')) {
-                ++p;
-            }
-            while (p < line_end && *p >= '0' && *p <= '9') {
-                size_t digit = (size_t)(*p - '0');
-                if (value > (SIZE_MAX - digit) / 10U) {
-                    return false;
-                }
-                value = value * 10U + digit;
-                digits = true;
-                ++p;
-            }
-            while (p < line_end && (*p == ' ' || *p == '\t')) {
-                ++p;
-            }
-            if (!digits || p != line_end || (found && content_length != value)) {
+            size_t value;
+            /* Include the terminating CR, matching the final parser's LF endpoint. */
+            if (parse_content_length(line + 15, line_end + 1, &value) < 0 ||
+                (found && content_length != value)) {
                 return false;
             }
             content_length = value;
@@ -492,8 +478,16 @@ static char *read_all(http_stream_t *stream, size_t *out_len, int *out_closed, u
     }
 
     while (deadline_remaining_ms(deadline) > 0) {
-        int ret = stream_recv(stream, buf + len, cap - len - 1, deadline);
+        size_t capacity = cap - len - 1;
+        /* At the cap, distinguish a clean EOF from an oversized response
+         * without issuing a zero-length receive or overwriting the NUL. */
+        char overflow_byte;
+        int ret = stream_recv(stream, capacity ? buf + len : &overflow_byte,
+                              capacity ? capacity : 1, deadline);
         if (ret > 0) {
+            if (capacity == 0 || (size_t)ret > capacity) {
+                goto fail;
+            }
             len += (size_t)ret;
             buf[len] = '\0';
 
@@ -503,10 +497,7 @@ static char *read_all(http_stream_t *stream, size_t *out_len, int *out_closed, u
 
             /* Grow the buffer if needed, bounded by RECV_BUF_MAX so a
              * misbehaving server cannot cause unbounded memory growth. */
-            if (cap - len < RECV_BUF_SIZE / 2) {
-                if (cap >= RECV_BUF_MAX) {
-                    break; /* No room remains for another receive chunk within the cap. */
-                }
+            if (cap < RECV_BUF_MAX && cap - len < RECV_BUF_SIZE / 2) {
                 cap *= 2;
                 if (cap > RECV_BUF_MAX) {
                     cap = RECV_BUF_MAX;
