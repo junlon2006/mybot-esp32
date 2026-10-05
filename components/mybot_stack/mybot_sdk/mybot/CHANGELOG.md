@@ -6,11 +6,33 @@ This project follows Semantic Versioning.
 
 ### Added
 
+- Expand unit coverage for protocol boundaries, allocation failures, callback ownership,
+  partial-start cleanup and recovery, including a standalone KV facade test and video-disabled
+  lifecycle checks.
 - Add a repeatable release script to package an explicit tag from main with its pinned AOSL
   sources, generate SHA-256 checksums, and verify the corresponding GitHub Release assets.
 
 ### Fixed
 
+- Avoid overflow when combining JSON fractional scale with extreme negative exponents,
+  reject non-finite or unrepresentable numbers before integer conversion, and preserve
+  signed 64-bit integer values when printing JSON.
+- Discard pending conversation-start requests when re-pairing begins. Starting a conversation
+  after the new binding is claimed requires a fresh trigger, even after pair-code retries.
+- Use all available HTTP receive-buffer space at the 32 KiB allocation limit, avoiding early
+  rejection of responses split across receive calls. Check full-buffer closure or overflow with
+  a one-byte receive probe under the existing request deadline.
+- Preserve the current conversation-stop reason during retry delays and rescheduling, so a
+  transport failure or HTTP 5xx does not by itself change `device_hangup` to `error`.
+- Reject Linux announcement assets when seeking back to the PCM data fails.
+- Discard software-buffered PCM from replaced or stopped pairing announcements, including
+  unfinished short writes. Commit replacements only after asset loading succeeds, preserving
+  the previous prompt if loading fails.
+- Reject control-event submissions without waiting when the queue is full, preventing an RTC
+  callback from blocking token renewal or shutdown. Request application exit if a video-start
+  event cannot be queued.
+- Complete local conversation cleanup before re-pairing when the device-service stop request
+  fails or is waiting for a retry, and avoid duplicate pair-code requests after auth rejection.
 - Align public Wi-Fi comments and integration guides with product-owned provisioning, and
   correct the embedded notes on RTSA logging and per-frame heap allocations.
 - Serialize video startup and encoder control with shutdown on the application control worker,
@@ -20,6 +42,9 @@ This project follows Semantic Versioning.
 
 ### Changed
 
+- Reuse consumer-owned PCM buffers during session flush, removing temporary drain allocations.
+- Increase the RTC queue capacity from 64 to 1000 pending calls while retaining nonblocking
+  submission and the existing event handling.
 - Share RTM-to-LCD event queuing, session validation, and rendering for voiceprint and server-state
   indicators while preserving their independent and mutually exclusive display semantics.
 - Share the device-service conversation response with the synchronous application callback,
