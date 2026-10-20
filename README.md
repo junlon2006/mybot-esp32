@@ -39,6 +39,9 @@ Circular-4 with XIAO ESP32S3, and SenseCAP Watcher.
 
 ## Supported Boards
 
+Per-board descriptions and original reference documents are listed in the
+[board documentation index](components/mybot_platform/boards/README.md).
+
 | Board profile | Audio | Display and input | Storage |
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S microphone and speaker | ST7789, Boot and volume buttons | 16 MB QIO Flash, 8 MB Octal PSRAM |

@@ -37,6 +37,7 @@ It does not replace third-party terms. This file is informational and is not leg
 | CoreS3 pixel-glasses renderer, geometry/mask generators (`dc4c854` BK reference) | MIT; expression helpers/policy retain their file-level Apache-2.0 notices | `components/mybot_platform/src/drivers/display/renderers/lvgl/pixel_glasses_view.cc`, pixel geometry/masks/generators and private expression support |
 | MyBot Terminal bitmap subsets derived from DejaVu Sans Mono Bold | Bitstream Vera font terms, with public-domain DejaVu changes | `components/mybot_platform/src/drivers/display/renderers/lvgl/pixel_fonts.c`, `TERMINAL_FONT_LICENSE.txt` |
 | Project-maintained shared LVGL panel adapters | Apache-2.0 unless file SPDX says otherwise | `components/mybot_platform/src/drivers/display/adapters/lvgl/st7789_lvgl_adapter.cc`, `components/mybot_platform/src/drivers/display/adapters/lvgl/shared_lvgl_adapter.cc` |
+| Verbatim board README documents (`1d5eeb2` reference) | MIT | The eleven files listed under Board reference documents in `VENDORED_SOURCES.md` |
 | M5Stack CoreS3-derived implementation | MIT | Paths listed under MIT Attributions |
 | ReSpeaker Flex XVF3800-derived implementation (`b060243`) | MIT | Paths listed under MIT Attributions |
 | SenseCAP Watcher-derived implementation (`2b9b4e3`) | MIT | Paths listed under MIT Attributions |
@@ -73,6 +74,13 @@ If authorization is unavailable, exclude the library from public artifacts and r
 supply an authorized package locally.
 
 ## MIT Attributions
+
+The eleven board reference README files listed in `VENDORED_SOURCES.md` are copied verbatim from
+`github.com/junlon2006/xiaozhi-esp32` at commit `1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`.
+The upstream MIT copyright and full permission notice are retained in
+`components/mybot_platform/assets/LICENSE.xiaozhi-esp32`. External product images remain linked
+to their original sites; no additional image files are vendored. The separate Bread Compact
+Wi-Fi LCD, Xingzhi Cube and ReSpeaker Flex profile descriptions are project-maintained documents.
 
 The pinned esp-wifi-connect manifest declares MIT but its 3.2.2 archive omitted the license file.
 `components/esp-wifi-connect/LICENSE` is the byte-identical MIT text later published by that

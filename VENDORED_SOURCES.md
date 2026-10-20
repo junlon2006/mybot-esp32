@@ -1,6 +1,6 @@
 # Vendored Dependency Baselines
 
-This file records only the revisions needed to reproduce the firmware build. License and
+This file records the revisions of firmware inputs and copied board documents. License and
 redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 | Path | Source | Pinned revision |
@@ -33,6 +33,34 @@ redistribution terms are documented separately in [THIRD_PARTY_NOTICES.md](THIRD
 | `components/mybot_platform/assets/locales` | `github.com/junlon2006/mybot-bk7258` | commit `2577b5977a9f137855a7acf1fcdcd4040c5db2ea` |
 | `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_fonts.c`, `components/mybot_platform/src/drivers/display/assets/licenses/LVGL_VIEW_FONT_LICENSE.txt` | `github.com/lvgl/lvgl`, `scripts/built_in_font/SourceHanSansSC-Normal.otf` | LVGL 9.5.0 source font SHA-256 `1ee89e1669362dee13851129c0a8a791a87521eb4148e5efbf5d26596738e25b`; generated 20 px, 4 bpp static UI subset |
 | `components/mybot_platform/assets/ui/noto_emoji`, `components/mybot_platform/src/drivers/display/renderers/lvgl/lvgl_assets.c` | Noto Color Emoji font glyphs rasterized by `github.com/78/noto-fonts`, `png/noto-color-emoji_64` | 2.0.0, commit `d45dbc64052d57048f20ab1770074172ce9eb53b`; per-image SHA-256 values and glyph provenance in `assets/ui/noto_emoji/SOURCES.json` |
+
+## Board reference documents
+
+The following files are copied verbatim from `github.com/junlon2006/xiaozhi-esp32` at commit
+`1d5eeb2dd51cb315f98ef3c7d3f2b96bd2bbcf1d`. Paths in the source column are relative to
+`main/boards/`; destination paths are relative to `components/mybot_platform/boards/`.
+The copies retain upstream text, whitespace and line endings under the upstream MIT license.
+
+| Destination | Source |
+| --- | --- |
+| `atom-echos3r/README.md` | `atom-echos3r/README.md` |
+| `esp-vocat/README.md` | `esp-vocat/README.md` |
+| `esp32-s3-touch-amoled-1.75/README.md` | `waveshare/esp32-s3-touch-amoled-1.75/README.md` |
+| `esp32-s3-touch-amoled-1.75c/README.md` | `waveshare/esp32-s3-touch-amoled-1.75/README.md` |
+| `esp32-s3-touch-amoled-2.16/README.md` | `waveshare/esp32-s3-touch-amoled-2.16/README.md` |
+| `m5stack-core-s3/README.md` | `m5stack-core-s3/README.md` |
+| `m5stack-stick-s3/README.md` | `m5stack-stick-s3/README.md` |
+| `sensecap-watcher/README.md` | `sensecap-watcher/README.md` |
+| `sensecap-watcher/README_en.md` | `sensecap-watcher/README_en.md` |
+| `zhengchen-1.54tft-ml307/README.md` | `zhengchen-1.54tft-ml307/README.md` |
+| `zhengchen-1.54tft-wifi/README.md` | `zhengchen-1.54tft-wifi/README.md` |
+
+Upstream selects the same 1.75 directory for the 1.75C variant, so both profiles share its README.
+The Bread Compact Wi-Fi LCD, Xingzhi Cube and ReSpeaker Flex profile READMEs are project-maintained
+descriptions based on the checked-in profiles; no corresponding upstream README was available.
+These documentation additions do not change firmware behavior or validation status.
+
+## Implementation references
 
 External implementation references and hardware-mapping verification baselines used for
 project-maintained board ports are pinned separately; their application layer and dependency set

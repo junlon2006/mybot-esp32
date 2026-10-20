@@ -35,6 +35,8 @@ StickS3、M5Stack AtomEchoS3R、搭配 XIAO ESP32S3 的 ReSpeaker Flex XVF3800 C
 
 ## 支持的板卡
 
+各板型目录中的说明和参考原文见[板卡说明索引](components/mybot_platform/boards/README.md)。
+
 | Board profile | 音频 | 显示与输入 | 存储 |
 | --- | --- | --- | --- |
 | `zhengchen-1.54tft-ml307` | I2S 麦克风和扬声器 | ST7789、Boot 与音量按键 | 16 MB QIO Flash、8 MB Octal PSRAM |

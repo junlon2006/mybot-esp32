@@ -11,6 +11,19 @@ components/lvgl/** -whitespace
 components/esp-wifi-connect/** -whitespace
 third_party/** -whitespace
 
+# Preserve board reference documents verbatim, including upstream whitespace and line endings.
+components/mybot_platform/boards/atom-echos3r/README.md -text -whitespace
+components/mybot_platform/boards/esp-vocat/README.md -text -whitespace
+components/mybot_platform/boards/esp32-s3-touch-amoled-1.75/README.md -text -whitespace
+components/mybot_platform/boards/esp32-s3-touch-amoled-1.75c/README.md -text -whitespace
+components/mybot_platform/boards/esp32-s3-touch-amoled-2.16/README.md -text -whitespace
+components/mybot_platform/boards/m5stack-core-s3/README.md -text -whitespace
+components/mybot_platform/boards/m5stack-stick-s3/README.md -text -whitespace
+components/mybot_platform/boards/sensecap-watcher/README.md -text -whitespace
+components/mybot_platform/boards/sensecap-watcher/README_en.md -text -whitespace
+components/mybot_platform/boards/zhengchen-1.54tft-ml307/README.md -text -whitespace
+components/mybot_platform/boards/zhengchen-1.54tft-wifi/README.md -text -whitespace
+
 *.a binary
 *.bin binary
 *.jpg binary
