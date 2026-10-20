@@ -15,6 +15,9 @@
 #include "mbedtls/md.h"
 #include "nvs_flash.h"
 #include "mybot_platform/board.h"
+#if CONFIG_MYBOT_TRACE_MCP
+#include "mybot_platform/mcp_trace.h"
+#endif
 #include "mybot_platform/display_status.h"
 #if CONFIG_MYBOT_AUDIO_PLAYBACK_TEST
 #include "mybot_platform/audio_playback_test.h"
@@ -223,6 +226,9 @@ void app_main(void) {
     snprintf(config.hw_model, sizeof(config.hw_model), "%s", board->hw_model);
 
     (void)init_time_sync();
+#if CONFIG_MYBOT_TRACE_MCP
+    mybot_mcp_trace_start();
+#endif
     for (;;) {
         int64_t network_started_us = esp_timer_get_time();
         ESP_LOGI(TAG, "event=control state=waiting_network");

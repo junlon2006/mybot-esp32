@@ -77,6 +77,23 @@ I2S 接受数据后额外等待 120 ms，覆盖当前 90 ms 的 DMA 容量。这
 `rebuffer_events` 估算重新缓冲的次数，
 可能包含正常语音停顿，不是 DMA 断供计数。
 
+本次 MCP 音量排查默认启用 `CONFIG_MYBOT_TRACE_MCP`。通过 AOSL 公开日志回调采集已有
+RTM 诊断，以 INFO 输出 `event=rtm_trace`，保留告警/错误级别及原始 `sdk_level`；其他 SDK
+消息保持正常详细程度。`truncated=1` 表示诊断行未能完整放入 2048 字节缓冲区。
+排查结束后可在 menuconfig 关闭该选项，停止打印 RTM 字符串内容。SDK 快照未修改。
+
+CoreS3 驱动收到请求后打印 `event=volume action=set phase=request`，随后结果包含
+`previous`、`value`、`changed` 以及 `target=codec|deferred`；设置为原值也会打印成功结果。
+`target=deferred` 表示暂存并在播放启动时应用，`action=get source=logical_cache` 返回软件
+维护的逻辑音量，不代表硬件寄存器回读。只有请求日志而没有后续结果，可能阻塞在驱动操作。
+
+复现时先进入对话，分别请求音量 20、80，再请求增大/减小音量，保留从 `conversation started`
+到 RTM 消息及音量结果的日志。SDK 1.3.0 接受不超过 1024 字节的 STRING 消息，外层必须是
+`message.user`，其 `content` 为 DeviceCommand JSON 字符串。支持 `audio.set_volume`
+（`level: 0..100`）及 `audio.adjust_volume`（`delta: -100..100`）。消息或参数不符、
+会话/channel/sender 不匹配，或 command ID 位于最近 16 条已接受记录中，均可能不执行；
+现有诊断会报告这些拒绝类别。按键调音也使用相同驱动操作，仅凭音量日志不能判定来自 MCP。
+
 CoreS3 增加缓冲后，三个离线阶段均已通过真机听音测试，普通对话在视频开启、关闭两种
 情况下也已验证正常。这是已记录的硬件验证基线；后续公共缓冲抽取及平台/UI 变化仍需
 逐板回归，主机模拟及固件编译不能证明实际听音结果。

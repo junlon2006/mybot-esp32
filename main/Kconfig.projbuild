@@ -69,6 +69,16 @@ menu "mybot"
             statistics using a low-priority task. Adds scheduler accounting and
             serial logging overhead; intended for diagnostics only.
 
+    config MYBOT_TRACE_MCP
+        bool "Trace MCP volume commands and RTM messages"
+        default y
+        help
+            Capture existing SDK RTM diagnostics through the public AOSL logger
+            and report them at INFO, preserving warning/error severity. Other
+            SDK messages retain their normal verbosity. CoreS3 also logs volume
+            requests and logical volume reads. Enabled for MCP troubleshooting;
+            disable after validation to stop logging complete RTM string payloads.
+
     config MYBOT_ENABLE_VIDEO
         bool "Enable CoreS3 camera JPEG uplink (1 fps)"
         default n

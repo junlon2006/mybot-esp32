@@ -7,6 +7,8 @@ Versioning and Conventional Commits.
 
 ### Added
 
+- Configurable MCP volume tracing through the public AOSL logger, enabled for troubleshooting,
+  exposing RTM payloads/rejections at INFO and CoreS3 volume requests, results and cached reads.
 - CoreS3-only process-gray pixel-glasses UI, with 23 expressions, four 9 px terminal rows,
   a 10 px signature and fixed 32 px six-digit pairing codes on its 320x240 display.
   Automatic faces follow READY/conversation phases; four MCP emotions use bounded holds,
@@ -185,6 +187,7 @@ Versioning and Conventional Commits.
 
 ### Fixed
 
+- Supply the missing volume arguments in CoreS3 persistence-failure log messages.
 - Restrict batch-builder cleanup to dedicated, owned generated directories. Reject repository
   ancestors, source directories, symlink components, traversal and overlapping roots before any
   cleanup; preserve unmarked existing data and anchor child deletion to directory descriptors.

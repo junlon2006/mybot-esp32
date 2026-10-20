@@ -791,17 +791,37 @@ static int volume_init(void **out_context) {
 }
 
 static int volume_set(void *opaque, int volume) {
+#if CONFIG_MYBOT_TRACE_MCP
+    ESP_LOGI(TAG, "event=volume action=set phase=request value=%d", volume);
+#endif
     audio_volume_context_t *context = opaque;
-    if (context != &s_volume_context || !context->active || volume < MYBOT_AUDIO_VOLUME_MIN ||
-        volume > MYBOT_AUDIO_VOLUME_MAX || !audio_lock()) {
+    if (context != &s_volume_context) {
+        ESP_LOGW(TAG, "event=volume action=set value=%d result=error reason=context", volume);
+        return -1;
+    }
+    if (!context->active) {
+        ESP_LOGW(TAG, "event=volume action=set value=%d result=error reason=inactive", volume);
+        return -1;
+    }
+    if (volume < MYBOT_AUDIO_VOLUME_MIN || volume > MYBOT_AUDIO_VOLUME_MAX) {
+        ESP_LOGW(TAG, "event=volume action=set value=%d result=error reason=range", volume);
+        return -1;
+    }
+    if (!audio_lock()) {
+        ESP_LOGW(TAG, "event=volume action=set value=%d result=error reason=lock", volume);
         return -1;
     }
 
     int previous_volume = s_output_volume;
-    if (s_audio.playback_started &&
-        esp_codec_dev_set_out_vol(s_audio.output_device, volume) != ESP_CODEC_DEV_OK) {
+    const char *target = s_audio.playback_started ? "codec" : "deferred";
+    int codec_result = ESP_CODEC_DEV_OK;
+    if (s_audio.playback_started && (codec_result = esp_codec_dev_set_out_vol(
+                                         s_audio.output_device, volume)) != ESP_CODEC_DEV_OK) {
         audio_unlock();
-        ESP_LOGE(TAG, "event=volume action=set value=%d result=error reason=codec", volume);
+        ESP_LOGE(TAG,
+                 "event=volume action=set previous=%d value=%d target=%s result=error "
+                 "reason=codec code=%d",
+                 previous_volume, volume, target, codec_result);
         return -1;
     }
     s_output_volume = volume;
@@ -809,26 +829,52 @@ static int volume_set(void *opaque, int volume) {
 
     if (previous_volume == volume && !context->persist_dirty && context->persisted_volume_known &&
         context->persisted_volume == volume) {
+        ESP_LOGI(TAG,
+                 "event=volume action=set previous=%d value=%d changed=0 target=%s "
+                 "persisted=1 result=ok",
+                 previous_volume, volume, target);
         return 0;
     }
     if (persist_volume(context, volume) < 0) {
         context->persist_dirty = true;
-        ESP_LOGW(TAG, "event=volume action=set value=%d applied=1 persisted=0 result=error "
-                      "scope=persistence");
+        ESP_LOGW(TAG,
+                 "event=volume action=set previous=%d value=%d changed=%d target=%s applied=1 "
+                 "persisted=0 result=error scope=persistence",
+                 previous_volume, volume, previous_volume != volume, target);
         return 0;
     }
 
-    ESP_LOGI(TAG, "event=volume action=set value=%d persisted=1 result=ok", volume);
+    ESP_LOGI(TAG,
+             "event=volume action=set previous=%d value=%d changed=%d target=%s persisted=1 "
+             "result=ok",
+             previous_volume, volume, previous_volume != volume, target);
     return 0;
 }
 
 static int volume_get(void *opaque, int *volume) {
     audio_volume_context_t *context = opaque;
-    if (context != &s_volume_context || !context->active || !volume || !audio_lock()) {
+    if (context != &s_volume_context) {
+        ESP_LOGW(TAG, "event=volume action=get result=error reason=context");
         return -1;
     }
-    *volume = s_output_volume;
+    if (!context->active) {
+        ESP_LOGW(TAG, "event=volume action=get result=error reason=inactive");
+        return -1;
+    }
+    if (!volume) {
+        ESP_LOGW(TAG, "event=volume action=get result=error reason=output");
+        return -1;
+    }
+    if (!audio_lock()) {
+        ESP_LOGW(TAG, "event=volume action=get result=error reason=lock");
+        return -1;
+    }
+    int value = s_output_volume;
+    *volume = value;
     audio_unlock();
+#if CONFIG_MYBOT_TRACE_MCP
+    ESP_LOGI(TAG, "event=volume action=get value=%d source=logical_cache result=ok", value);
+#endif
     return 0;
 }
 
@@ -844,8 +890,10 @@ static void volume_destroy(void *opaque) {
         persisted = persist_volume(context, volume) == 0;
     }
     if (context->persist_dirty) {
-        ESP_LOGW(TAG, "event=volume action=detach value=%d persisted=0 result=error "
-                      "scope=persistence");
+        ESP_LOGW(TAG,
+                 "event=volume action=detach value=%d persisted=0 result=error "
+                 "scope=persistence",
+                 volume);
     } else {
         ESP_LOGI(TAG, "event=volume action=detach value=%d persisted=%d result=ok", volume,
                  persisted ? 1 : 0);

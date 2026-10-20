@@ -84,6 +84,27 @@ SDK packet delivery. The removed renderer's `event=ui_stats` is no longer emitte
 `rebuffer_events` estimates when playback needs buffering again and may include speech pauses.
 It is not a DMA-underrun counter.
 
+`CONFIG_MYBOT_TRACE_MCP` is enabled for the current MCP volume investigation. It captures existing
+RTM diagnostics through the public AOSL logger and emits `event=rtm_trace` at INFO, retaining warning
+and error severity and the original `sdk_level`. Other SDK messages keep their normal verbosity.
+`truncated=1` means the diagnostic line did not fit the 2048-byte buffer. Disable the option in
+menuconfig after testing to stop logging RTM string payloads. The SDK snapshot is unchanged.
+
+On CoreS3, a command reaching the driver produces `event=volume action=set phase=request`, followed
+by a result containing `previous`, `value`, `changed`, and `target=codec|deferred`. A successful
+unchanged value is logged too. `target=deferred` means the value will be applied when playback
+starts; `action=get source=logical_cache` reports the software-maintained value, not a register read.
+Only a request with no following result suggests a blocked driver operation.
+
+To reproduce, start a conversation, request an absolute volume of 20, then 80, then a relative
+increase/decrease. Save logs from `conversation started` through the RTM payload and volume result.
+SDK 1.3.0 accepts STRING messages up to 1024 bytes with a `message.user` envelope whose `content`
+is a DeviceCommand JSON string. Only `audio.set_volume` (`level: 0..100`) and
+`audio.adjust_volume` (`delta: -100..100`) are supported. Invalid envelopes/parameters, a different
+conversation/channel/sender, or one of the 16 recently accepted command IDs can prevent execution.
+The existing trace reports these rejection categories. Button volume changes use the same driver
+operations, so a volume log by itself does not identify the source as MCP.
+
 CoreS3 real-device testing passed all three offline stages after buffering was added; normal
 conversations also passed with video enabled and disabled. That is the recorded hardware baseline.
 The subsequent shared-buffer extraction and platform/UI changes still need per-board regression;
