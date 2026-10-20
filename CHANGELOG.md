@@ -187,6 +187,8 @@ Versioning and Conventional Commits.
 
 ### Fixed
 
+- Allocate MCP trace buffers per call in PSRAM instead of on SDK worker stacks, releasing them
+  after output or formatting failure and skipping the trace if PSRAM allocation fails.
 - Supply the missing volume arguments in CoreS3 persistence-failure log messages.
 - Restrict batch-builder cleanup to dedicated, owned generated directories. Reject repository
   ancestors, source directories, symlink components, traversal and overlapping roots before any

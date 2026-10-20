@@ -89,6 +89,9 @@ RTM diagnostics through the public AOSL logger and emits `event=rtm_trace` at IN
 and error severity and the original `sdk_level`. Other SDK messages keep their normal verbosity.
 `truncated=1` means the diagnostic line did not fit the 2048-byte buffer. Disable the option in
 menuconfig after testing to stop logging RTM string payloads. The SDK snapshot is unchanged.
+Each RTM trace allocates its own 2048-byte buffer in PSRAM and releases it after output, keeping
+the buffer off SDK worker stacks and separate across concurrent calls. Other messages do not
+allocate a buffer. If PSRAM allocation fails, that trace is skipped with a `reason=psram` warning.
 
 On CoreS3, a command reaching the driver produces `event=volume action=set phase=request`, followed
 by a result containing `previous`, `value`, `changed`, and `target=codec|deferred`. A successful

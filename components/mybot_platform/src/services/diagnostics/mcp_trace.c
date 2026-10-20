@@ -3,6 +3,7 @@
 
 #include <api/aosl_log.h>
 
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 
 #include <stdbool.h>
@@ -31,12 +32,18 @@ static void trace_sdk_log(int level, const char *format, va_list args) {
         return;
     }
 
-    char line[RTM_TRACE_CAPACITY];
+    /* Each caller owns its buffer; SDK worker stacks stay small and calls may overlap. */
+    char *line = heap_caps_malloc(RTM_TRACE_CAPACITY, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!line) {
+        ESP_LOGW(TAG, "event=rtm_trace result=error reason=psram bytes=%d", RTM_TRACE_CAPACITY);
+        return;
+    }
     va_list copy;
     va_copy(copy, args);
-    int length = vsnprintf(line, sizeof(line), format, copy);
+    int length = vsnprintf(line, RTM_TRACE_CAPACITY, format, copy);
     va_end(copy);
     if (length < 0) {
+        heap_caps_free(line);
         ESP_LOGW(TAG, "event=rtm_trace result=error reason=format");
         return;
     }
@@ -48,7 +55,7 @@ static void trace_sdk_log(int level, const char *format, va_list args) {
     if (!message) {
         message = line;
     }
-    int truncated = (size_t)length >= sizeof(line);
+    int truncated = (size_t)length >= RTM_TRACE_CAPACITY;
     if (level <= AOSL_LOG_ERROR) {
         ESP_LOGE(TAG, "event=rtm_trace sdk_level=%d truncated=%d %s", level, truncated, message);
     } else if (level == AOSL_LOG_WARNING) {
@@ -56,6 +63,7 @@ static void trace_sdk_log(int level, const char *format, va_list args) {
     } else {
         ESP_LOGI(TAG, "event=rtm_trace sdk_level=%d truncated=%d %s", level, truncated, message);
     }
+    heap_caps_free(line);
 }
 
 void mybot_mcp_trace_start(void) {

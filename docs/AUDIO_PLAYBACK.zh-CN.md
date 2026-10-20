@@ -81,6 +81,9 @@ I2S 接受数据后额外等待 120 ms，覆盖当前 90 ms 的 DMA 容量。这
 RTM 诊断，以 INFO 输出 `event=rtm_trace`，保留告警/错误级别及原始 `sdk_level`；其他 SDK
 消息保持正常详细程度。`truncated=1` 表示诊断行未能完整放入 2048 字节缓冲区。
 排查结束后可在 menuconfig 关闭该选项，停止打印 RTM 字符串内容。SDK 快照未修改。
+每条 RTM 诊断独立从 PSRAM 分配 2048 字节缓冲，输出后释放，避免占用 SDK 工作线程栈，
+并发调用也不共用缓冲。其他消息不分配缓冲。PSRAM 分配失败时打印 `reason=psram` 告警，
+跳过本条诊断。
 
 CoreS3 驱动收到请求后打印 `event=volume action=set phase=request`，随后结果包含
 `previous`、`value`、`changed` 以及 `target=codec|deferred`；设置为原值也会打印成功结果。

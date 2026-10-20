@@ -13,10 +13,17 @@ if [ "${SANITIZE:-0}" = 1 ]; then
 fi
 
 "${CC:-cc}" -std=c11 -Wall -Wextra -Werror "$@" -Dvprintf=mock_vprintf \
+    -Dvsnprintf=mock_trace_vsnprintf \
     -I"$test_dir/mocks" \
     -I"$repo_root/components/mybot_platform/include" \
-    "$test_dir/test_mcp_trace.c" \
+    -c \
     "$repo_root/components/mybot_platform/src/services/diagnostics/mcp_trace.c" \
+    -o "$test_build_dir/mcp_trace.o"
+
+"${CC:-cc}" -std=c11 -Wall -Wextra -Werror "$@" \
+    -I"$test_dir/mocks" \
+    -I"$repo_root/components/mybot_platform/include" \
+    "$test_dir/test_mcp_trace.c" "$test_build_dir/mcp_trace.o" \
     -o "$test_build_dir/test_mcp_trace"
 
 for initial_level in 0 3 5 6 7; do
