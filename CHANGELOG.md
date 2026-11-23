@@ -150,6 +150,7 @@ Versioning and Conventional Commits.
 - Centralize build and flash commands in the board index and current validation status in
   `docs/VALIDATION.md`; remove repeated status paragraphs, volatile build timings and per-board
   command copies from board and topic documentation.
+- Sync the MyBot SDK snapshot to `8bae576` (1.3.0 plus upstream source style updates).
 - Sync the MyBot SDK snapshot to `eebf185` (1.3.0 plus post-release fixes). The SDK completes
   framed HTTP responses without waiting for the peer to close, restores the pending pairing code
   after a Wi-Fi reconnect, and preserves stored credentials when a KV read fails. The firmware
