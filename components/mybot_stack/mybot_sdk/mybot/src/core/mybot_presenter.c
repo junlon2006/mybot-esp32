@@ -9,6 +9,7 @@ int mybot_presenter_init(mybot_presenter_t *presenter) {
     if (!presenter) {
         return -1;
     }
+    presenter->pair_code[0] = '\0';
     presenter->indicators = MYBOT_LCD_INDICATOR_NONE;
     if (!mybot_lcd_is_registered()) {
         return 0;
@@ -51,14 +52,16 @@ void mybot_presenter_show_screen(mybot_presenter_t *presenter, mybot_lcd_screen_
     }
 }
 
-void mybot_presenter_show_pair_code(mybot_presenter_t *presenter, const char *code) {
+void mybot_presenter_set_pair_code(mybot_presenter_t *presenter, const char *code) {
     if (!presenter) {
         return;
     }
-    presenter->indicators = MYBOT_LCD_INDICATOR_NONE;
-    if (presenter->active && mybot_lcd_show_pair_code(&presenter->lcd, code) < 0) {
-        AOSL_LOG_WRN("failed to render LCD pair code");
+    size_t len = code ? strlen(code) : 0;
+    if (!len || len >= sizeof(presenter->pair_code)) {
+        presenter->pair_code[0] = '\0';
+        return;
     }
+    memcpy(presenter->pair_code, code, len + 1);
 }
 
 void mybot_presenter_set_vp_registered(mybot_presenter_t *presenter, bool registered) {
@@ -93,49 +96,36 @@ void mybot_presenter_clear_server_indicators(mybot_presenter_t *presenter) {
     }
 }
 
-static bool app_state_matches_device_state(mybot_device_state_t device_state,
-                                           mybot_state_t app_state) {
-    switch (device_state) {
-    case MYBOT_DEVICE_STATE_UNPROVISIONED:
-    case MYBOT_DEVICE_STATE_PAIRING:
-    case MYBOT_DEVICE_STATE_AWAITING_CLAIM:
-        return app_state == MYBOT_STATE_PAIRING;
-    case MYBOT_DEVICE_STATE_RUNTIME:
-        return app_state == MYBOT_STATE_READY;
-    case MYBOT_DEVICE_STATE_IN_CONVERSATION:
-        return app_state == MYBOT_STATE_IN_CONVERSATION;
-    default:
-        return false;
-    }
-}
-
 void mybot_presenter_render_state(mybot_presenter_t *presenter,
                                   const mybot_state_model_t *state_model) {
     if (!presenter || !state_model) {
         return;
     }
     mybot_state_view_t state = mybot_state_model_get_view(state_model);
-    mybot_device_state_t device_state = state.device_state;
-    mybot_state_t app_state = state.app_state;
-    if (!app_state_matches_device_state(device_state, app_state)) {
-        return;
+    bool awaiting_claim = state.device_state == MYBOT_DEVICE_STATE_AWAITING_CLAIM;
+    if (!awaiting_claim) {
+        presenter->pair_code[0] = '\0';
     }
 
-    switch (device_state) {
-    case MYBOT_DEVICE_STATE_UNPROVISIONED:
-    case MYBOT_DEVICE_STATE_PAIRING:
+    switch (state.app_state) {
+    case MYBOT_STATE_PAIRING:
+        if (!awaiting_claim) {
+            mybot_presenter_show_screen(presenter, MYBOT_LCD_SCREEN_PAIRING);
+            break;
+        }
         presenter->indicators = MYBOT_LCD_INDICATOR_NONE;
-        mybot_presenter_show_screen(presenter, MYBOT_LCD_SCREEN_PAIRING);
+        if (presenter->active && presenter->pair_code[0] &&
+            mybot_lcd_show_pair_code(&presenter->lcd, presenter->pair_code) < 0) {
+            AOSL_LOG_WRN("failed to render LCD pair code");
+        }
         break;
-    case MYBOT_DEVICE_STATE_AWAITING_CLAIM:
-        presenter->indicators = MYBOT_LCD_INDICATOR_NONE;
-        break;
-    case MYBOT_DEVICE_STATE_RUNTIME:
-        presenter->indicators = MYBOT_LCD_INDICATOR_NONE;
+    case MYBOT_STATE_READY:
         mybot_presenter_show_screen(presenter, MYBOT_LCD_SCREEN_READY);
         break;
-    case MYBOT_DEVICE_STATE_IN_CONVERSATION:
+    case MYBOT_STATE_IN_CONVERSATION:
         mybot_presenter_show_screen(presenter, MYBOT_LCD_SCREEN_IN_CONVERSATION);
+        break;
+    default:
         break;
     }
 }
