@@ -1,14 +1,30 @@
 # Changelog
 
-This project follows Semantic Versioning.
+This project follows Semantic Versioning for its public source API. Binary ABI compatibility is
+not currently guaranteed; consumers and platform adapters must be rebuilt against the selected
+headers.
 
 ## [Unreleased]
+
+### Fixed
+
+- Finish reading a chunked HTTP response as soon as its trailers end, including when the TLS
+  peer keeps the connection open.
+- Keep shutdown in `STOPPING` when device I/O or a worker cannot stop. A later `mybot_stop()`
+  resumes cleanup before the SDK can restart.
+- End the affected conversation if the RTC worker cannot receive a critical connection or token
+  notification.
+- Restore the current pairing code on the LCD after Wi-Fi reconnects while the device awaits a claim.
+- Preserve the stored device credential if startup cannot read it. Restarting after storage
+  recovers restores the original binding.
 
 ### Changed
 
 - Refresh the Chinese and English pairing-code prompt and digit audio.
 - Remove stale external-platform, footprint, endpoint, and licensing details from the guides, and
   document only the device-service fields consumed by this repository.
+- Align dependency, volume, KV error, RTM boundary, service contract, and source-API/ABI
+  compatibility documentation with the current implementation.
 - Use one bounded URL parser for startup configuration and HTTP requests, and one strict printable
   header-value validator for request headers and device authorization credentials.
 

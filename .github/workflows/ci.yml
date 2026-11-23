@@ -23,7 +23,7 @@ jobs:
             tests/cst816s_input tests/tca9554 tests/aw9523b tests/compact_panel \
             tests/cores3_pixel_ui tests/labplus_stm8_reset tests/atk_tca9555_power \
             tests/custom_panel_profiles tests/board_power tests/cst226_input \
-            tests/i80_st7789_lifecycle tests/audio_video_psram -type f \
+            tests/i80_st7789_lifecycle tests/audio_video_psram tests/app_lifecycle -type f \
             \( -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' \) \
             -exec clang-format --dry-run --Werror {} +
       - name: Whitespace check
@@ -46,7 +46,7 @@ jobs:
             tests/cst816s_input tests/tca9554 tests/aw9523b tests/compact_panel \
             tests/cores3_pixel_ui tests/labplus_stm8_reset tests/atk_tca9555_power \
             tests/custom_panel_profiles tests/board_power tests/cst226_input \
-            tests/i80_st7789_lifecycle tests/audio_video_psram -type f \
+            tests/i80_st7789_lifecycle tests/audio_video_psram tests/app_lifecycle -type f \
             \( -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' \) \
             -print0 | while IFS= read -r -d '' file; do
               head -n 5 "$file" | grep -q 'SPDX-License-Identifier:' || {
@@ -86,6 +86,8 @@ jobs:
         run: sh tests/cores3_pixel_ui/run.sh
       - name: PSRAM audio and video lifecycle tests
         run: sh tests/audio_video_psram/run.sh
+      - name: Application lifecycle tests
+        run: sh tests/app_lifecycle/run.sh
       - name: Build output cleanup safety tests
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/build_all -p 'test_*.py' -v
       - name: Validate commit messages
